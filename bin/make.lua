@@ -1,5 +1,5 @@
 --[[
-    Titanium builder
+    Titanium build script.
 
     Retrieves all source files and compiles them into one.
 ]]
@@ -67,11 +67,11 @@ local function loadFile( name, verify )
 
     local content = files[ name ]
     if content then
-        local output, err = loadstring( content, name )
-        if not output or err then return error( "Failed to load Lua chunk. File '"..name.."' has a syntax error: "..tostring( err ) ) end
+        local output, err = loadstring( classLib and classLib.preprocess( content ) or content, name )
+        if not output or err then return error( "Failed to load Lua chunk. File '"..name.."' has a syntax error: "..tostring( err ), 0 ) end
 
         local ok, err = pcall( output )
-        if not ok or err then return error( "Failed to execute Lua chunk. File '"..name.."' crashed: "..tostring( err ) ) end
+        if not ok or err then return error( "Failed to execute Lua chunk. File '"..name.."' crashed: "..tostring( err ), 0 ) end
 
         if verify then
             local className = name:gsub( "%..*", "" )

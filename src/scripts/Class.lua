@@ -7,7 +7,8 @@
     - Harry Felton (HexCodeCC) -
 ]]
 local sub, find = string.sub, string.find
-local classLib, classes, current, last = {}, {}, false, false
+local classes, current, last = {}, false, false
+_G.classLib = {}
 
 local reserved, allowRawAccess = {
     __super = true;
@@ -30,6 +31,7 @@ local setters = setmetatable( {}, { __index = function( self, name )
     return self[ name ]
 end })
 
+
 --[[
     @local
     @desc Throws an exception prefixed with 'ClassLib Exception: '.
@@ -39,6 +41,7 @@ end })
 local function throw( message )
     return error( "ClassLib Exception: " .. tostring( message ), 2 )
 end
+
 
 --[[
     @local
@@ -83,7 +86,12 @@ local function getRawContent( base )
 end
 
 
---[[]]
+--[[
+    @local
+    @desc Creates a deep copy of a variable. Mainly for tables. The new table removed contains no references to the source table.
+    @param source <any>
+    @return <any>
+]]
 local function deepCopy( source )
     local orig_type = type( source )
     local copy
@@ -459,6 +467,105 @@ end
 
 
 --[[
+    @global
+    @desc Returns a class named 'name' if present
+    @param name <string>
+    @return [class base]
+]]
+function classLib.getClass( name )
+    return classes[ name ]
+end
+
+
+--[[
+    @global
+    @desc Returns the classes table
+    @return <table>
+]]
+function classLib.getClasses()
+    return classes
+end
+
+
+--[[
+    @global
+    @desc Returns true if the target object is a class
+    @param target [testFor - any]
+    @return <boolean>
+]]
+function classLib.isClass( target ) return type( target ) == "table" and target.__type and classes[ target.__type ] and classes[ target.__type ].__class end
+
+
+--[[
+    @global
+    @desc Returns true if the target object is a class instance
+    @param target [testFor - any]
+    @return <boolean>
+]]
+function classLib.isInstance( target ) return classLib.isClass and target.__instance end
+
+
+--[[
+    @global
+    @desc Returns true if the target object is of type 'classType'. If 'isInstance' is true then it will be instance checked too
+    @param
+        target [testFor - any]
+        classType <string>
+        isInstance [boolean]
+    @return <boolean>
+]]
+function classLib.typeOf( target, classType, isInstance ) return ( ( isInstance and classLib.isInstance( target ) ) or ( not isInstance and classLib.isClass( target ) ) ) and target.__type == classType end
+
+
+--[[
+    @global
+    @desc Sets the class loader Titanium will use when a class that isn't loaded is used.
+    @param fn <function>
+]]
+function classLib.setClassLoader( fn )
+    if type( fn ) ~= "function" then throw( "Failed to set MISSING_CLASS_LOADER. Value '"..tostring( fn ).." ("..type( fn )..")' is invalid." ) end
+
+    MISSING_CLASS_LOADER = fn
+end
+
+
+--[[
+    @local
+    @desc Performs the pre-processing of files by searching for keywords followed by values.
+    @param
+        text <string>
+        keyword <string>
+    @return <string>
+]]
+local function searchAndReplace( text, keyword )
+    local start, stop, value = find( text, keyword.." (.[^%s]+)")
+
+    if start and stop and value then
+        if find( value, "\"") then return text end
+        text = text:gsub( keyword.." "..value, keyword.." \""..value.."\"", 1 )
+    end
+
+    return text
+end
+
+
+--[[
+    @global
+    @desc Performs pre-processing of a file, searches for class, extends, alias and mixin keywords.
+    @param text <string>
+    @return <string>
+]]
+local preprocessTargets = {"class", "extends", "alias", "mixin"}
+function classLib.preprocess( text )
+    for i = 1, #preprocessTargets do
+        text = searchAndReplace( text, preprocessTargets[ i ] )
+    end
+
+    return text
+end
+
+
+--[[
     @local
     @desc Throws an error 'message' is current is not defined. Mainly for code reuse with below global functions
     @param
@@ -497,6 +604,7 @@ _G.mixin = function( target )
     return argumentCatcher
 end
 
+
 --[[
     @global
     @desc Used to add alias redirects to the currently building class
@@ -509,9 +617,3 @@ _G.alias = function( target )
 
     return argumentCatcher
 end
-
--- Class library
-function classLib.getClass( name )
-    return classes[ name ]
-end
-_G.classLib = classLib

@@ -1,5 +1,5 @@
 --[[
-    Titanium make file
+    Titanium builder
 
     Retrieves all source files and compiles them into one.
 ]]

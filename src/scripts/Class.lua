@@ -541,7 +541,7 @@ local function searchAndReplace( text, keyword )
     local start, stop, value = find( text, keyword.." (.[^%s]+)")
 
     if start and stop and value then
-        if find( value, "\"") then return text end
+        if find( value, "\"") or find( value, "\'" ) then return text end
         text = text:gsub( keyword.." "..value, keyword.." \""..value.."\"", 1 )
     end
 
@@ -560,6 +560,9 @@ function classLib.preprocess( text )
     for i = 1, #preprocessTargets do
         text = searchAndReplace( text, preprocessTargets[ i ] )
     end
+
+    local name = text:match( "abstract class (\".[^%s]+\")" )
+    if name then text = text:gsub( "abstract class "..name, "class "..name.." abstract()", 1 ) end
 
     return text
 end

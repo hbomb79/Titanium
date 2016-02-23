@@ -115,7 +115,7 @@ end
 local function compileSuper( base, target, aliases, inherited, superID )
     local superID = superID or 1
     local super, superMt = {}, {}
-    local targetRaw = getRawContent( getClass( target ) )
+    local targetRaw = getRawContent( getClass( target, true, "Failed to compile base class '"..tostring( base ).."'. Super target '"..tostring( target ).."' couldn't be found.", "Failed to compile base class '"..tostring( base ).."'. Super target '"..tostring( target ).."' is not compiled") )
 
     local totalAliases, totalInherited = aliases or {}, inherited or {}
 

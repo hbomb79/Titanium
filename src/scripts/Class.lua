@@ -383,6 +383,8 @@ _G.class = function( name )
     function proxy:spawn()
         if not isCompiled then
             throw( "Cannot spawn instance of un-compiled class base" )
+        elseif isAbstract then
+            throw( "Cannot spawn abstract class base" )
         end
 
         return spawn( name )
@@ -617,6 +619,18 @@ end
 _G.alias = function( target )
     throwIfNotCurrent( "Cannot add alias redirects." )
     current:addAlias( target )
+
+    return argumentCatcher
+end
+
+--[[
+    @global
+    @desc Used to make the currently building class abstract (cannot be instantiated)
+    @return <function>
+]]
+_G.abstract = function()
+    throwIfNotCurrent( "Cannot adjust abstract property." )
+    current:abstract( true )
 
     return argumentCatcher
 end

@@ -20,6 +20,7 @@ local function getContents( dir, _results )
             if fs.isDir( filePath ) then
                 getContents( filePath, results )
             else
+                print( "Found: " .. filePath )
                 results[ #results + 1 ] = filePath
             end
         end
@@ -27,8 +28,9 @@ local function getContents( dir, _results )
 
     return results
 end
-
+print( "Building Titanium\nSearching source directory" )
 local files, exports = getContents( "src" ), {}
+print( "Searching src/scripts directory" )
 local scripts, scriptFiles = getContents( "src/scripts" ), {}
 local preLoadFiles = {}
 
@@ -38,7 +40,7 @@ if fs.exists( "src/loadFirst.cfg" ) then
     h.close()
 
     if content then
-        for name in content:gmatch( "[^\n]+" ) do preLoadFiles[ #preLoadFiles + 1 ] = name end
+        for name in content:gmatch( "[^\n]+" ) do preLoadFiles[ #preLoadFiles + 1 ] = name; print( "Assigning file '"..name.."' as preload" ) end
     end
 end
 
@@ -49,9 +51,11 @@ for i = 1, #files do
     h = fs.open( file, "r" )
     exports[ fs.getName( file ) ] = h.readAll()
     h.close()
+
+    print( "File '"..file.."' read." )
 end
 
-for i = 1, #scripts do scriptFiles[ fs.getName( scripts[ i ] ) ] = true end
+for i = 1, #scripts do scriptFiles[ fs.getName( scripts[ i ] ) ] = true; print( "Assigning file '"..scripts[ i ].."' as script" ) end
 
 
 local fileHandle = fs.open("build/titanium.lua", "w")

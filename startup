@@ -1,4 +1,2 @@
 dofile( "bin/make.lua" )
 dofile( "build/titanium.lua" )
-
-print( classLib.preprocess("abstract class TestClass_is_awesome alias hey extends AParentClass mixin MTest") )

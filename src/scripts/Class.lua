@@ -253,7 +253,7 @@ end
     @param name <string>
     @return <instance>
 ]]
-local function spawn( name )
+local function spawn( name, ... )
     local instanceRaw = deepCopy( getRawContent( getClass( name ) ) )
     local instance, instanceMt = {}, {}
 
@@ -295,7 +295,21 @@ local function spawn( name )
     end
 
     function instanceMt:__newindex( k, v )
+        local k = alias[ k ] or k
 
+        local setter = setters[ k ]
+        if type(instanceRaw[ setter ]) == "function" and not setting[ k ] then
+            local oSuper = instanceRaw.super
+            self:setSuper( 1 )
+
+            setting[ k ] = true
+            instanceRaw[ setter ]( self )
+            setting[ k ] = nil
+
+            instanceRaw.super = oSuper
+        else
+            instanceRaw[ k ] = v
+        end
     end
     instanceMt.__tostring = function()
         return "[Instance] "..name
@@ -310,6 +324,8 @@ local function spawn( name )
     end
 
     setmetatable( instance, instanceMt )
+
+    if type( instanceRaw.__init__ ) == "function" then instanceRaw.__init__( instance, ... ) end
     return instance
 end
 
@@ -380,14 +396,14 @@ _G.class = function( name )
 
     function proxy:isCompiled() return isCompiled end
 
-    function proxy:spawn()
+    function proxy:spawn( ... )
         if not isCompiled then
             throw( "Cannot spawn instance of un-compiled class base" )
         elseif isAbstract then
             throw( "Cannot spawn abstract class base" )
         end
 
-        return spawn( name )
+        return spawn( name, ... )
     end
 
     function proxy:abstract( bool )

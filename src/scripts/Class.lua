@@ -124,7 +124,6 @@ local function compileSuper( base, target, aliases, inherited, superID )
         if not reserved[ key ] then
             if type( value ) == "function" then
                 factories[ key ] = function( instance, raw, ... )
-                    _G.instance = instance
                     local oldSuper = instance.super
                     instance:setSuper( superID + 1 )
 

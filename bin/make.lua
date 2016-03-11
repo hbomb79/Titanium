@@ -98,7 +98,7 @@ loadFile( "Class.lua" )
 for i = 1, #preLoad do loadFile( preLoad[ i ] ) end
 
 -- Load all other files
-for name, _ in pairs( files ) do loadFile( name, true ) end
+for name, _ in pairs( files ) do loadFile( name, not scriptFiles[ name ] ) end
 ]])
 
 fileHandle.close()

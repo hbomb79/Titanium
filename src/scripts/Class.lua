@@ -257,6 +257,8 @@ local function spawn( name, ... )
     local instanceRaw = deepCopy( getRawContent( getClass( name ) ) )
     local instance, instanceMt = {}, {}
 
+	instanceRaw.__ID = string.sub( tostring( instance ), 8)
+
     local alias = instanceRaw.__aliases
 
     local supers = {}

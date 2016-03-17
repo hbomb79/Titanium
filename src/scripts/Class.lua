@@ -265,6 +265,7 @@ local function spawn( name, ... )
 	instanceRaw.__ID = string.sub( tostring( instance ), 8)
 
     local alias = instanceRaw.__aliases
+	local constructed = false
 
     local supers = {}
     local function indexSupers( last, ID )
@@ -280,12 +281,16 @@ local function spawn( name, ... )
         instanceRaw.super = supers[ ID ]
     end
 
+	function instance:isConstructed()
+		return constructed
+	end
+
     local getting, setting = {}, {}
     function instanceMt:__index( k )
         local k = alias[ k ] or k
 
         local getter = getters[ k ]
-        if type(instanceRaw[ getter ]) == "function" and not getting[ k ] then
+        if type(instanceRaw[ getter ]) == "function" and not getting[ k ] and constructed then -- getters won't be used while the instance is being constructed (__init__)
             local oSuper = instanceRaw.super
             self:setSuper( 1 )
 
@@ -304,8 +309,12 @@ local function spawn( name, ... )
     function instanceMt:__newindex( k, v )
         local k = alias[ k ] or k
 
+		if reserved[ k ] then
+			throw( "Key name '"..k.."' is reserved." )
+		end
+
         local setter = setters[ k ]
-        if type(instanceRaw[ setter ]) == "function" and not setting[ k ] then
+        if type(instanceRaw[ setter ]) == "function" and not setting[ k ] and constructed then -- setters won't be used while the instance is being constructed (__init__)
             local oSuper = instanceRaw.super
             self:setSuper( 1 )
 
@@ -333,7 +342,9 @@ local function spawn( name, ... )
     setmetatable( instance, instanceMt )
 
     if type( instanceRaw.__init__ ) == "function" then instanceRaw.__init__( instance, ... ) end
-    return instance
+	constructed = true
+    
+	return instance
 end
 
 
@@ -374,10 +385,6 @@ _G.class = function( name )
         local char = sub( name, 1, 1 )
         if char ~= char:upper() then
             throw( "Class name '"..name.."' is not valid. Class names must begin with an uppercase character.")
-        end
-
-        if current then
-            throw( "Cannot create class base, class '"..tostring( current ).."' is already being created" )
         end
     end
 

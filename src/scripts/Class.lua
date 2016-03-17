@@ -59,7 +59,13 @@ local function getClass( name, compiled, notFoundError, notCompiledError )
 
     if not class then
         if MISSING_CLASS_LOADER then
-            return loadRequiredClass( name )
+			-- backup variable
+			local oCurrent = current
+
+			MISSING_CLASS_LOADER( name )
+
+			current = oCurrent
+			return ( not classes[ name ] and throw( notFoundError ) ) or ( classes[ name ] and not classes[ name ]:isCompiled() and throw( notCompiledError ) ) or classes[ name ]
         else
             return throw( notFoundError )
         end

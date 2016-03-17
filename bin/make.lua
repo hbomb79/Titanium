@@ -94,6 +94,16 @@ end
 -- Load our class file
 loadFile( "Class.lua" )
 
+classLib.setClassLoader(function( name )
+	local fName = name..".ti"
+
+	if not files[ fName ] then
+		return error("Failed to find file '"..fName..", to load missing class '"..name.."'.")
+	else
+		loadFile( fName, true )
+	end
+end)
+
 -- Load any files specified by our config file
 for i = 1, #preLoad do loadFile( preLoad[ i ] ) end
 

@@ -1,2 +1,2 @@
-dofile( "bin/make.lua" )
-dofile( "build/titanium.lua" )
+dofile( "bin/make.lua" ) -- Build an on-the-fly version of Titanium (un-minified)
+dofile( "build/titanium.lua" ) -- Run the compiled Titanium script

@@ -1,8 +1,8 @@
 --[[
     Titanium Class System
 
-    Description: This file manages Titanium's classes and their respective instances.
-    Version: 0.1 (Incomplete)
+    Description: This file manages Titanium's classes and their instances.
+    Version: 1.0
 
     - Harry Felton (HexCodeCC) -
 ]]
@@ -51,7 +51,6 @@ end
         compiled <boolean>
         notFoundError <string>
         notCompiledError <string>
-
     @return <class base> || error
 ]]
 local function getClass( name, compiled, notFoundError, notCompiledError )
@@ -59,13 +58,13 @@ local function getClass( name, compiled, notFoundError, notCompiledError )
 
     if not class then
         if MISSING_CLASS_LOADER then
-			-- backup variable
-			local oCurrent = current
+            -- backup variable
+            local oCurrent = current
 
-			MISSING_CLASS_LOADER( name )
+            MISSING_CLASS_LOADER( name )
 
-			current = oCurrent
-			return ( not classes[ name ] and throw( notFoundError ) ) or ( classes[ name ] and not classes[ name ]:isCompiled() and throw( notCompiledError ) ) or classes[ name ]
+            current = oCurrent
+            return ( not classes[ name ] and throw( notFoundError ) ) or ( classes[ name ] and not classes[ name ]:isCompiled() and throw( notCompiledError ) ) or classes[ name ]
         else
             return throw( notFoundError )
         end
@@ -262,10 +261,10 @@ local function spawn( name, ... )
     local instanceRaw = deepCopy( getRawContent( getClass( name ) ) )
     local instance, instanceMt = {}, {}
 
-	instanceRaw.__ID = string.sub( tostring( instance ), 8)
+    instanceRaw.__ID = string.sub( tostring( instance ), 8)
 
     local alias = instanceRaw.__aliases
-	local constructed = false
+    local constructed = false
 
     local supers = {}
     local function indexSupers( last, ID )
@@ -281,9 +280,9 @@ local function spawn( name, ... )
         instanceRaw.super = supers[ ID ]
     end
 
-	function instance:isConstructed()
-		return constructed
-	end
+    function instance:isConstructed()
+        return constructed
+    end
 
     local getting, setting = {}, {}
     function instanceMt:__index( k )
@@ -309,9 +308,9 @@ local function spawn( name, ... )
     function instanceMt:__newindex( k, v )
         local k = alias[ k ] or k
 
-		if reserved[ k ] then
-			throw( "Key name '"..k.."' is reserved." )
-		end
+        if reserved[ k ] then
+            throw( "Key name '"..k.."' is reserved." )
+        end
 
         local setter = setters[ k ]
         if type(instanceRaw[ setter ]) == "function" and not setting[ k ] and constructed then -- setters won't be used while the instance is being constructed (__init__)
@@ -342,9 +341,9 @@ local function spawn( name, ... )
     setmetatable( instance, instanceMt )
 
     if type( instanceRaw.__init__ ) == "function" then instanceRaw.__init__( instance, ... ) end
-	constructed = true
-    
-	return instance
+    constructed = true
+
+    return instance
 end
 
 

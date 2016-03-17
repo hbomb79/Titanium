@@ -72,7 +72,7 @@ local function loadFile( name, verify )
 
     local content = files[ name ]
     if content then
-        local output, err = loadstring( classLib and classLib.preprocess( content ) or content, name )
+        local output, err = loadstring( classLib and not scriptFiles[ name ] and classLib.preprocess( content ) or content, name )
         if not output or err then return error( "Failed to load Lua chunk. File '"..name.."' has a syntax error: "..tostring( err ), 0 ) end
 
         local ok, err = pcall( output )

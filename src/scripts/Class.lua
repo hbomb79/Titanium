@@ -1,23 +1,13 @@
 --[[
-    Titanium Class System
+    Titanium class system
+    Handles creation, compilation and spawning of classes
 
-    Description: This file manages Titanium's classes and their instances.
-    Version: 1.0
-
-    - Harry Felton (HexCodeCC) -
+    Licensed under MIT (Harry Felton)
 ]]
-local sub, find = string.sub, string.find
-local classes, current, last = {}, false, false
-_G.classLib = {}
+classLib = {}
+local classes, classReg, current, currentReg = {}, {}, false, false
 
-local reserved, allowRawAccess = {
-    __super = true;
-    __ownedIndexes = true;
-    __mixins = true;
-    __aliases = true;
-    __interfaces = true;
-}, false
-
+local reserved = { super = true; }
 
 local getters = setmetatable( {}, { __index = function( self, name )
     self[ name ] = "get" .. name:sub( 1, 1 ):upper() .. name:sub( 2 )
@@ -31,277 +21,259 @@ local setters = setmetatable( {}, { __index = function( self, name )
     return self[ name ]
 end })
 
-
---[[
-    @local
-    @desc Throws an exception prefixed with 'ClassLib Exception: '.
-    @param message <string>
-    @return <error>
-]]
-local function throw( message )
-    return error( "ClassLib Exception: " .. tostring( message ), 2 )
+local function throw( message, level )
+    return error( "Titanium Class Exception: " .. ( message or "No error provided" ), type( level ) == "number" and level > 0 and level + 1 or 2 )
 end
 
-
---[[
-    @local
-    @desc Attempts to retrieve a class. If its not found then Titanium will try to load it using the missing class loader.
-    @param
-        name <string>
-        compiled <boolean>
-        notFoundError <string>
-        notCompiledError <string>
-    @return <class base> || error
-]]
-local function getClass( name, compiled, notFoundError, notCompiledError )
+local function getClass( name, compiled )
     local class = classes[ name ]
 
     if not class then
         if MISSING_CLASS_LOADER then
-            -- backup variable
-            local oCurrent = current
+            local oCurrent, oCurrentReg = current, currentReg
+            current, currentReg = false, false
 
             MISSING_CLASS_LOADER( name )
 
-            current = oCurrent
-            return ( not classes[ name ] and throw( notFoundError ) ) or ( classes[ name ] and not classes[ name ]:isCompiled() and throw( notCompiledError ) ) or classes[ name ]
+            current, currentReg = oCurrent, oCurrentReg
+            return ( not classes[ name ] and throw( "Failed to load class '"..name.."'. Class not found" ) ) or ( classes[ name ] and not classes[ name ]:isCompiled() and throw( "Failed to load class '"..name.."'. Class not compiled" ) ) or classes[ name ]
         else
-            return throw( notFoundError )
+            return throw( "Failed to load class '"..tostring( name ).."'. Class not found" )
         end
     elseif not class:isCompiled() then
-        return throw( notCompiledError )
+        return throw( "Failed to load class '"..name.."'. Class not compiled" )
     end
 
     return class
 end
 
-
---[[
-    @local
-    @desc Gets the raw content from a class base
-    @param base <class base>
-    @return <table>
-]]
-local function getRawContent( base )
-    allowRawAccess = true
-    local raw = base:getRaw()
-    allowRawAccess = false
-
-    return raw
+local function isBuilding()
+    if current or currentReg then
+        return ( current and currentReg and true ) or throw("A class registry error has occured")
+    end
+    return false
 end
 
+local function propertyCatch( tbl )
+    if type( tbl ) == "table" then
+        if not isBuilding() then
+            throw("Cannot implement trailing property. No class is being built")
+        end
 
---[[
-    @local
-    @desc Creates a deep copy of a variable. Mainly for tables. The new table removed contains no references to the source table.
-    @param source <any>
-    @return <any>
-]]
+        for key, value in pairs( tbl ) do
+            current[ key ] = value
+        end
+    elseif type( tbl ) ~= "nil" then
+        throw("Unknown property trailing class declaration")
+    end
+end
+
 local function deepCopy( source )
-    local orig_type = type( source )
-    local copy
-    if orig_type == 'table' then
-        copy = {}
+    if type( source ) == "table" then
+        local copy = {}
         for key, value in next, source, nil do
             copy[ deepCopy( key ) ] = deepCopy( value )
         end
+        return copy
     else
-        copy = source
+        return source
     end
-    return copy
 end
 
+local function compileSupers( base, targets )
+    local inheritedKeys, inheritedAlias, superMatrix = {}, {}, {}
+    local baseAlias = classReg[ base:type() ].alias
+    local function compileSuper( target, id )
+        local factories = {}
+        local targetReg = classReg[ target:type() ]
 
---[[
-    @local
-    @desc Creates a compiled super matrix, this is then stored on class bases at compilation.
-    @param name <string>
-]]
-local function compileSuper( base, target, aliases, inherited, superID )
-    local superID = superID or 1
-    local super, superMt = {}, {}
-    local targetRaw = getRawContent( getClass( target, true, "Failed to compile base class '"..tostring( base ).."'. Super target '"..tostring( target ).."' couldn't be found.", "Failed to compile base class '"..tostring( base ).."'. Super target '"..tostring( target ).."' is not compiled") )
-
-    local totalAliases, totalInherited = aliases or {}, inherited or {}
-
-    local factories = {}
-    for key, value in pairs( targetRaw ) do
-        if not reserved[ key ] then
-            if type( value ) == "function" then
-                factories[ key ] = function( instance, raw, ... )
-                    local oldSuper = instance.super
-                    instance:setSuper( superID + 1 )
-
-                    local returnData = { raw[ key ]( instance, ... ) }
-
-                    instance.super = oldSuper
-
-                    return unpack( returnData )
-                end
-                if totalInherited[ key ] == nil then
-                    totalInherited[ key ] = factories[ key ]
-                end
-            else
-                if totalInherited[ key ] == nil then
-                    totalInherited[ key ] = value
-                end
-            end
-        elseif key == "__aliases" then
-            for target, redirect in pairs( value ) do
-                if not totalAliases[ target ] then
-                    totalAliases[ target ] = redirect
-                end
-            end
-        end
-    end
-
-    if targetRaw.__super then
-        super.super = compileSuper( base, targetRaw.__super, totalAliases, totalInherited, superID + 1 )
-    end
-
-    function super:spawn( instance )
-        -- Create a custom instance of this super matrix for this instance in particular.
-        local raw = deepCopy( targetRaw )
-        local proxy, proxyMt = {}, {}
-
-        local owned = raw.__ownedIndexes
-
-        local factoryCache, wrapCache = {}, {}
-        local factory
-        function proxyMt:__index( k )
-            if factories[ k ] then
-                if not factoryCache[ k ] then
-                    factoryCache[ k ] = owned[ k ] and factories[ k ] or raw[ k ]
-                end
-
-                factory = factoryCache[ k ]
-
-                if not wrapCache[ k ] then
-                    wrapCache[ k ] = function( self, ... )
-                        local v
-                        if owned[ k ] then
-                            v = { factory( instance, raw, ... ) }
-                        else
-                            v = { factory( instance, ... ) }
-                        end
+        for key, value in pairs( targetReg.raw ) do
+            if not reserved[ key ] then
+                local toInsert = value
+                if type( value ) == "function" then
+                    factories[ key ] = function( instance, raw, ... )
+                        local old = instance:setSuper( id + 1 )
+                        local v = { value( instance, ... ) }
+                        instance.raw.super = old
 
                         return unpack( v )
                     end
+                    toInsert = factories[ key ]
                 end
-                return wrapCache[ k ]
-            elseif raw[ k ] then
-                throw( "Non-function values cannot be retrieved from super." )
+
+                inheritedKeys[ key ] = toInsert
+            end
+        end
+        for alias, redirect in pairs( targetReg.alias ) do baseAlias[ alias ] = redirect end
+
+        -- Handle inheritance
+        for key, value in pairs( inheritedKeys ) do
+            if type( value ) == "function" and not factories[ key ] then
+                factories[ key ] = value
             end
         end
 
-        function proxyMt:__newindex( k )
-            throw( "Failed to set key '"..k.."'. Setting keys on super is not allowed" )
-        end
-
-        proxyMt.__tostring = function()
-            return "Super #"..superID.." of "..tostring( instance )
-        end
-
-        setmetatable( proxy, proxyMt )
-        return proxy
+        superMatrix[ id ] = { factories, targetReg }
     end
 
-    return super, totalAliases, totalInherited
+    for id = #targets, 1, -1 do compileSuper( targets[ id ], id ) end
+
+    return inheritedKeys, function( instance )
+        local matrix, matrixReady = {}
+        local function generateMatrix( target, id )
+            local superTarget, matrixTbl, matrixMt = superMatrix[ id ], {}, {}
+            local factories, reg = superTarget[ 1 ], superTarget[ 2 ]
+
+            local raw, owned, wrapCache, factory, upSuper = reg.raw, reg.ownedKeys, {}
+
+            function matrixMt:__tostring()
+                return "["..reg.type.."] Super #"..id.." of '"..instance:type().."' instance"
+            end
+            function matrixMt:__newindex( k, v )
+                if matrixReady or k ~= "super" then
+                    throw("Cannot set keys on super. Illegal action.")
+                else
+                    upSuper = v
+                end
+            end
+            function matrixMt:__index( k )
+                factory = factories[ k ]
+                if factory then
+                    if not wrapCache[ k ] then wrapCache[ k ] = function( self, ... ) return factory( instance, raw, ... ) end end
+                    return wrapCache[ k ]
+                else
+                    if k == "super" then
+                        return upSuper
+                    else
+                        return throw("Cannot lookup value for key '"..k.."' on super. Illegal action.")
+                    end
+                end
+            end
+            function matrixMt:__call( ... )
+                local init = self.__init__
+                if type( init ) == "function" then
+                    return init( ... )
+                else
+                    throw("Failed to execute super constructor. __init__ method not found")
+                end
+            end
+
+            setmetatable( matrixTbl, matrixMt )
+            return matrixTbl
+        end
+
+        local last = matrix
+        for id = 1, #targets do
+            last.super = generateMatrix( targets[ id ], id )
+            last = last.super
+        end
+
+        martixReady = true
+        return matrix
+    end
 end
 
-
---[[
-    @local
-    @desc Compiles the class base by combining the classes super classes, mixins and setting aliases
-]]
-local function compile()
-    local raw = getRawContent( current )
-    if not current then
-        throw( "Cannot compile class because no class is being created" )
+local function compileCurrent()
+    if not isBuilding() then
+        throw("Cannot compile currently building class. No class is being built")
     end
 
-    -- Handle mixins
-    local mixins, mixin, mixinClass, mixinRaw = raw.__mixins
-    for i = 1, #mixins do
-        mixin = mixins[ i ]
+    local raw, alias = currentReg.raw, currentReg.alias
 
-        mixinClass = getClass( mixin, true, "Failed to mixin target '"..mixin.."'. The class couldn't be found", "Failed to mixin target '"..mixin.."'. The class is not compiled" )
-        mixinRaw = getRawContent( mixinClass )
+    for target, _ in pairs( currentReg.mixin ) do
+        local reg = classReg[ target ]
 
-        for key, value in pairs( mixinRaw ) do
-            if not current[ key ] then
-                current[ key ] = value
+        -- Mixin raw keys
+        for key, value in pairs( reg.raw ) do
+            if not reserved[ key ] and not raw[ key ] then raw[ key ] = value end
+        end
+
+        -- Mixin alias
+        for target, redirect in pairs( reg.alias ) do
+            if not alias[ target ] then alias[ target ] = redirect end
+        end
+    end
+
+    if currentReg.super then
+        local supers = {}
+
+        local last, c, newC = currentReg.super.target
+        while last do
+            c = getClass( last, true )
+
+            table.insert( supers, c )
+            newC = classReg[ c:type() ].super
+            last = newC and newC.target or false
+        end
+
+        local keys
+        keys, currentReg.super.matrix = compileSupers( current, supers )
+
+        local wrappers = currentReg.super.wrappers
+        for key, value in pairs( keys ) do
+            if raw[ key ] == nil then
+                if type( value ) == "function" then wrappers[ key ] = value else raw[ key ] = value end
             end
         end
     end
-
-    -- Handle supers
-    if raw.__extensionTarget then
-        local total, aliases, inherited = raw.__aliases
-        raw.__super, aliases, inherited = compileSuper( current, raw.__extensionTarget )
-
-        for alias, redirect in pairs( aliases ) do
-            if not total[ alias ] then total[ alias ] = redirect end
-        end
-        for key, value in pairs( inherited ) do
-            if not raw[ key ] then current[ key ] = value end
-        end
-        raw.__extensionTarget = false
-    end
+    currentReg.compiled, current, currentReg = true, false, false
 end
 
+local function spawn( target, ... )
+    local targetReg = classReg[ target:type() ]
+    if targetReg.abstract then
+        throw("Failed to spawn instance of abstract class '"..target:type().."'. Illegal action.")
+    end
 
---[[
-    @local
-    @desc Spawn an instance of a compiled class base
-    @param name <string>
-    @return <instance>
-]]
-local function spawn( name, ... )
-    local instanceRaw = deepCopy( getRawContent( getClass( name ) ) )
-    local instance, instanceMt = {}, {}
+    local instance, instanceMt, instanceRaw, instanceWrappers = {}, {}, deepCopy( targetReg.raw ), {}
+    local initialised, hasSupers, superAmount, instanceType, alias, super = false, false, 0, target:type(), targetReg.alias, targetReg.super
 
-    instanceRaw.__ID = string.sub( tostring( instance ), 8)
-
-    local alias = instanceRaw.__aliases
-    local constructed = false
+    instanceRaw.__ID = string.sub( tostring( instanceRaw ), 8 )
+    instance.raw = instanceRaw
 
     local supers = {}
     local function indexSupers( last, ID )
-        local ID = ID or 1
-        if last.super then
+        while last.super do
             supers[ ID ] = last.super
-
-            indexSupers( last.super, ID + 1 )
+            last = last.super
+            ID = ID + 1
         end
     end
 
-    function instance:setSuper( ID )
-        instanceRaw.super = supers[ ID ]
-    end
-
-    function instance:isConstructed()
-        return constructed
-    end
-
-    local getting, setting = {}, {}
-    function instanceMt:__index( k )
-        local k = alias[ k ] or k
-
-        local getter = getters[ k ]
-        if type(instanceRaw[ getter ]) == "function" and not getting[ k ] and constructed then -- getters won't be used while the instance is being constructed (__init__)
-            local oSuper = instanceRaw.super
-            self:setSuper( 1 )
-
-            getting[ k ] = true
-            local v = { instanceRaw[ getter ]( self ) }
-            getting[ k ] = nil
-
+    local function createWrapper( key, value )
+        instanceWrappers[ key ] = function( self, ... )
+            local oSuper = self:setSuper( 1 )
+            local v = value( instance, ... )
             instanceRaw.super = oSuper
 
-            return unpack( v )
+            return v
+        end
+    end
+
+    local setting, getting = {}, {}
+    local function runProxyFunction( instance, keyName, proxyName, tbl, ... )
+        local oSuper = instance:setSuper( 1 )
+
+        tbl[ keyName ] = true
+        local v = instanceRaw[ proxyName ]( instance, ... )
+        tbl[ keyName ] = nil
+
+        instanceRaw.super = oSuper
+        return v
+    end
+
+    function instanceMt:__index( k )
+        local k = alias[ k ] or k
+        local getter = getters[ k ]
+
+        if type(instanceRaw[ getter ]) == "function" and not getting[ k ] and initialised then
+            runProxyFunction( self, k, getter, getting )
         else
-            return instanceRaw[ k ]
+            if instanceWrappers[ k ] then
+                return instanceWrappers[ k ]
+            else
+                return instanceRaw[ k ]
+            end
         end
     end
 
@@ -313,279 +285,211 @@ local function spawn( name, ... )
         end
 
         local setter = setters[ k ]
-        if type(instanceRaw[ setter ]) == "function" and not setting[ k ] and constructed then -- setters won't be used while the instance is being constructed (__init__)
-            local oSuper = instanceRaw.super
-            self:setSuper( 1 )
-
-            setting[ k ] = true
-            instanceRaw[ setter ]( self )
-            setting[ k ] = nil
-
-            instanceRaw.super = oSuper
+        if instanceWrappers[ setter ] and not setting[ k ] and initialised then
+            runProxyFunction( self, k, setter, setting, v )
         else
-            instanceRaw[ k ] = v
+            if type( v ) == "function" then
+                createWrapper( k, v )
+            else
+                instanceRaw[ k ], instanceWrappers[ k ] = v, nil
+            end
         end
     end
-    instanceMt.__tostring = function()
-        return "[Instance] "..name
+
+    function instanceMt:__tostring()
+        return "Instance of '"..instanceType.."'"
     end
 
-    if instanceRaw.__super then
-        instanceRaw.super = instanceRaw.__super:spawn( instance )
-
-        instanceRaw.__super = nil
-
-        indexSupers( instance )
+    local old
+    function instance:setSuper( target )
+        old, instanceRaw.super = instanceRaw.super, supers[ target ]
+        return old
     end
+
+    function instance:isInitialised() return initialised end
+
+    function instance:type() return instanceType end
 
     setmetatable( instance, instanceMt )
 
+    local classOwned = targetReg.ownedKeys
+    for key, value in pairs( instanceRaw ) do
+        if classOwned[ key ] and type( value ) == "function" then createWrapper( key, value ) end
+    end
+
+    if super then
+        hasSupers = true
+
+        local matrix, wrappers = super.matrix, super.wrappers
+        for key, value in pairs( wrappers ) do
+            instanceRaw[ key ] = function( instance, ... ) return value( instance, instanceRaw, ... ) end
+        end
+        instanceRaw.super = targetReg.super.matrix( instance ).super
+
+        indexSupers( instanceRaw, 1 )
+    end
+
     if type( instanceRaw.__init__ ) == "function" then instanceRaw.__init__( instance, ... ) end
-    constructed = true
+    initialised = true
 
     return instance
 end
 
-
---[[
-    @local
-    @desc Catches a table of arguments following a class declaration. The key-value pairs from this table are added to the current class.
-    @param tbl <table>
-]]
-local function argumentCatcher( tbl )
-    if type( tbl ) == "table" then
-        for key, value in pairs( tbl ) do
-            current[ key ] = value
-        end
-    elseif tbl then
-        throw( "Argument catcher caught invalid trailing identifier '"..tostring( tbl ).." ("..type( tbl )..")'" )
+function class( name )
+    if isBuilding() then
+        throw("Cannot begin construction of new class before currently building class '"..current:type().."' is compiled.")
     end
-end
 
-
---[[
-    @global
-    @desc Creates a class base which, once compiled can be instantiated.
-    @param name <string>
-    @return argumentCatcher <function>
-]]
-_G.class = function( name )
     if type( name ) ~= "string" then
         throw( "Class name '"..tostring( name ).."' is not valid. Class names must be a string." )
-    elseif not find( name, "%a" ) then
-        throw( "Class name '"..tostring( name ).."' is not valid. No letters could be found.")
-    elseif find( name, "%d" ) then
+    elseif not name:find( "%a" ) then
+        throw( "Class name '"..tostring( name ).."' is not valid. No alphabetic characters could be found.")
+    elseif name:find( "%d" ) then
         throw( "Class name '"..name.."' is not valid. Class names cannot contain digits." )
     elseif classes[ name ] then
         throw( "A class with name '"..name.."' already exists." )
     elseif reserved[ name ] then
         throw( "System name '"..name.."' is reserved" )
     else
-        local char = sub( name, 1, 1 )
+        local char = name:sub( 1, 1 )
         if char ~= char:upper() then
             throw( "Class name '"..name.."' is not valid. Class names must begin with an uppercase character.")
         end
     end
 
-    local isPhysical, isCompiled, isAbstract = true, false, false
-    local base, proxyMt = { __ownedIndexes = {}, __aliases = {}, __mixins = {}, __interfaces = {} }, {}
+    local registryEntry = { type = name; raw = {}; mixin = {}; alias = {}; ownedKeys = {}; super = false; compiled = false; }
+    classReg[ name ] = registryEntry
 
-    local ownedIndexes, aliases, mixins, interfaces = base.__ownedIndexes, base.__aliases, base.__mixins, base.__interfaces
+    local classMt = { __index = registryEntry.raw, __tostring = function() return ( registryEntry.compiled and "Compiled " or "" ) .. "Class '"..name.."'" end, __call = function( self, ... ) return self:spawn( ... ) end}
 
-    -- Create our proxy (public class interface)
-    local proxy = setmetatable( {}, proxyMt )
-
-    function proxy:compile()
-        if isCompiled then
-            throw( "Class base '"..name.."' is already compiled" )
+    function classMt:__newindex( key, value )
+        if reserved[ key ] then
+            throw( "Key name '"..key.."' is reserved." )
+        elseif self:isCompiled() then
+            throw( "Failed to set key on compiled class. Illegal action." )
         end
 
-        compile()
-        isCompiled = true
-
-        last = current
-        current = nil
+        registryEntry.raw[ key ] = value
+        registryEntry.ownedKeys[ key ] = value == nil and nil or true
     end
 
-    function proxy:isCompiled() return isCompiled end
+    local class = {}
+    function class.type()
+        return name
+    end
 
-    function proxy:spawn( ... )
-        if not isCompiled then
-            throw( "Cannot spawn instance of un-compiled class base" )
-        elseif isAbstract then
-            throw( "Cannot spawn abstract class base" )
+    function class.getRegistry()
+        return registryEntry
+    end
+
+    function class.isCompiled()
+        return registryEntry.compiled
+    end
+
+    function class.compile()
+        compileCurrent()
+    end
+
+    function class:spawn( ... )
+        if not registryEntry.compiled then
+            throw("Cannot spawn instance of class '"..name.."'. The class has not been compiled.")
         end
 
-        return spawn( name, ... )
+        return spawn( self, ... )
     end
 
-    function proxy:abstract( bool )
-        if isCompiled then throw( "Cannot adjust abstract state of class base once compiled." ) end
+    setmetatable( class, classMt )
 
-        isAbstract = bool
-    end
+    classes[ name ] = class
+    _G[ name ] = class
 
-    function proxy:isAbstract() return isAbstract end
+    current = class
+    currentReg = registryEntry
 
-    function proxy:mixin( target )
-        insert( mixins, target )
-    end
-
-    function proxy:implement( target )
-        insert( interfaces, target )
-    end
-
-    function proxy:addAlias( target )
-        local tbl
-        if type( target ) == "table" then
-            tbl = target
-        elseif type( _G[ target ] ) == "table" then
-            tbl = _G[ target ]
-        end
-
-        for key, value in pairs( tbl ) do
-            aliases[ key ] = value
-        end
-    end
-
-    function proxy:extend( target )
-        if isCompiled then
-            throw( "Cannot set extend target of class base once compiled." )
-        elseif base.__extensionTarget then
-            throw( "Cannot set multiple supers on class base." )
-        end
-
-        base.__extensionTarget = target
-    end
-
-    function proxy:setVirtualKey( k, v )
-        isPhysical = false
-        self[ k ] = v
-        isPhysical = true
-    end
-
-    function proxy:getRaw()
-        if not allowRawAccess then throw( "Cannot access raw content of a class base without permissions" ) end
-
-        return base
-    end
-
-    -- Set the proxy to use our metatable
-    proxyMt.__index = base
-    proxyMt.__tostring = function() return (isCompiled and "Compiled " or "") .. "Base ["..name.."]" end
-    proxyMt.__call = proxy.spawn
-    function proxyMt:__newindex( k, v )
-        if reserved[ k ] then
-            throw( "Key name '"..k.."' is reserved." )
-        elseif isCompiled then
-            throw( "Cannot set value '"..tostring( v ).."' to key '"..k.."'. The class base '"..name.."' has been compiled." )
-        end
-
-        base[ k ] = v
-        if isPhysical then
-            ownedIndexes[ k ] = v ~= nil and true or nil
-        end
-    end
-
-    -- make this proxy available
-    current = proxy
-    _G[ name ] = current
-    classes[ name ] = current
-
-    -- catch any class arguments that follow the declaration
-    return argumentCatcher
+    return propertyCatch
 end
 
+function extends( name )
+    if not isBuilding() then
+        throw("Cannot extend to target '"..name.."'. No class is being built.")
+    end
 
---[[
-    @global
-    @desc Returns a class named 'name' if present
-    @param name <string>
-    @return [class base]
-]]
+    if currentReg.super then
+        throw("Cannot extend to target '"..name.."'. The class '"..current:type().."' has already extended to '"..currentReg.super.."'")
+    else
+        currentReg.super = { target = name; matrix = {}; wrappers = {} }
+    end
+
+    return propertyCatch
+end
+
+function mixin( name )
+    if not isBuilding() then
+        throw("Cannot mixin target '"..name.."'. No class is being built")
+    elseif currentReg.mixin[ name ] then
+        throw("Cannot mixin target '"..name.."' to class '"..current:type().."'. The target has already been mixed in to this class.")
+    else
+        currentReg.mixin[ name ] = true
+    end
+
+    return propertyCatch
+end
+
+function alias( target )
+    if not isBuilding() then
+        throw("Cannot add alias target. No class is being built")
+    end
+
+    local tbl = ( type( target ) == "table" and target ) or ( type( _G[ target ] ) == "table" and _G[ target ] )
+    if not tbl then
+        throw("Failed to lookup alias target '"..tostring( target ).."' in global environment")
+    end
+
+    local currentAlias = currentReg.alias
+    for key, redirect in pairs( tbl ) do
+        currentAlias[ key ] = redirect
+    end
+
+    return propertyCatch
+end
+
+function abstract()
+    currentReg.abstract = true
+    return propertyCatch
+end
+
+-- Class Library
 function classLib.getClass( name )
     return classes[ name ]
 end
 
-
---[[
-    @global
-    @desc Returns the classes table
-    @return <table>
-]]
 function classLib.getClasses()
     return classes
 end
 
-
---[[
-    @global
-    @desc Returns true if the target object is a class
-    @param target [testFor - any]
-    @return <boolean>
-]]
 function classLib.isClass( target ) return type( target ) == "table" and target.__type and classes[ target.__type ] and classes[ target.__type ].__class end
 
-
---[[
-    @global
-    @desc Returns true if the target object is a class instance
-    @param target [testFor - any]
-    @return <boolean>
-]]
 function classLib.isInstance( target ) return classLib.isClass and target.__instance end
 
-
---[[
-    @global
-    @desc Returns true if the target object is of type 'classType'. If 'isInstance' is true then it will be instance checked too
-    @param
-        target [testFor - any]
-        classType <string>
-        isInstance [boolean]
-    @return <boolean>
-]]
 function classLib.typeOf( target, classType, isInstance ) return ( ( isInstance and classLib.isInstance( target ) ) or ( not isInstance and classLib.isClass( target ) ) ) and target.__type == classType end
 
-
---[[
-    @global
-    @desc Sets the class loader Titanium will use when a class that isn't loaded is used.
-    @param fn <function>
-]]
 function classLib.setClassLoader( fn )
     if type( fn ) ~= "function" then throw( "Failed to set MISSING_CLASS_LOADER. Value '"..tostring( fn ).." ("..type( fn )..")' is invalid." ) end
 
     MISSING_CLASS_LOADER = fn
 end
 
-
---[[
-    @local
-    @desc Performs the pre-processing of files by searching for keywords followed by values.
-    @param
-        text <string>
-        keyword <string>
-    @return <string>
-]]
 local function searchAndReplace( text, keyword )
-    local start, stop, value = find( text, keyword.." (.[^%s]+)")
+    local start, stop, value = text:find( keyword.." (.[^%s]+)" )
 
     if start and stop and value then
-        if find( value, "\"") or find( value, "\'" ) then return text end
+        if value:find( "\"" ) or value:find( "\'" ) then return text end
         text = text:gsub( keyword.." "..value, keyword.." \""..value.."\"", 1 )
     end
 
     return text
 end
 
-
---[[
-    @global
-    @desc Performs pre-processing of a file, searches for class, extends, alias and mixin keywords.
-    @param text <string>
-    @return <string>
-]]
 local preprocessTargets = {"class", "extends", "alias", "mixin"}
 function classLib.preprocess( text )
     for i = 1, #preprocessTargets do
@@ -596,70 +500,4 @@ function classLib.preprocess( text )
     if name then text = text:gsub( "abstract class "..name, "class "..name.." abstract()", 1 ) end
 
     return text
-end
-
-
---[[
-    @local
-    @desc Throws an error 'message' is current is not defined. Mainly for code reuse with below global functions
-    @param
-        message <string>
-        manual [string]
-]]
-local function throwIfNotCurrent( message, manual )
-    if not current then return throw( message .. ( manual or " No class is being created" ) ) end
-end
-
-
---[[
-    @global
-    @desc Used to extend currently building class to the target
-    @param target <string>
-    @return <function>
-]]
-_G.extends = function( target )
-    throwIfNotCurrent( "Cannot extend to target '"..tostring( target ).."'." )
-    current:extend( target )
-
-    return argumentCatcher
-end
-
-
---[[
-    @global
-    @desc Used to mix the currently building class with the target
-    @param target <string>
-    @return <function>
-]]
-_G.mixin = function( target )
-    throwIfNotCurrent( "Cannot mixin target class '"..tostring( target ).."'." )
-    current:mixin( target )
-
-    return argumentCatcher
-end
-
-
---[[
-    @global
-    @desc Used to add alias redirects to the currently building class
-    @param target <string>
-    @return <function>
-]]
-_G.alias = function( target )
-    throwIfNotCurrent( "Cannot add alias redirects." )
-    current:addAlias( target )
-
-    return argumentCatcher
-end
-
---[[
-    @global
-    @desc Used to make the currently building class abstract (cannot be instantiated)
-    @return <function>
-]]
-_G.abstract = function()
-    throwIfNotCurrent( "Cannot adjust abstract property." )
-    current:abstract( true )
-
-    return argumentCatcher
 end

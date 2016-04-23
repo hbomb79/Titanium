@@ -49,7 +49,7 @@ end
 
 local function isBuilding()
     if current or currentReg then
-        return ( current and currentReg and true ) or throw("A class registry error has occured")
+        return ( current and currentReg ) or throw("A class registry error has occured")
     end
     return false
 end

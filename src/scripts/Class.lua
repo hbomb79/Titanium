@@ -392,10 +392,6 @@ function class( name )
         return name
     end
 
-    function class.getRegistry()
-        return registryEntry
-    end
-
     function class.isCompiled()
         return registryEntry.compiled
     end

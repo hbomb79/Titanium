@@ -127,7 +127,7 @@ local function compileSupers( base, targets )
             local raw, owned, wrapCache, factory, upSuper = reg.raw, reg.ownedKeys, {}
 
             function matrixMt:__tostring()
-                return "["..reg.type.."] Super #"..id.." of '"..instance:type().."' instance"
+                return "["..reg.type.."] Super #"..id.." of '"..instance.__type.."' instance"
             end
             function matrixMt:__newindex( k, v )
                 if matrixReady or k ~= "super" then
@@ -226,9 +226,12 @@ local function spawn( target, ... )
     end
 
     local instance, instanceMt, instanceRaw, instanceWrappers = {}, {}, deepCopy( targetReg.raw ), {}
-    local initialised, hasSupers, superAmount, instanceType, alias, super = false, false, 0, target:type(), targetReg.alias, targetReg.super
+    local hasSupers, superAmount, instanceType, alias, super = false, 0, target:type(), targetReg.alias, targetReg.super
 
     instanceRaw.__ID = string.sub( tostring( instanceRaw ), 8 )
+    instanceRaw.__type = instanceType
+    instanceRaw.__instance = true
+
     instance.raw = instanceRaw
 
     local supers = {}
@@ -301,14 +304,10 @@ local function spawn( target, ... )
     end
 
     local old
-    function instance:setSuper( target )
+    function instanceRaw:setSuper( target )
         old, instanceRaw.super = instanceRaw.super, supers[ target ]
         return old
     end
-
-    function instance:isInitialised() return initialised end
-
-    function instance:type() return instanceType end
 
     setmetatable( instance, instanceMt )
 
@@ -330,7 +329,7 @@ local function spawn( target, ... )
     end
 
     if type( instanceRaw.__init__ ) == "function" then instanceRaw.__init__( instance, ... ) end
-    initialised = true
+    instanceRaw.__initialised = true
 
     return instance
 end

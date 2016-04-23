@@ -328,6 +328,21 @@ local function spawn( target, ... )
         indexSupers( instanceRaw, 1 )
     end
 
+    local meta = targetReg.meta
+    local isWhitelisted = meta.mode == "w"
+    local targetTable = isWhitelisted and meta.whitelist or meta.blacklist
+
+    function instanceRaw:setMetaMethod( method, fn )
+        local method = "__"..method
+        if ( isWhitelisted and not targetTable[ method ] ) or ( not isWhitelisted and targetTable[ method ] ) then
+            return throw("Cannot set meta method '"..method.."'. Illegal action")
+        end
+
+        instanceMt[ method ] = fn
+    end
+
+    setmetatable( instance, instanceMt )
+
     if type( instanceRaw.__init__ ) == "function" then instanceRaw.__init__( instance, ... ) end
     instanceRaw.__initialised = true
 
@@ -356,7 +371,7 @@ function class( name )
         end
     end
 
-    local registryEntry = { type = name; raw = {}; mixin = {}; alias = {}; ownedKeys = {}; super = false; compiled = false; }
+    local registryEntry = { type = name; raw = {}; mixin = {}; alias = {}; ownedKeys = {}; super = false; compiled = false; meta = { blacklist = { __index = true, __newindex = true }; whitelist = {}; mode = false } }
     classReg[ name ] = registryEntry
 
     local classMt = { __index = registryEntry.raw, __tostring = function() return ( registryEntry.compiled and "Compiled " or "" ) .. "Class '"..name.."'" end, __call = function( self, ... ) return self:spawn( ... ) end}
@@ -453,8 +468,46 @@ function alias( target )
 end
 
 function abstract()
+    if not isBuilding() then
+        throw("Cannot enforce abstract class policy. No class is being built.")
+    end
+
     currentReg.abstract = true
     return propertyCatch
+end
+
+local function apply( str, tbl )
+    for item in str:gmatch("(%w+)[,]?") do
+        tbl[ "__"..item ] = true
+    end
+end
+
+local function applySetting( mt, blacklist )
+    if ( blacklist and mt.mode == "w" ) or ( not blacklist and mt.mode == "b" ) then
+        return throw("Cannot "..( blacklist and "lock" or "unlock" ).." meta methods. The class has applied a '"..( blacklist and "whitelist" or "blacklist" ).."' rule which cannot be used alongside the '"..(blacklist and "blacklist" or "whitelist").."' rule." )
+    end
+
+    mt.mode = blacklist and "b" or "w"
+end
+
+function blacklist( str )
+    if not isBuilding() then
+        throw("Cannot blacklist meta methods on building class. No class is being built.")
+    end
+    local mt = currentReg.meta
+
+    applySetting( mt, true )
+    apply( str, mt.blacklist )
+end
+
+function whitelist( str )
+    if not isBuilding() then
+        throw("Cannot whitelist meta methods on building class. No class is being built.")
+    end
+    local mt = currentReg.meta
+
+    applySetting( mt )
+    apply( str, mt.whitelist )
 end
 
 -- Class Library

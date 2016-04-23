@@ -472,15 +472,15 @@ function abstract()
     return propertyCatch
 end
 
-local function apply( str, tbl )
+local function apply( str, tbl, invert )
     for item in str:gmatch("(%w+)[,]?") do
-        tbl[ "__"..item ] = true
+        tbl[ "__"..item ] = not invert or nil
     end
 end
 
 local function applySetting( mt, blacklist )
     if ( blacklist and mt.mode == "w" ) or ( not blacklist and mt.mode == "b" ) then
-        return throw("Cannot "..( blacklist and "lock" or "unlock" ).." meta methods. The class has applied a '"..( blacklist and "whitelist" or "blacklist" ).."' rule which cannot be used alongside the '"..(blacklist and "blacklist" or "whitelist").."' rule." )
+        return throw("Cannot "..( blacklist and "blacklist" or "whitelist" ).." meta methods. The class has applied a '"..( blacklist and "whitelist" or "blacklist" ).."' rule which cannot be used alongside the '"..(blacklist and "blacklist" or "whitelist").."' rule." )
     end
 
     mt.mode = blacklist and "b" or "w"
@@ -494,6 +494,20 @@ function blacklist( str )
 
     applySetting( mt, true )
     apply( str, mt.blacklist )
+
+    return propertyCatch
+end
+
+function unblacklist( str )
+    if not isBuilding() then
+        throw("Cannot unblacklist meta methods on building class. No class is being built.")
+    end
+    local mt = currentReg.meta
+
+    applySetting( mt, true )
+    apply( str, mt.blacklist, true )
+
+    return propertyCatch
 end
 
 function whitelist( str )
@@ -504,6 +518,8 @@ function whitelist( str )
 
     applySetting( mt )
     apply( str, mt.whitelist )
+
+    return propertyCatch
 end
 
 -- Class Library

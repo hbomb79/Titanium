@@ -335,7 +335,7 @@ local function spawn( target, ... )
     function instanceRaw:setMetaMethod( method, fn )
         local method = "__"..method
         if ( isWhitelisted and not targetTable[ method ] ) or ( not isWhitelisted and targetTable[ method ] ) then
-            return throw("Cannot set meta method '"..method.."'. Illegal action")
+            return throw("Cannot set meta method '"..method.."'. Illegal action.")
         end
 
         instanceMt[ method ] = fn
@@ -363,7 +363,7 @@ function class( name )
     elseif classes[ name ] then
         throw( "A class with name '"..name.."' already exists." )
     elseif reserved[ name ] then
-        throw( "System name '"..name.."' is reserved" )
+        throw( "System name '"..name.."' is reserved." )
     else
         local char = name:sub( 1, 1 )
         if char ~= char:upper() then
@@ -425,7 +425,7 @@ function extends( name )
     end
 
     if currentReg.super then
-        throw("Cannot extend to target '"..name.."'. The class '"..current:type().."' has already extended to '"..currentReg.super.."'")
+        throw("Cannot extend to target '"..name.."'. The class '"..current:type().."' has already extended to '"..currentReg.super.."'.")
     else
         currentReg.super = { target = name; matrix = {}; wrappers = {} }
     end
@@ -435,7 +435,7 @@ end
 
 function mixin( name )
     if not isBuilding() then
-        throw("Cannot mixin target '"..name.."'. No class is being built")
+        throw("Cannot mixin target '"..name.."'. No class is being built.")
     elseif currentReg.mixin[ name ] then
         throw("Cannot mixin target '"..name.."' to class '"..current:type().."'. The target has already been mixed in to this class.")
     else
@@ -447,12 +447,12 @@ end
 
 function alias( target )
     if not isBuilding() then
-        throw("Cannot add alias target. No class is being built")
+        throw("Cannot add alias target. No class is being built.")
     end
 
     local tbl = ( type( target ) == "table" and target ) or ( type( _G[ target ] ) == "table" and _G[ target ] )
     if not tbl then
-        throw("Failed to lookup alias target '"..tostring( target ).."' in global environment")
+        throw("Failed to lookup alias target '"..tostring( target ).."' in global environment.")
     end
 
     local currentAlias = currentReg.alias

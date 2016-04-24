@@ -231,6 +231,7 @@ local function spawn( target, ... )
     instanceRaw.__ID = string.sub( tostring( instanceRaw ), 8 )
     instanceRaw.__type = instanceType
     instanceRaw.__instance = true
+    local initialised
 
     instance.raw = instanceRaw
 
@@ -344,7 +345,7 @@ local function spawn( target, ... )
     setmetatable( instance, instanceMt )
 
     if type( instanceRaw.__init__ ) == "function" then instanceRaw.__init__( instance, ... ) end
-    instanceRaw.__initialised = true
+    instanceRaw.__initialised, initialised = true, true
 
     return instance
 end

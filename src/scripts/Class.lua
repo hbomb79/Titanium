@@ -271,7 +271,7 @@ local function spawn( target, ... )
         local getter = getters[ k ]
 
         if type(instanceRaw[ getter ]) == "function" and not getting[ k ] and initialised then
-            runProxyFunction( self, k, getter, getting )
+            return runProxyFunction( self, k, getter, getting )
         else
             if instanceWrappers[ k ] then
                 return instanceWrappers[ k ]

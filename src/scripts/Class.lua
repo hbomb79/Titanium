@@ -440,6 +440,10 @@ function mixin( name )
     elseif currentReg.mixin[ name ] then
         throw("Cannot mixin target '"..name.."' to class '"..current:type().."'. The target has already been mixed in to this class.")
     else
+        if not getClass( name, true ) then
+            throw("Cannot mixin target '"..name.."' to class '"..current:type().."'. Failed to locate target class.")
+        end
+
         currentReg.mixin[ name ] = true
     end
 

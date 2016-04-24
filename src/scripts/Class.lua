@@ -531,11 +531,11 @@ function classLib.getClasses()
     return classes
 end
 
-function classLib.isClass( target ) return type( target ) == "table" and target.__type and classes[ target.__type ] and classes[ target.__type ].__class end
+function classLib.isClass( target ) return type( target ) == "table" and target.__type and classes[ target.__type ] end
 
-function classLib.isInstance( target ) return classLib.isClass and target.__instance end
+function classLib.isInstance( target ) return classLib.isClass( target ) and target.__instance end
 
-function classLib.typeOf( target, classType, isInstance ) return ( ( isInstance and classLib.isInstance( target ) ) or ( not isInstance and classLib.isClass( target ) ) ) and target.__type == classType end
+function classLib.typeOf( target, classType, isInstance ) return ( ( isInstance and classLib.isInstance( target ) ) or ( not isInstance and classLib.isClass( target ) and not classLib.isInstance( target ) ) ) and target.__type == classType end
 
 function classLib.setClassLoader( fn )
     if type( fn ) ~= "function" then throw( "Failed to set MISSING_CLASS_LOADER. Value '"..tostring( fn ).." ("..type( fn )..")' is invalid." ) end

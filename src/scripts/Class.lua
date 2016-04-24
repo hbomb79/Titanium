@@ -371,7 +371,7 @@ function class( name )
         end
     end
 
-    local registryEntry = { type = name; raw = {}; mixin = {}; alias = {}; ownedKeys = {}; super = false; compiled = false; meta = { blacklist = { __index = true, __newindex = true }; whitelist = {}; mode = false } }
+    local registryEntry = { type = name; raw = { __type = name }; mixin = {}; alias = {}; ownedKeys = {}; super = false; compiled = false; meta = { blacklist = { __index = true, __newindex = true }; whitelist = {}; mode = false } }
     classReg[ name ] = registryEntry
 
     local classMt = { __index = registryEntry.raw, __tostring = function() return ( registryEntry.compiled and "Compiled " or "" ) .. "Class '"..name.."'" end, __call = function( self, ... ) return self:spawn( ... ) end}

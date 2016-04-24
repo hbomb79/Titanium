@@ -98,7 +98,7 @@ classLib.setClassLoader(function( name )
 	local fName = name..".ti"
 
 	if not files[ fName ] then
-		return error("Failed to find file '"..fName..", to load missing class '"..name.."'.")
+		return error("Failed to find file '"..fName..", to load missing class '"..name.."'.", 3)
 	else
 		loadFile( fName, true )
 	end

@@ -7,7 +7,7 @@
 classLib = {}
 local classes, classReg, current, currentReg = {}, {}, false, false
 
-local reserved = { super = true; }
+local reserved = { super = true; __type = true; __instance = true; }
 
 local getters = setmetatable( {}, { __index = function( self, name )
     self[ name ] = "get" .. name:sub( 1, 1 ):upper() .. name:sub( 2 )

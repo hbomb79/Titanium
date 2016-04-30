@@ -348,6 +348,70 @@ local function spawn( target, ... )
         instanceMt[ method ] = fn
     end
 
+    function instanceRaw:resolve( ... )
+        local current = instanceRaw.__current
+        local args, config, raw = { ... }, classReg[ current ].meta.constructor, instanceRaw
+        local configRequired, configOrdered, configTypes, configPrune = config.requiredArguments, config.orderedArguments, config.argumentTypes or {}, config.pruneMode
+
+        local argumentsRequired = {}
+        if configRequired then
+            local target = type( configRequired ) == "table" and configRequired or configOrdered
+
+            for i = 1, #target do argumentsRequired[ target[ i ] ] = true end
+        end
+
+        local orderedMatrix = {}
+        for i = 1, #configOrdered do
+            orderedMatrix[ configOrdered[ i ] ] = i
+        end
+
+        local usedIndexes = {}
+        local function handleArgument( position, name, value )
+            if configTypes[ name ] and type( value ) ~= configTypes[ name ] then
+                return throw("Failed to resolve "..tostring( instance ).." constructor arguments. Invalid type for argument '"..name.."'. Type "..configTypes[ name ].." expected, "..type( value ).." was received.")
+            end
+
+            if position then usedIndexes[ position ] = true end
+            argumentsRequired[ name ] = nil
+            raw[ name ] = value
+        end
+
+        for iter, value in pairs( args ) do
+            if configOrdered[ iter ] then
+                handleArgument( iter, configOrdered[ iter ], value )
+            elseif type( value ) == "table" then
+                for key, v in pairs( value ) do
+                    if orderedMatrix[ key ] or not configPrune then -- If we are not pruning parse the table anyway, we haven't been told to preserve unused arguments.
+                        handleArgument( orderedMatrix[ key ], key, v )
+                    end
+                end
+            elseif not configPrune then
+                return throw("Failed to resolve "..tostring( instance ).." constructor arguments. Invalid argument found at ordered position "..iter..".")
+            end
+        end
+
+        if next( argumentsRequired ) then
+            return throw("Failed to resolve "..tostring( instance ).." constructor arguments. The following required arguments were not provided:\n\n"..(function()
+                local str = ""
+                for name, _ in pairs( argumentsRequired ) do
+                    str = str .. "- "..name.."\n"
+                end
+
+                return str
+            end)())
+        end
+
+        if configPrune then
+            for i = #args, 1, -1 do
+                if usedIndexes[ i ] then
+                    table.remove( args, i )
+                end
+            end
+
+            return unpack( args )
+        end
+    end
+
     setmetatable( instance, instanceMt )
 
     if type( instanceRaw.__init__ ) == "function" then instanceRaw.__init__( instance, ... ) end
@@ -531,6 +595,16 @@ function whitelist( str )
     apply( str, mt.whitelist )
 
     return propertyCatch
+end
+
+function configureConstructor( config )
+    if not isBuilding() then
+        throw("Cannot configure constructor of building class. No class is being built.")
+    elseif type( config ) ~= "table" then
+        throw("Cannot configure constructor of building class. Invalid constructor configuration")
+    end
+
+    currentReg.meta.constructor = config
 end
 
 -- Class Library

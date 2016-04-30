@@ -85,7 +85,9 @@ local function compileSupers( base, targets )
     local baseAlias = classReg[ base:type() ].alias
     local function compileSuper( target, id )
         local factories = {}
-        local targetReg = classReg[ target:type() ]
+        local targetType = target:type()
+        local targetReg = classReg[ targetType ]
+
 
         for key, value in pairs( targetReg.raw ) do
             if not reserved[ key ] then
@@ -93,6 +95,8 @@ local function compileSupers( base, targets )
                 if type( value ) == "function" then
                     factories[ key ] = function( instance, raw, ... )
                         local old = instance:setSuper( id + 1 )
+                        instance.raw.__current = targetType
+
                         local v = { value( instance, ... ) }
                         instance.raw.super = old
 
@@ -231,6 +235,7 @@ local function spawn( target, ... )
     instanceRaw.__ID = string.sub( tostring( instanceRaw ), 8 )
     instanceRaw.__type = instanceType
     instanceRaw.__instance = true
+    instanceRaw.__current = instanceType
     local initialised
 
     instance.raw = instanceRaw
@@ -270,10 +275,11 @@ local function spawn( target, ... )
         local k = alias[ k ] or k
         local getter = getters[ k ]
 
-        if type(instanceRaw[ getter ]) == "function" and not getting[ k ] and initialised then
+        if initialised and type( instanceRaw[ getter ] ) == "function" and not getting[ k ] then
             return runProxyFunction( self, k, getter, getting )
         else
             if instanceWrappers[ k ] then
+                instanceRaw.__current = instanceType
                 return instanceWrappers[ k ]
             else
                 return instanceRaw[ k ]

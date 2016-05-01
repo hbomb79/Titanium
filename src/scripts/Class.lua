@@ -82,12 +82,11 @@ end
 
 local function compileSupers( base, targets )
     local inheritedKeys, inheritedAlias, superMatrix = {}, {}, {}
-    local baseAlias = classReg[ base:type() ].alias
+    local aliasPart = {}
     local function compileSuper( target, id )
         local factories = {}
         local targetType = target:type()
         local targetReg = classReg[ targetType ]
-
 
         for key, value in pairs( targetReg.raw ) do
             if not reserved[ key ] then
@@ -108,7 +107,9 @@ local function compileSupers( base, targets )
                 inheritedKeys[ key ] = toInsert
             end
         end
-        for alias, redirect in pairs( targetReg.alias ) do baseAlias[ alias ] = redirect end
+        for alias, redirect in pairs( targetReg.alias ) do
+            aliasPart[ alias ] = redirect
+        end
 
         -- Handle inheritance
         for key, value in pairs( inheritedKeys ) do
@@ -121,6 +122,13 @@ local function compileSupers( base, targets )
     end
 
     for id = #targets, 1, -1 do compileSuper( targets[ id ], id ) end
+
+    local baseAlias = classReg[ base:type() ].alias
+    for alias, redirect in pairs( aliasPart ) do
+        if baseAlias[ alias ] == nil then
+            baseAlias[ alias ] = redirect
+        end
+    end
 
     return inheritedKeys, function( instance )
         local matrix, matrixReady = {}

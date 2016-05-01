@@ -187,6 +187,50 @@ local function compileSupers( base, targets )
     end
 end
 
+local function compileConfiguration( targets )
+    -- Generate a matrix, containing a configuration table for each step of the classes instantiation.
+    local matrix = {}
+    local function convertToPair( tbl )
+        if type( tbl ) ~= "table" then return false end
+
+        local newTbl = {}
+        for i = 1, #tbl do
+            newTbl[ tbl[ i ] ] = true
+        end
+
+        return newTbl
+    end
+
+    local function mergeSection( a, b )
+        local merged = {}
+        if type( a ) == "table" and type( b ) == "table" then
+            merged = a
+
+            for key in pairs( b ) do merged[ key ] = true end
+        else
+            printError("Invalid. A: "..type( a )..", B: "..type( b ))
+        end
+
+        return merged
+    end
+
+    local function processTarget( target, rollover )
+        -- Merge this classes configuration with the current, without overwriting.
+        local part = mergeSection( convertToPair( classReg[ target.__type ].meta.constructor.useProxy ), rollover )
+
+        matrix[ target.__type ] = part
+
+        return part
+    end
+
+    local base = processTarget( current, {} )
+    for i = 1, #targets do
+        base = processTarget( targets[ i ], base )
+    end
+
+    return matrix
+end
+
 local function compileCurrent()
     if not isBuilding() then
         throw("Cannot compile currently building class. No class is being built")
@@ -219,6 +263,9 @@ local function compileCurrent()
             newC = classReg[ c:type() ].super
             last = newC and newC.target or false
         end
+
+        --TODO: configuration testing and integration.
+        --compileConfiguration( supers )
 
         local keys
         keys, currentReg.super.matrix = compileSupers( current, supers )

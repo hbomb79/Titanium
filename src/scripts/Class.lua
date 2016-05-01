@@ -191,7 +191,7 @@ local function compileConfiguration( targets )
     -- Generate a matrix, containing a configuration table for each step of the classes instantiation.
     local matrix = {}
     local function convertToPair( tbl )
-        if type( tbl ) ~= "table" then return false end
+        if type( tbl ) ~= "table" then return tbl end
 
         local newTbl = {}
         for i = 1, #tbl do

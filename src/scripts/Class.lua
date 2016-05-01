@@ -332,7 +332,7 @@ local function spawn( target, ... )
         local k = alias[ k ] or k
         local getter = getters[ k ]
 
-        if initialised and type( instanceRaw[ getter ] ) == "function" and not getting[ k ] then
+        if type( instanceRaw[ getter ] ) == "function" and not getting[ k ] then
             return runProxyFunction( self, k, getter, getting )
         else
             if instanceWrappers[ k ] then
@@ -352,7 +352,7 @@ local function spawn( target, ... )
         end
 
         local setter = setters[ k ]
-        if instanceWrappers[ setter ] and not setting[ k ] and initialised then
+        if instanceWrappers[ setter ] and not setting[ k ] then
             runProxyFunction( self, k, setter, setting, v )
         else
             if type( v ) == "function" then

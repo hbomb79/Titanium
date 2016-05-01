@@ -203,19 +203,22 @@ local function compileConfiguration( targets )
 
     local function mergeSection( a, b )
         local merged = {}
-        if type( a ) == "table" and type( b ) == "table" then
+        if type( a ) == "table" and type( b ) == "table" then -- both are tables, merge them together
             merged = a
 
             for key in pairs( b ) do merged[ key ] = true end
+        elseif not a and b then -- a not set or false and b is a value
+            merged = b
+        elseif a and type( a ) == "boolean" then -- a is boolean true
+            merged = a
         else
-            printError("Invalid. A: "..type( a )..", B: "..type( b ))
+            printError("Invalid. A: "..tostring( a ).." ("..type( a ).."), B: "..tostring( b ).." ("..type( b ).."). Please report")
         end
 
         return merged
     end
 
     local function processTarget( target, rollover )
-        -- Merge this classes configuration with the current, without overwriting.
         local part = mergeSection( convertToPair( classReg[ target.__type ].meta.constructor.useProxy ), rollover )
 
         matrix[ target.__type ] = part

@@ -136,6 +136,8 @@ local function compileSupers( base, targets )
             local superTarget, matrixTbl, matrixMt = superMatrix[ id ], {}, {}
             local factories, reg = superTarget[ 1 ], superTarget[ 2 ]
 
+            matrixTbl.__type = reg.type
+
             local raw, owned, wrapCache, factory, upSuper = reg.raw, reg.ownedKeys, {}
 
             function matrixMt:__tostring()

@@ -414,7 +414,7 @@ local function spawn( target, ... )
     function instanceRaw:resolve( ... )
         local current = instanceRaw.__current
         local args, config, raw = { ... }, classReg[ current ].meta.constructor, instanceRaw
-        local configRequired, configOrdered, configTypes, configPrune, configProxy = config.requiredArguments, config.orderedArguments, config.argumentTypes or {}, config.pruneMode, targetReg.meta.proxyMatrix
+        local configRequired, configOrdered, configTypes, configPrune, configProxy = config.requiredArguments, config.orderedArguments, config.argumentTypes or {}, config.pruneMode, targetReg.meta.proxyMatrix[ current ]
 
         local argumentsRequired = {}
         if configRequired then
@@ -428,6 +428,8 @@ local function spawn( target, ... )
             orderedMatrix[ configOrdered[ i ] ] = i
         end
 
+        local proxyAll = type( configProxy ) ~= "table" and configProxy
+
         local usedIndexes = {}
         local function handleArgument( position, name, value )
             if configTypes[ name ] and type( value ) ~= configTypes[ name ] then
@@ -436,7 +438,12 @@ local function spawn( target, ... )
 
             if position then usedIndexes[ position ] = true end
             argumentsRequired[ name ] = nil
-            raw[ name ] = value
+
+            if proxyAll or configProxy[ name ] then
+                self[ name ] = value
+            else
+                raw[ name ] = value
+            end
         end
 
         for iter, value in pairs( args ) do

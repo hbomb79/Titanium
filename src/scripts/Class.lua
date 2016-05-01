@@ -408,7 +408,7 @@ local function spawn( target, ... )
     function instanceRaw:resolve( ... )
         local current = instanceRaw.__current
         local args, config, raw = { ... }, classReg[ current ].meta.constructor, instanceRaw
-        local configRequired, configOrdered, configTypes, configPrune = config.requiredArguments, config.orderedArguments, config.argumentTypes or {}, config.pruneMode
+        local configRequired, configOrdered, configTypes, configPrune, configProxy = config.requiredArguments, config.orderedArguments, config.argumentTypes or {}, config.pruneMode, config.useProxy or {}
 
         local argumentsRequired = {}
         if configRequired then

@@ -1,0 +1,115 @@
+--[[
+    The Canvas object is used by all components. It facilitates the drawing of pixels which are stored in its buffer.
+
+    The Canvas object is abstract. If you need a canvas for your object 'NodeCanvas' and 'TermCanvas' are provided with Titanium and may suite your needs.
+--]]
+
+local function range( xBoundary, xDesired, width, canvasWidth )
+    local x1 = xBoundary > xDesired and 1 - xDesired or 1
+    local x2 = xDesired + width > canvasWidth and canvasWidth - xDesired or width
+
+    return x1, x2
+end
+
+abstract class Canvas {
+    buffer = {};
+    last = {};
+
+    width = 51;
+    height = 19;
+
+    backgroundColour = 32768;
+    colour = 1;
+}
+
+--[[
+    @constructor
+    @desc Constructs the canvas instance and binds it with the owner supplied.
+    @param <ClassInstance - owner>
+]]
+function Canvas:__init__( owner )
+    self.raw.owner = Titanium.isInstance( owner ) and owner or error("Invalid argument for Canvas. Expected instance owner, got '"..tostring( owner ).."'")
+    self.raw.width = owner.raw.width
+    self.raw.height = owner.raw.height
+
+    self.raw.backgroundColour = owner.raw.backgroundColour
+    self.raw.colour = owner.raw.colour
+
+    self:clear()
+end
+
+--[[
+    @instance
+    @desc Replaces the canvas with a blank one
+    @param [number - colour]
+]]
+function Canvas:clear( colour )
+    local pixel, buffer = { " ", self.colour, colour or self.backgroundColour }, {}
+
+    for index = 1, self.width * self.height do
+        buffer[ index ] = pixel
+    end
+    self.buffer = buffer
+end
+
+--[[
+    @instance
+    @desc Updates the colour of the canvas and then clears the canvas
+    @param <number - colour>
+]]
+function Canvas:setColour( colour )
+    self.colour = colour
+    self:clear()
+end
+
+--[[
+    @instance
+    @desc Updates the background colour of the canvas and then clears the canvas
+    @param <number - backgroundColour>
+]]
+function Canvas:setBackgroundColour( backgroundColour )
+    self.backgroundColour = backgroundColour
+    self:clear()
+end
+
+--[[
+    @instance
+    @desc Draws the canvas to the target 'canvas' using the X and Y offsets
+    @param <Canvas - canvas>, [number - offsetX], [number - offsetY]
+]]
+function Canvas:drawTo( canvas, offsetX, offsetY )
+    local owner = self.owner
+    canvas = canvas or owner.canvas
+
+    offsetX = offsetX - 1 or 0
+    offsetY = offsetY - 1 or 0
+
+    local sRaw, tRaw = self.raw, canvas.raw
+    local width, height, buffer = sRaw.width, sRaw.height, sRaw.buffer
+    local tWidth, tHeight, tBuffer = tRaw.width, tRaw.height, tRaw.buffer
+
+    local xStart, xEnd = range( 1, offsetX, width, tWidth )
+
+    local cache, tCache, char, tc, bg, pixel, cPixel, tPos = 0, offsetX + ( offsetY * tWidth )
+    for y = 1, height do
+        local cY = y + offsetY
+        if cY >= 1 and cY <= tHeight then
+            for x = xStart, xEnd do
+                pixel = buffer[ cache + x ]
+                tc, bg, tPos = pixel[ 2 ], pixel[ 3 ], tCache + x
+
+                if not tc or not bg then
+                    cPixel = tBuffer[ tPos ]
+                    tBuffer[ tPos ] = { pixel[ 1 ], tc or cPixel[ 2 ], bg or cPixel[ 3 ] }
+                else
+                    tBuffer[ tPos ] = pixel
+                end
+            end
+        elseif cY > tHeight then
+            break
+        end
+
+        cache = cache + width
+        tCache = tCache + tWidth
+    end
+end

@@ -1,0 +1,56 @@
+--[[
+    A Component is an object that can be respresented visually.
+--]]
+
+abstract class Component {
+    width = 1;
+    height = 1;
+    X = 1;
+    Y = 1;
+}
+
+function Component:setX( X )
+    self.X = X
+    self.changed = true
+end
+
+function Component:setY( Y )
+    self.Y = Y
+    self.changed = true
+end
+
+function Component:setWidth( width )
+    self.width = width
+    self.canvas.width = width
+
+    self.changed = true
+end
+
+function Component:setHeight( height )
+    self.height = height
+    self.canvas.height = height
+
+    self.changed = true
+end
+
+function Component:setColour( colour )
+    self.colour = colour
+    self.canvas.colour = colour
+
+    self.changed = true
+end
+
+function Component:setBackgroundColour( backgroundColour )
+    self.backgroundColour = backgroundColour
+    self.canvas.backgroundColour = backgroundColour
+
+    self.changed = true
+end
+
+configureConstructor {
+    orderedArguments = { "X", "Y", "width", "height" },
+    argumentTypes = { X = "number", Y = "number", width = "number", height = "number", colour = "number", backgroundColour = "number" }
+} alias {
+    color = "colour",
+    backgroundColor = "backgroundColour"
+}

@@ -1,0 +1,130 @@
+--[[
+    The XML class is used to handle the lexing and parsing of XML source into a parse tree.
+]]
+
+class XML {
+    tokens = false;
+    tree = false;
+
+    position = 0;
+}
+
+--[[
+    @constructor
+    @desc Creates a 'Lexer' instance with the source and stores the tokens provided. Invokes 'parse' once lexical analysis complete.
+]]
+function XML:__init__( source )
+    local lex = Lexer( source )
+    self.tokens = lex.tokens
+
+    self:parse()
+end
+
+--[[
+    @instance
+    @desc Iterates through every token and constructs a tree of XML layers
+]]
+function XML:parse()
+    local stack, top, token = {{}}, false, self:stepForward()
+    local isTagOpen, settingAttribute
+
+    while token do
+        if settingAttribute then
+            if token.type == "XML_ATTRIBUTE_VALUE" or token.type == "XML_STRING_ATTRIBUTE_VALUE" then
+                top.arguments[ settingAttribute ] = token.value
+                settingAttribute = false
+            else
+                self:throw( "Unexpected "..token.type..". Expected attribute value following XML_ASSIGNMENT token." )
+            end
+        else
+            if token.type == "XML_OPEN" then
+                if isTagOpen then
+                    self:throw "Unexpected XML_OPEN token. Expected XML attributes or end of tag."
+                end
+                isTagOpen = true
+
+                top = { type = token.value, arguments = {} }
+                table.insert( stack, top )
+            elseif token.type == "XML_END" then
+                local toClose = table.remove( stack )
+                top = stack[ #stack ]
+
+                if not top then
+                    self:throw("Nothing to close with XML_END of type '"..token.value.."'")
+                elseif toClose.type ~= token.value then
+                    self:throw("Tried to close "..toClose.type.." with XML_END of type '"..token.value.."'")
+                end
+
+                if not top.children then top.children = {} end
+                table.insert( top.children, toClose )
+            elseif token.type == "XML_END_CLOSE" then
+                top = stack[ #stack - 1 ]
+
+                if not top then
+                    self:throw("Unexpected XML_END_CLOSE tag (/>)")
+                end
+
+                if not top.children then top.children = {} end
+                table.insert( top.children, table.remove( stack ) )
+            elseif token.type == "XML_CLOSE" then
+                isTagOpen = false
+            elseif token.type == "XML_ATTRIBUTE" then
+                local next = self:stepForward()
+
+                if next.type ~= "XML_ASSIGNMENT" then
+                    self:throw("Unexpected "..next.type.." token. Expected XML_ASSIGNMENT (=) to complete attribute ("..token.value..") definition", next)
+                elseif next.value ~= "=" then
+                    self:throw("Unexpected XML_ASSIGNMENT. Invalid symbol ("..next.value..")", next)
+                end
+
+                settingAttribute = token.value
+            elseif token.type == "XML_CONTENT" then
+                if not top.type then
+                    self:throw("Unexpected XML_CONTENT. Invalid content: "..token.value)
+                end
+
+                top.content = token.value
+            else
+                self:throw("Unexpected "..token.type)
+            end
+        end
+
+        if token.type == "XML_END" or token.type == "XML_END_CLOSE" then
+            isTagOpen = false
+        end
+
+        if top.content and top.children then
+            self:throw "XML layers cannot contain child nodes and XML_CONTENT at the same time"
+        end
+
+        token = self:stepForward()
+    end
+    self.tree = stack[ 1 ].children
+end
+
+--[[
+    @instance
+    @desc Returns the token at 'position'
+]]
+function XML:getCurrentToken()
+    return self.tokens[ self.position ]
+end
+
+--[[
+    @instance
+    @desc Advances 'position' by one and returns the token at the new position
+]]
+function XML:stepForward( amount )
+    self.position = self.position + ( amount or 1 )
+    return self:getCurrentToken()
+end
+
+--[[
+    @instance
+    @desc Throws a error prefixed with information about the token being parsed at the time of error.
+]]
+function XML:throw( e, token )
+    local token = token or self:getCurrentToken()
+    self.exception = "XML Parse Error. Line "..token.line..", char "..token.char .. ": "..e
+    error( self.exception )
+end

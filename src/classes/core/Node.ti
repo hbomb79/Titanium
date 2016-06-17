@@ -1,0 +1,122 @@
+--[[
+    A Node is an object which makes up the applications graphical user interface (GUI).
+
+    Objects such as labels, buttons and text inputs are nodes.
+--]]
+
+abstract class Node extends Component {
+    static = {
+        eventMatrix = {
+            mouse_click = "onMouseClick",
+            mouse_drag = "onMouseDrag",
+            mouse_up = "onMouseUp",
+            mouse_scroll = "onMouseScroll",
+
+            key = "onKeyDown",
+            key_up = "onKeyUp"
+        },
+        anyMatrix = {
+            MOUSE = "onMouse",
+            KEY = "onKey",
+            CHAR = "onChar"
+        }
+    };
+
+    allowMouse = false;
+    allowKey = false;
+    allowChar = false;
+    useAnyCallbacks = false;
+
+    enabled = true;
+    visible = true;
+
+    changed = true;
+    parent = false;
+
+    __node = true;
+}
+
+--[[
+    @constructor
+    @desc Creates a NodeCanvas (bound to self) and stores it inside of `self.canvas`. This canvas is drawn to the parents canvas at draw time.
+]]
+function Node:__init__()
+    self.raw.canvas = NodeCanvas( self )
+end
+
+--[[
+    @instance
+    @desc Sets the enabled property of the node to 'enabled'. Sets node's 'changed' to true.
+    @param <boolean - enabled>
+]]
+function Node:setEnabled( enabled )
+    self.enabled = enabled
+    self.changed = true
+end
+
+--[[
+    @instance
+    @desc Sets the node to visible/invisible depending on 'visible' paramater
+    @param <boolean - visible>
+]]
+function Node:setVisible( visible )
+    self.visible = visible
+    self.changed = true
+end
+
+--[[
+    @instance
+    @desc Sets the changed state of this node to 'changed'. If 'changed' then the parents of this node will also have changed set to true.
+    @param <boolean - changed>
+]]
+function Node:setChanged( changed )
+    self.changed = changed
+
+    if changed then
+        local parent = self.parent
+        if parent and not parent.changed then
+            parent.changed = true
+        end
+    end
+end
+
+--[[
+    @instance
+    @desc Handles events by triggering methods on the node depending on the event object passed
+    @param <Event Instance* - eventObj>
+
+    *Note: The event instance passed can be of variable type, ideally is extends 'Event' so that required methods are implemented on the eventObj.
+]]
+function Node:handle( eventObj )
+    local main, sub, within = eventObj.main, eventObj.sub
+    local handled = eventObj.handled
+
+    if main == "MOUSE" then
+        if self.allowMouse then
+            within = eventObj:withinParent( self )
+        else return end
+    elseif ( main == "KEY" and not self.allowKey ) or ( main == "CHAR" and not self.allowChar ) then
+        return
+    end
+
+    local fn = Node.eventMatrix[ eventObj.name ] or "onEvent"
+    if self:can( fn ) then
+        self[ fn ]( self, eventObj, handled, within )
+    end
+
+    if self.useAnyCallbacks then
+        local anyFn = Node.anyMatrix[ main ]
+        if self:can( anyFn ) then
+            self[ anyFn ]( self, eventObj, handled, within )
+        end
+    end
+end
+
+function Node:apply( template, weak )
+    if not Titanium.typeOf( template, "Template", true ) then
+        return error "Cannot apply template, invalid template passed"
+    end
+
+    template:applyTo( self, weak )
+    return self
+end

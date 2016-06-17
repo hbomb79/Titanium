@@ -1,0 +1,26 @@
+--[[
+    The NodeCanvas is an object that allows classes to draw to their canvas using functions that are useful when drawing 'nodes', hence the name.
+
+    The NodeCanvas is most suited to these use cases:
+    - You would like to utilise helpful functions that making drawing nodes easier.
+    - Your object is not high level. High level objects use to TermCanvas which draws to the terminal, the NodeCanvas draws to a parent canvas
+--]]
+
+local string_sub = string.sub
+
+class NodeCanvas extends Canvas
+
+function NodeCanvas:drawPoint( x, y, char, tc, bg )
+    if #char > 1 then return error "drawPoint can only draw one character" end
+
+    self.buffer[ ( self.width * ( y - 1 ) ) + x ] = { char, tc or self.colour, bg or self.backgroundColour }
+end
+
+function NodeCanvas:drawTextLine( x, y, text, tc, bg )
+    local tc, bg = tc or self.colour, bg or self.backgroundColour
+
+    local buffer, start = self.buffer, ( self.width * ( y - 1 ) ) + x
+    for i = 1, #text do
+        buffer[ -1 + start + i ] = { string_sub( text, i, i ), tc, bg }
+    end
+end

@@ -1,19 +1,18 @@
 --[[
-	Titanium Builder - Advanced
+    Titanium Builder - Advanced
 
-	This builder is not compatible with ComputerCraft.
+    This builder is not compatible with ComputerCraft.
 ]]
 
 -- Settings
-local SOURCE_FOLDER, OUTPUT_PATH, TAG_VERSION, MINIFY_SOURCE, SILENT
+local SOURCE_FOLDER, OUTPUT_PATH, MINIFY_SOURCE, QUIET
 local flags = {
-	{"source", "s", function( target ) SOURCE_FOLDER = target; print("Source directory set to: "..target) end, 1},
-	{"output", "o", function( output ) OUTPUT_PATH = output; print("Output path set to: "..output) end, 1},
-	{"tag", "t", function( tag ) TAG_VERSION = tag; print("Tag set to: "..tag) end, 1},
-	{"minify", "m", function() MINIFY_SOURCE = true; print("Minification enabled") end, 0},
-	{"silent", "s", function() SILENT = true end, 0},
-	{"help", "h", function()
-		print([[
+    {"source", "s", function( target ) SOURCE_FOLDER = target; print("Source directory set to: "..target) end, 1},
+    {"output", "o", function( output ) OUTPUT_PATH = output; print("Output path set to: "..output) end, 1},
+    {"minify", "m", function() MINIFY_SOURCE = true; print("Minification enabled") end, 0},
+    {"quiet", "q", function() QUIET = true end, 0},
+    {"help", "h", function()
+        print([[
 Titanium Constructor - Help
 
 The constructor allows Titaniums source code to be compiled into one executable file.
@@ -25,13 +24,13 @@ Flags can be used to alter the building of the source:
 --output (-o) <path>: Specifies the location that the build file should be saved. Any current file will be overwritten.
 --tag (-t) <tag>: The argument following will be added into the build comment as the build version. Eg: 0.1-alpha.
 --minify (-m): All source files inside that are NOT .cfg files will be minified.
---silent (-s): No output will be printed unless an error occurs.
+--quiet (-q): The amount of information printed to the screen is reduced dramatically.
 --help (-h): Shows this help screen.
-		]])
+        ]])
 
-		print("Help menu opened")
-		os.exit()
-	end, 0}
+        print("Help menu opened")
+        os.exit()
+    end, 0}
 }
 local ignore = {".", "..", "loadFirst.cfg", ".DS_Store"}
 local oPrint = _G.print
@@ -43,69 +42,66 @@ dofile("bin/Minify.lua")
 
 -- Local functions
 local function print( ... )
-	if SILENT then return end
-	local args = { ... }
+    if QUIET then return end
+    local args = { ... }
 
-	oPrint( table.concat( args, " " ) )
+    oPrint( table.concat( args, " " ) )
 end
 
 local function isInTable( tbl, content )
-	for i = 1, #tbl do
-		if tbl[ i ] == content then return true end
-	end
+    for i = 1, #tbl do
+        if tbl[ i ] == content then return true end
+    end
 
-	return false
+    return false
 end
 
 local function scan( path, files )
-	local files = files or {}
+    local files = files or {}
 
-	local filePath
-	
-	print("Scaning directory '"..path.."'")
-	for file in lfs.dir( path ) do
-		if not isInTable( ignore, file ) and not string.find( file, ".*%.swp" ) then
-			filePath = path .. "/" .. file
+    local filePath
 
-			local attrs = lfs.attributes( filePath )
+    print("Scaning directory '"..path.."'")
+    for file in lfs.dir( path ) do
+        if not isInTable( ignore, file ) and not string.find( file, ".*%.swp" ) then
+            filePath = path .. "/" .. file
 
-			if attrs.mode == "directory" then
-				files = scan( filePath, files )	
-			else
-				table.insert( files, filePath )
-				print("Found file '"..filePath.."'")
-			end
-		end
-	end
-	
-	return files
+            local attrs = lfs.attributes( filePath )
+
+            if attrs.mode == "directory" then
+                files = scan( filePath, files )
+            else
+                table.insert( files, filePath )
+                print("Found file '"..filePath.."'")
+            end
+        end
+    end
+
+    return files
 end
 
 local function getFileName( path )
-	local _, stop = string.find( path, ".*/" )
+    local _, stop = string.find( path, ".*/" )
 
-	return string.sub( path, stop + 1 )
-end
-
-local function searchAndReplace( text, keyword )
-    local start, stop, value = string.find( text, keyword.." (.[^%s]+)")
-
-    if start and stop and value then
-        if string.find( value, "\"") or string.find( value, "\'" ) then return text end
-        text = text:gsub( keyword.." "..value, keyword.." \""..value.."\"", 1 )
-    end
-
-    return text
+    return string.sub( path, stop + 1 )
 end
 
 local preprocessTargets = {"class", "extends", "alias", "mixin"}
 local function preprocess( text )
+    local keyword
     for i = 1, #preprocessTargets do
-        text = searchAndReplace( text, preprocessTargets[ i ] )
+        keyword = preprocessTargets[ i ]
+
+        for value in text:gmatch( keyword .. " (.[^%s]+)" ) do
+            if not ( value:find("\"") or value:find("\'") ) then
+                text = text:gsub( keyword .. " " .. value, keyword.." \""..value.."\"" )
+            end
+        end
     end
 
-    local name = text:match( "abstract class (\".[^%s]+\")" )
-    if name then text = text:gsub( "abstract class "..name, "class "..name.." abstract()", 1 ) end
+    for name in text:gmatch( "abstract class (\".[^%s]+\")" ) do
+        text = text:gsub( "abstract class "..name, "class "..name.." abstract()" )
+    end
 
     return text
 end
@@ -114,37 +110,37 @@ end
 -- Search flags
 local args, arg, i = { ... }, false, 1
 while i <= #args do
-	arg = args[ i ]	
-	local foundFlag
+    arg = args[ i ]
+    local foundFlag
 
-	local flag
-	for i = 1, #flags do
-		flag = flags[ i ]
+    local flag
+    for i = 1, #flags do
+        flag = flags[ i ]
 
-		if ( flag[ 1 ] and "--" .. flag[ 1 ] == arg ) or ( flag[ 2 ] and "-" .. flag[ 2 ] == arg ) then
-			foundFlag = flag
-			break
-		end
-	end
+        if ( flag[ 1 ] and "--" .. flag[ 1 ] == arg ) or ( flag[ 2 ] and "-" .. flag[ 2 ] == arg ) then
+            foundFlag = flag
+            break
+        end
+    end
 
-	if foundFlag then
-		-- Process its arguments
-		if foundFlag[ 4 ] and not args[ i + foundFlag[ 4 ] ] then
-			return error("Flag '"..arg.."' requires "..foundFlag[ 4 ].." arguments.")
-		end
+    if foundFlag then
+        -- Process its arguments
+        if foundFlag[ 4 ] and not args[ i + foundFlag[ 4 ] ] then
+            return error("Flag '"..arg.."' requires "..foundFlag[ 4 ].." arguments.")
+        end
 
-		local arguments = {}
-		for k = i + 1, i + foundFlag[4] do
-			table.insert( arguments, args[ k ] )
-			i = i + 1
-		end
+        local arguments = {}
+        for k = i + 1, i + foundFlag[4] do
+            table.insert( arguments, args[ k ] )
+            i = i + 1
+        end
 
-		foundFlag[3]( unpack( arguments ) )
-	else
-		return error( "Unknown flag specified: "..tostring( arg ) )
-	end
+        foundFlag[3]( unpack( arguments ) )
+    else
+        return error( "Unknown flag specified: "..tostring( arg ) )
+    end
 
-	i = i + 1
+    i = i + 1
 end
 
 if not SOURCE_FOLDER then error( "Source directory not set, use --source (-s) <source_directory>. Use --help to show help." ) end
@@ -157,39 +153,39 @@ local rawFiles, rawScriptFiles = scan( SOURCE_FOLDER ), scan( SOURCE_FOLDER .. "
 -- Compile files
 local scriptFiles = {}
 for i = 1, #rawScriptFiles do
-	scriptFiles[ getFileName( rawScriptFiles[ i ] ) ] = true
+    scriptFiles[ getFileName( rawScriptFiles[ i ] ) ] = true
 end
 
 local exportFiles = {}
 for i = 1, #rawFiles do
-	local h = io.open( rawFiles[ i ], "r" )
-	local content = h:read("*all")
-	h:close()
+    local h = io.open( rawFiles[ i ], "r" )
+    local content = h:read("*all")
+    h:close()
 
-	local name = getFileName( rawFiles[ i ] )
+    local name = getFileName( rawFiles[ i ] )
 
-	if not ( scriptFiles[ name ] ) then
-		content = preprocess( content )
-	end
+    if not ( scriptFiles[ name ] ) then
+        content = preprocess( content )
+    end
 
-	if MINIFY_SOURCE then
-		local ok, mContent = Minify( content )
-		
-		if not ok then return error( "Failed to minify content '"..rawFiles[i]..": "..tostring( content ) ) end
-		print("Minified file '"..name.."'")
+    if MINIFY_SOURCE then
+        local ok, mContent = Minify( content )
 
-		content = mContent
-	end
+        if not ok then return error( "Failed to minify content '"..rawFiles[i]..": "..tostring( content ) ) end
+        print("Minified file '"..name.."'")
 
-	exportFiles[ name ] = content
+        content = mContent
+    end
+
+    exportFiles[ name ] = content
 end
 
 local preLoad = {}
 local handle = io.open( SOURCE_FOLDER .. "/loadFirst.cfg", "r" )
 if handle then
-	for line in handle:lines() do
-		table.insert( preLoad, line )
-	end
+    for line in handle:lines() do
+        table.insert( preLoad, line )
+    end
 end
 
 -- Generate output
@@ -213,7 +209,7 @@ local function loadFile( name, verify )
 
         if verify then
             local className = name:gsub( "%..*", "" )
-            local class = classLib.getClass( className )
+            local class = Titanium.getClass( className )
 
             if class then
                 if not class:isCompiled() then class:compile() end
@@ -227,11 +223,26 @@ end
 -- Load our class file
 loadFile( "Class.lua" )
 
+Titanium.setClassLoader(function( name )
+    local fName = name..".ti"
+
+    if not files[ fName ] then
+        return error("Failed to find file '"..fName..", to load missing class '"..name.."'.", 3)
+    else
+        loadFile( fName, true )
+    end
+end)
+
 -- Load any files specified by our config file
 for i = 1, #preLoad do loadFile( preLoad[ i ] ) end
 
--- Load all other files
-for name, _ in pairs( files ) do loadFile( name, not scriptFiles[ name ] ) end
+-- Load all class files
+for name in pairs( files ) do if not scriptFiles[ name ] then
+    loadFile( name, true )
+end end
+
+-- Load all script files
+for name in pairs( scriptFiles ) do loadFile( name, false ) end
 ]]
 
 local h = io.open( OUTPUT_PATH, "w" )

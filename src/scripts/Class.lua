@@ -1,13 +1,19 @@
 --[[
-    Titanium class system
-    Handles creation, compilation and spawning of classes
+    Titanium Class System - Version 1.1
 
-    Licensed under MIT (Harry Felton)
+    Copyright (c) Harry Felton 2016
 ]]
-classLib = {}
-local classes, classReg, current, currentReg = {}, {}, false, false
 
-local reserved = { super = true; __type = true; __instance = true; setMetaMethod = true; resolve = true; __current = true }
+classes, classRegistry, currentClass, currentRegistry = {}, {}
+local reserved = {
+    static = true,
+    super = true,
+    __type = true,
+    isCompiled = true,
+    compile = true
+}
+
+local missingClassLoader
 
 local getters = setmetatable( {}, { __index = function( self, name )
     self[ name ] = "get" .. name:sub( 1, 1 ):upper() .. name:sub( 2 )
@@ -21,51 +27,64 @@ local setters = setmetatable( {}, { __index = function( self, name )
     return self[ name ]
 end })
 
-local function throw( message, level )
-    return error( "Titanium Class Exception: " .. ( message or "No error provided" ), type( level ) == "number" and level > 0 and level + 1 or 2 )
+--[[ Constants ]]--
+local ERROR_BUG = "\nPlease report this via GitHub @ hbomb79/Titanium"
+local ERROR_GLOBAL = "Failed to %s to %s\n"
+local ERROR_NOT_BUILDING = "No class is currently being built. Declare a class before invoking '%s'"
+
+--[[ Helper functions ]]--
+local function throw( ... )
+    return error( table.concat( { ... }, "\n" ) , 2 )
 end
 
-local function getClass( name, compiled )
-    local class = classes[ name ]
-
-    if not class then
-        if MISSING_CLASS_LOADER then
-            local oCurrent, oCurrentReg = current, currentReg
-            current, currentReg = false, false
-
-            MISSING_CLASS_LOADER( name )
-
-            current, currentReg = oCurrent, oCurrentReg
-            return ( not classes[ name ] and throw( "Failed to load class '"..name.."'. Class not found" ) ) or ( classes[ name ] and not classes[ name ]:isCompiled() and throw( "Failed to load class '"..name.."'. Class not compiled" ) ) or classes[ name ]
-        else
-            return throw( "Failed to load class '"..tostring( name ).."'. Class not found" )
-        end
-    elseif not class:isCompiled() then
-        return throw( "Failed to load class '"..name.."'. Class not compiled" )
-    end
-
-    return class
+local function verifyClassEntry( target )
+    return type( target ) == "string" and type( classes[ target ] ) == "table" and type( classRegistry[ target ] ) == "table"
 end
 
-local function isBuilding()
-    if current or currentReg then
-        return ( current and currentReg ) or throw("A class registry error has occured")
+local function verifyClassObject( target, autoCompile )
+    if not Titanium.isClass( target ) then
+        return false
     end
-    return false
+
+    if autoCompile and not target:isCompiled() then
+        target:compile()
+    end
+
+    return true
 end
 
-local function propertyCatch( tbl )
-    if type( tbl ) == "table" then
-        if not isBuilding() then
-            throw("Cannot implement trailing property. No class is being built")
+local function isBuilding( ... )
+    if type( currentRegistry ) == "table" or type( currentClass ) == "table" then
+        if not ( currentRegistry and currentClass ) then
+            throw("Failed to validate currently building class objects", "The 'currentClass' and 'currentRegistry' variables are not both set\n", "currentClass: "..tostring( currentClass ), "currentRegistry: "..tostring( currentRegistry ), ERROR_BUG)
+        end
+        return true
+    end
+
+    if #({ ... }) > 0 then
+        return throw( ... )
+    else
+        return false
+    end
+end
+
+local function getClass( target )
+    if verifyClassEntry( target ) then
+        return classes[ target ]
+    elseif missingClassLoader then
+        local oC, oCReg = currentClass, currentRegistry
+        currentClass, currentRegistry = nil, nil
+
+        missingClassLoader( target )
+        local c = classes[ target ]
+        if not verifyClassObject( c, true ) then
+            throw("Failed to load missing class '"..target.."'.\n", "The missing class loader failed to load class '"..target.."'.\n")
         end
 
-        for key, value in pairs( tbl ) do
-            current[ key ] = value
-        end
-    elseif type( tbl ) ~= "nil" then
-        throw("Unknown property trailing class declaration")
-    end
+        currentClass, currentRegistry = oC, oCReg
+
+        return c
+    else throw("Class '"..target.."' not found") end
 end
 
 local function deepCopy( source )
@@ -80,35 +99,79 @@ local function deepCopy( source )
     end
 end
 
-local function compileSupers( base, targets )
-    local inheritedKeys, inheritedAlias, superMatrix = {}, {}, {}
-    local aliasPart = {}
+local function propertyCatch( tbl )
+    if type( tbl ) == "table" then
+        if tbl.static then
+            if type( tbl.static ) ~= "table" then
+                throw("Invalid entity found in trailing property table", "Expected type 'table' for entity 'static'. Found: "..tostring( tbl.static ), "\nThe 'static' entity is for storing static variables, refactor your class declaration.")
+            end
+
+
+            local cStatic, cOwnedStatics = currentRegistry.static, currentRegistry.ownedStatics
+            for key, value in pairs( tbl.static ) do
+                if reserved[ key ] then
+                    throw(
+                        "Failed to set static key '"..key.."' on building class '"..currentRegistry.type.."'",
+                        "'"..key.."' is reserved by Titanium for internal processes."
+                    )
+                end
+
+                cStatic[ key ] = value
+                cOwnedStatics[ key ] = type( value ) == "nil" and nil or true
+            end
+
+            tbl.static = nil
+        end
+
+        local cKeys, cOwned = currentRegistry.keys, currentRegistry.ownedKeys
+        for key, value in pairs( tbl ) do
+            cKeys[ key ] = value
+            cOwned[ key ] = type( value ) == "nil" and nil or true
+        end
+    elseif type( tbl ) ~= "nil" then
+        throw("Invalid trailing entity caught\n", "An invalid object was caught trailing the class declaration for '"..currentRegistry.type.."'.\n", "Object: '"..tostring( tbl ).."' ("..type( tbl )..")".."\n", "Expected [tbl | nil]")
+    end
+end
+
+local function createFunctionWrapper( fn, superLevel )
+    return function( instance, ... )
+        local oldSuper = instance:setSuper( superLevel )
+
+        local v = { fn( ... ) }
+
+        instance.super = oldSuper
+
+        return unpack( v )
+    end
+end
+
+
+--[[ Local Functions ]]--
+local function compileSupers( targets )
+    local inheritedKeys, superMatrix = {}, {}, {}
     local function compileSuper( target, id )
         local factories = {}
-        local targetType = target:type()
-        local targetReg = classReg[ targetType ]
+        local targetType = target.__type
+        local targetReg = classRegistry[ targetType ]
 
-        for key, value in pairs( targetReg.raw ) do
+        for key, value in pairs( targetReg.keys ) do
             if not reserved[ key ] then
                 local toInsert = value
                 if type( value ) == "function" then
-                    factories[ key ] = function( instance, raw, ... )
-                        local old = instance:setSuper( id + 1 )
-                        instance.raw.__current = targetType
-
+                    factories[ key ] = function( instance, ... )
+                        --print("Super factory for "..key.."\nArgs: "..( function( args ) local s = ""; for i = 1, #args do s = s .. " - " .. tostring( args[ i ] ) .. "\n" end return s end )( { ... } ))
+                        local oldSuper = instance:setSuper( id + 1 )
                         local v = { value( instance, ... ) }
-                        instance.raw.super = old
 
+                        instance.super = oldSuper
                         return unpack( v )
                     end
+
                     toInsert = factories[ key ]
                 end
 
                 inheritedKeys[ key ] = toInsert
             end
-        end
-        for alias, redirect in pairs( targetReg.alias ) do
-            aliasPart[ alias ] = redirect
         end
 
         -- Handle inheritance
@@ -122,13 +185,6 @@ local function compileSupers( base, targets )
     end
 
     for id = #targets, 1, -1 do compileSuper( targets[ id ], id ) end
-
-    local baseAlias = classReg[ base:type() ].alias
-    for alias, redirect in pairs( aliasPart ) do
-        if baseAlias[ alias ] == nil then
-            baseAlias[ alias ] = redirect
-        end
-    end
 
     return inheritedKeys, function( instance )
         local matrix, matrixReady = {}
@@ -144,29 +200,35 @@ local function compileSupers( base, targets )
                 return "["..reg.type.."] Super #"..id.." of '"..instance.__type.."' instance"
             end
             function matrixMt:__newindex( k, v )
-                if matrixReady or k ~= "super" then
-                    throw("Cannot set keys on super. Illegal action.")
-                else
+                if not matrixReady and k == "super" then
                     upSuper = v
+                    return
                 end
+
+                throw("Cannot set keys on super. Illegal action.")
             end
             function matrixMt:__index( k )
                 factory = factories[ k ]
                 if factory then
-                    if not wrapCache[ k ] then wrapCache[ k ] = function( self, ... ) return factory( instance, raw, ... ) end end
+                    if not wrapCache[ k ] then
+                        wrapCache[ k ] = (function( _, ... )
+                            return factory( instance, ... )
+                        end)
+                    end
+
                     return wrapCache[ k ]
                 else
                     if k == "super" then
                         return upSuper
                     else
-                        return throw("Cannot lookup value for key '"..k.."' on super. Illegal action.")
+                        return throw("Cannot lookup value for key '"..k.."' on super", "Only functions can be accessed from supers.")
                     end
                 end
             end
             function matrixMt:__call( ... )
                 local init = self.__init__
                 if type( init ) == "function" then
-                    return init( ... )
+                    return init( self, ... )
                 else
                     throw("Failed to execute super constructor. __init__ method not found")
                 end
@@ -186,122 +248,145 @@ local function compileSupers( base, targets )
         return matrix
     end
 end
+local function compileConstructor( superReg )
+    local constructorConfiguration, constructorKeys = {}, { "orderedArguments", "requiredArguments", "argumentTypes", "useProxy" }
 
-local function compileConfiguration( targets )
-    -- Generate a matrix, containing a configuration table for each step of the classes instantiation.
-    local matrix = {}
-    local function convertToPair( tbl )
-        if type( tbl ) ~= "table" then return tbl end
+    local superConfig, currentConfig = superReg.constructor, currentRegistry.constructor
+    if not currentConfig and superConfig then
+        currentRegistry.constructor = superConfig
+        return
+    elseif currentConfig and not superConfig then
+        superConfig = {}
+    elseif not currentConfig and not superConfig then
+        return
+    end
 
-        local newTbl = {}
-        for i = 1, #tbl do
-            newTbl[ tbl[ i ] ] = true
+    local function mergeValues( a, b )
+        if type( a ) == "table" and type( b ) == "table" then
+            local merged = deepCopy( a ) or throw( "Invalid base table for merging." )
+
+            if #b == 0 and next( b ) then
+                for key, value in pairs( b ) do merged[ key ] = value end
+            elseif #b > 0 then
+                for i = 1, #b do table.insert( merged, i, b[ i ] ) end
+            end
+
+            return merged
         end
 
-        return newTbl
+        return b == nil and a or b -- if b is set return it as it overrides a
     end
 
-    local function mergeSection( a, b )
-        local merged = {}
-        if type( a ) == "table" and type( b ) == "table" then -- both are tables, merge them together
-            merged = a
-
-            for key in pairs( b ) do merged[ key ] = true end
-        elseif not a and b then -- a not set or false and b is a value
-            merged = b
-        elseif a and type( a ) == "boolean" then -- a is boolean true
-            merged = a
-        else
-            printError("Invalid. A: "..tostring( a ).." ("..type( a ).."), B: "..tostring( b ).." ("..type( b ).."). Please report")
+    local constructorKey
+    for i = 1, #constructorKeys do
+        constructorKey = constructorKeys[ i ]
+        if not ( ( constructorKey == "orderedArguments" and currentConfig.clearOrdered ) or ( constructorKey == "requiredArguments" and currentConfig.clearRequired ) ) then
+            currentConfig[ constructorKey ] = mergeValues( superConfig[ constructorKey ], currentConfig[ constructorKey ] )
         end
-
-        return merged
     end
-
-    local function processTarget( target, rollover )
-        local part = mergeSection( convertToPair( classReg[ target.__type ].meta.constructor.useProxy ), rollover )
-
-        matrix[ target.__type ] = part
-
-        return part
-    end
-
-    local base = processTarget( current, {} )
-    for i = 1, #targets do
-        base = processTarget( targets[ i ], base )
-    end
-
-    return matrix
 end
-
 local function compileCurrent()
-    if not isBuilding() then
-        throw("Cannot compile currently building class. No class is being built")
+    isBuilding(
+        "Cannot compile current class.",
+        "No class is being built at time of call. Declare a class be invoking 'compileCurrent'"
+    )
+    local ownedKeys, ownedStatics = currentRegistry.ownedKeys, currentRegistry.ownedStatics
+
+    -- Mixins
+    for target in pairs( currentRegistry.mixins ) do
+        local reg = classRegistry[ target ]
+
+        local t = { { reg.keys, currentRegistry.keys, ownedKeys }, { reg.static, currentRegistry.static, ownedStatics }, { reg.alias, currentRegistry.alias, currentRegistry.alias } }
+        for i = 1, #t do
+            local source, target, owned = t[ i ][ 1 ], t[ i ][ 2 ], t[ i ][ 3 ]
+            for key, value in pairs( source ) do
+                if not owned[ key ] then
+                    target[ key ] = value
+                end
+            end
+        end
     end
 
-    local raw, alias = currentReg.raw, currentReg.alias
-
-    for target, _ in pairs( currentReg.mixin ) do
-        local reg = classReg[ target ]
-
-        -- Mixin raw keys
-        for key, value in pairs( reg.raw ) do
-            if not reserved[ key ] and not raw[ key ] then raw[ key ] = value end
-        end
-
-        -- Mixin alias
-        for target, redirect in pairs( reg.alias ) do
-            if not alias[ target ] then alias[ target ] = redirect end
-        end
-    end
-
-    if currentReg.super then
+    -- Supers
+    local superKeys
+    if currentRegistry.super then
         local supers = {}
 
-        local last, c, newC = currentReg.super.target
+        local last, c, newC = currentRegistry.super.target
         while last do
             c = getClass( last, true )
 
-            table.insert( supers, c )
-            newC = classReg[ c:type() ].super
+            supers[ #supers + 1 ] = c
+            newC = classRegistry[ last ].super
             last = newC and newC.target or false
         end
 
-        currentReg.meta.proxyMatrix = compileConfiguration( supers )
+        superKeys, currentRegistry.super.matrix = compileSupers( supers )
 
-        local keys
-        keys, currentReg.super.matrix = compileSupers( current, supers )
-
-        local wrappers = currentReg.super.wrappers
-        for key, value in pairs( keys ) do
-            if raw[ key ] == nil then
-                if type( value ) == "function" then wrappers[ key ] = value else raw[ key ] = value end
+        -- Inherit alias from previous super
+        local currentAlias = currentRegistry.alias
+        for alias, redirect in pairs( classRegistry[ supers[ 1 ].__type ].alias ) do
+            if currentAlias[ alias ] == nil then
+                currentAlias[ alias ] = redirect
             end
         end
-    else
-        currentReg.meta.proxyMatrix = {
-            [currentReg.type] = currentReg.meta.constructor.useProxy
-        }
+
+        compileConstructor( classRegistry[ supers[ 1 ].__type ] )
     end
-    currentReg.compiled, current, currentReg = true, false, false
+
+    -- Generate instance function wrappers
+    local instanceWrappers, instanceVariables = {}, {}
+    for key, value in pairs( currentRegistry.keys ) do
+        if type( value ) == "function" then
+            instanceWrappers[ key ] = true
+            instanceVariables[ key ] = createFunctionWrapper( value, 1 )
+        else
+            instanceVariables[ key ] = value
+        end
+    end
+    if superKeys then
+        for key, value in pairs( superKeys ) do
+            if not instanceVariables[ key ] then
+                if type( value ) == "function" then
+                    instanceWrappers[ key ] = true
+                    instanceVariables[ key ] = function( _, ... ) return value( ... ) end
+                else
+                    instanceVariables[ key ] = value
+                end
+            end
+        end
+    end
+
+    -- Finish compilation
+    currentRegistry.initialWrappers = instanceWrappers
+    currentRegistry.initialKeys = instanceVariables
+    currentRegistry.compiled = true
+
+    currentRegistry = nil
+    currentClass = nil
+
 end
-
 local function spawn( target, ... )
-    local targetReg = classReg[ target:type() ]
-    if targetReg.abstract then
-        throw("Failed to spawn instance of abstract class '"..target:type().."'. Illegal action.")
+    if not verifyClassEntry( target ) then
+        throw(
+            "Failed to spawn class instance of '"..tostring( target ).."'",
+            "A class entity named '"..tostring( target ).."' doesn't exist."
+        )
     end
 
-    local instance, instanceMt, instanceRaw, instanceWrappers = {}, {}, deepCopy( targetReg.raw ), {}
-    local hasSupers, superAmount, instanceType, alias, super = false, 0, target:type(), targetReg.alias, targetReg.super
+    local classEntry, classReg = classes[ target ], classRegistry[ target ]
+    if classReg.abstract or not classReg.compiled then
+        throw(
+            "Failed to instantiate class '"..classReg.type.."'",
+            "Class '"..classReg.type.."' "..(classReg.abstract and "is abstract. Cannot instantiate abstract class." or "has not been compiled. Cannot instantiate.")
+        )
+    end
 
-    instanceRaw.__ID = string.sub( tostring( instanceRaw ), 8 )
-    instanceRaw.__type = instanceType
-    instanceRaw.__instance = true
-    instanceRaw.__current = instanceType
-    local initialised
+    local wrappers, wrapperCache = deepCopy( classReg.initialWrappers ), {}
+    local raw = deepCopy( classReg.initialKeys )
+    local alias = classReg.alias
 
-    instance.raw = instanceRaw
+    local instanceID = string.sub( tostring( raw ), 8 )
 
     local supers = {}
     local function indexSupers( last, ID )
@@ -312,109 +397,78 @@ local function spawn( target, ... )
         end
     end
 
-    local function createWrapper( key, value )
-        instanceWrappers[ key ] = function( self, ... )
-            local oSuper = self:setSuper( 1 )
-            local v = value( instance, ... )
-            instanceRaw.super = oSuper
-
-            return v
-        end
-    end
-
-    local setting, getting = {}, {}
-    local function runProxyFunction( instance, keyName, proxyName, tbl, ... )
-        local oSuper = instance:setSuper( 1 )
-
-        tbl[ keyName ] = true
-        local v = instanceRaw[ proxyName ]( instance, ... )
-        tbl[ keyName ] = nil
-
-        instanceRaw.super = oSuper
-        return v
-    end
-
+    local instanceObj, instanceMt = { raw = raw, __type = target, __instance = true }, {}
+    local getting, useGetters, setting, useSetters = {}, true, {}, true
     function instanceMt:__index( k )
         local k = alias[ k ] or k
-        local getter = getters[ k ]
 
-        if type( instanceRaw[ getter ] ) == "function" and not getting[ k ] then
-            return runProxyFunction( self, k, getter, getting )
-        else
-            if instanceWrappers[ k ] then
-                instanceRaw.__current = instanceType
-                return instanceWrappers[ k ]
-            else
-                return instanceRaw[ k ]
+        local getFn = getters[ k ]
+        if useGetters and not getting[ k ] and wrappers[ getFn ] then
+            setting[ k ] = true
+            local v = self[ getFn ]( self )
+            setting[ k ] = nil
+
+            return v
+        elseif wrappers[ k ] then
+            if not wrapperCache[ k ] then
+                wrapperCache[ k ] = function( ... )
+                    --print("Wrapper for "..k..". Arguments: "..( function( args ) local s = ""; for i = 1, #args do s = s .. " - " .. tostring( args[ i ] ) .. "\n" end return s end )( { ... } ) )
+                    return raw[ k ]( self, ... )
+                end
             end
-        end
+
+            return wrapperCache[ k ]
+        else return raw[ k ] end
     end
 
     function instanceMt:__newindex( k, v )
         local k = alias[ k ] or k
 
-        if reserved[ k ] then
-            throw( "Key name '"..k.."' is reserved." )
-        end
-
-        local setter = setters[ k ]
-        if instanceWrappers[ setter ] and not setting[ k ] then
-            runProxyFunction( self, k, setter, setting, v )
+        local setFn = setters[ k ]
+        if useSetters and not setting[ k ] and wrappers[ setFn ] then
+            setting[ k ] = true
+            self[ setFn ]( self, v )
+            setting[ k ] = nil
+        elseif type( v ) == "function" then
+            wrappers[ k ] = true
+            raw[ k ] = createFunctionWrapper( v, 1 )
         else
-            if type( v ) == "function" then
-                createWrapper( k, v )
-            else
-                instanceRaw[ k ], instanceWrappers[ k ] = v, nil
-            end
+            wrappers[ k ] = nil
+            raw[ k ] = v
         end
     end
 
     function instanceMt:__tostring()
-        return "Instance of '"..instanceType.."'"
+        return "[Instance] "..target.." ("..instanceID..")"
+    end
+
+    if classReg.super then
+        instanceObj.super = classReg.super.matrix( instanceObj ).super
+        indexSupers( instanceObj, 1 )
     end
 
     local old
-    function instanceRaw:setSuper( target )
-        old, instanceRaw.super = instanceRaw.super, supers[ target ]
+    function instanceObj:setSuper( target )
+        old, instanceObj.super = instanceObj.super, supers[ target ]
         return old
     end
 
-    setmetatable( instance, instanceMt )
-
-    local classOwned = targetReg.ownedKeys
-    for key, value in pairs( instanceRaw ) do
-        if classOwned[ key ] and type( value ) == "function" then createWrapper( key, value ) end
+    local function setSymKey( key, value )
+        useSetters = false
+        instanceObj[ key ] = value
+        useSetters = true
     end
 
-    if super then
-        hasSupers = true
+    local resolved
+    function instanceObj:resolve( ... )
+        if resolved then return false end
 
-        local matrix, wrappers = super.matrix, super.wrappers
-        for key, value in pairs( wrappers ) do
-            instanceRaw[ key ] = function( instance, ... ) return value( instance, instanceRaw, ... ) end
-        end
-        instanceRaw.super = targetReg.super.matrix( instance ).super
-
-        indexSupers( instanceRaw, 1 )
-    end
-
-    local meta = targetReg.meta
-    local isWhitelisted = meta.mode == "w"
-    local targetTable = isWhitelisted and meta.whitelist or meta.blacklist
-
-    function instanceRaw:setMetaMethod( method, fn )
-        local method = "__"..method
-        if ( isWhitelisted and not targetTable[ method ] ) or ( not isWhitelisted and targetTable[ method ] ) then
-            return throw("Cannot set meta method '"..method.."'. Illegal action.")
+        local args, config = { ... }, classReg.constructor
+        if not config then
+            throw("Failed to resolve "..tostring( instance ).." constructor arguments. No configuration has been set via 'configureConstructor'.")
         end
 
-        instanceMt[ method ] = fn
-    end
-
-    function instanceRaw:resolve( ... )
-        local current = instanceRaw.__current
-        local args, config, raw = { ... }, classReg[ current ].meta.constructor, instanceRaw
-        local configRequired, configOrdered, configTypes, configPrune, configProxy = config.requiredArguments, config.orderedArguments, config.argumentTypes or {}, config.pruneMode, targetReg.meta.proxyMatrix[ current ]
+        local configRequired, configOrdered, configTypes, configProxy = config.requiredArguments, config.orderedArguments, config.argumentTypes or {}, config.useProxy or {}
 
         local argumentsRequired = {}
         if configRequired then
@@ -424,25 +478,23 @@ local function spawn( target, ... )
         end
 
         local orderedMatrix = {}
-        for i = 1, #configOrdered do
-            orderedMatrix[ configOrdered[ i ] ] = i
+        for i = 1, #configOrdered do orderedMatrix[ configOrdered[ i ] ] = i end
+
+        local proxyAll, proxyMatrix = type( configProxy ) == "boolean" and configProxy, {}
+        if not proxyAll then
+            for i = 1, #configProxy do proxyMatrix[ configProxy[ i ] ] = true end
         end
 
-        local proxyAll = type( configProxy ) ~= "table" and configProxy
-
-        local usedIndexes = {}
         local function handleArgument( position, name, value )
             if configTypes[ name ] and type( value ) ~= configTypes[ name ] then
-                return throw("Failed to resolve "..tostring( instance ).." constructor arguments. Invalid type for argument '"..name.."'. Type "..configTypes[ name ].." expected, "..type( value ).." was received.")
+                return throw("Failed to resolve '"..tostring( target ).."' constructor arguments. Invalid type for argument '"..name.."'. Type "..configTypes[ name ].." expected, "..type( value ).." was received.")
             end
 
-            if position then usedIndexes[ position ] = true end
             argumentsRequired[ name ] = nil
-
-            if proxyAll or configProxy[ name ] then
+            if proxyAll or proxyMatrix[ name ] then
                 self[ name ] = value
             else
-                raw[ name ] = value
+                setSymKey( name, value )
             end
         end
 
@@ -451,272 +503,336 @@ local function spawn( target, ... )
                 handleArgument( iter, configOrdered[ iter ], value )
             elseif type( value ) == "table" then
                 for key, v in pairs( value ) do
-                    if orderedMatrix[ key ] or not configPrune then -- If we are not pruning parse the table anyway, we haven't been told to preserve unused arguments.
-                        handleArgument( orderedMatrix[ key ], key, v )
-                    end
+                    handleArgument( orderedMatrix[ key ], key, v )
                 end
-            elseif not configPrune then
-                return throw("Failed to resolve "..tostring( instance ).." constructor arguments. Invalid argument found at ordered position "..iter..".")
+            else
+                return throw("Failed to resolve '"..tostring( target ).."' constructor arguments. Invalid argument found at ordered position "..iter..".")
             end
         end
 
         if next( argumentsRequired ) then
-            return throw("Failed to resolve "..tostring( instance ).." constructor arguments. The following required arguments were not provided:\n\n"..(function()
-                local str = ""
-                for name, _ in pairs( argumentsRequired ) do
-                    str = str .. "- "..name.."\n"
+            local str, name = ""
+            local function append( cnt )
+                str = str .."- "..cnt.."\n"
+            end
+
+            return throw("Failed to resolve '"..tostring( target ).."' constructor arguments. The following required arguments were not provided:\n\n"..(function()
+                str = "Ordered:\n"
+                for i = 1, #configOrdered do
+                    name = configOrdered[ i ]
+                    if argumentsRequired[ name ] then
+                        append( name .. " [#"..i.."]" )
+                        argumentsRequired[ name ] = nil
+                    end
+                end
+
+                if next( argumentsRequired ) then
+                    str = str .. "\nTrailing:\n"
+                    for name, _ in pairs( argumentsRequired ) do append( name ) end
                 end
 
                 return str
             end)())
         end
 
-        if configPrune then
-            for i = #args, 1, -1 do
-                if usedIndexes[ i ] then
-                    table.remove( args, i )
-                end
-            end
-
-            return unpack( args )
-        end
+        resolved = true
+        return true
     end
 
-    setmetatable( instance, instanceMt )
+    function instanceObj:can( method )
+        return wrappers[ method ] or false
+    end
 
-    if type( instanceRaw.__init__ ) == "function" then instanceRaw.__init__( instance, ... ) end
-    instanceRaw.__initialised, initialised = true, true
+    local locked = { __index = true, __newindex = true }
+    function instanceObj:setMetaMethod( method, fn )
+        if type( method ) ~= "string" then
+            throw( "Failed to set metamethod '"..tostring( method ).."'", "Expected string for argument #1, got '"..tostring( method ).."' of type "..type( method ) )
+        elseif type( fn ) ~= "function" then
+            throw( "Failed to set metamethod '"..tostring( method ).."'", "Expected function for argument #2, got '"..tostring( fn ).."' of type "..type( fn ) )
+        end
 
-    return instance
+        method = "__"..method
+        if locked[ method ] then
+            throw( "Failed to set metamethod '"..tostring( method ).."'", "Metamethod locked" )
+        end
+
+        instanceMt[ method ] = fn
+    end
+
+    function instanceObj:lockMetaMethod( method )
+        if type( method ) ~= "string" then
+            throw( "Failed to lock metamethod '"..tostring( method ).."'", "Expected string, got '"..tostring( method ).."' of type "..type( method ) )
+        end
+
+        locked[ "__"..method ] = true
+    end
+
+    setmetatable( instanceObj, instanceMt )
+    if type( instanceObj.__init__ ) == "function" then instanceObj:__init__( ... ) end
+
+    return instanceObj
 end
+
+
+--[[ Global functions ]]--
 
 function class( name )
     if isBuilding() then
-        throw("Cannot begin construction of new class before currently building class '"..current:type().."' is compiled.")
+        throw(
+            "Failed to declare class '"..tostring( name ).."'",
+            "A new class cannot be declared until the currently building class has been compiled.",
+            "\nCompile '"..tostring( currentRegistry.type ).."' before declaring '"..tostring( name ).."'"
+        )
+    end
+
+    local function nameErr( reason )
+        throw( "Failed to declare class '"..tostring( name ).."'\n", string.format( "Class name %s is not valid. %s", tostring( name ), reason ) )
     end
 
     if type( name ) ~= "string" then
-        throw( "Class name '"..tostring( name ).."' is not valid. Class names must be a string." )
-    elseif not name:find( "%a" ) then
-        throw( "Class name '"..tostring( name ).."' is not valid. No alphabetic characters could be found.")
-    elseif name:find( "%d" ) then
-        throw( "Class name '"..name.."' is not valid. Class names cannot contain digits." )
+        nameErr "Class names must be a string"
+    elseif not name:find "%a" then
+        nameErr "No alphabetic characters could be found"
+    elseif name:find "%d" then
+        nameErr "Class names cannot contain digits"
     elseif classes[ name ] then
-        throw( "A class with name '"..name.."' already exists." )
+        nameErr "A class with that name already exists"
     elseif reserved[ name ] then
-        throw( "System name '"..name.."' is reserved." )
+        nameErr ("'"..name.."' is reserved for Titanium processes")
     else
         local char = name:sub( 1, 1 )
         if char ~= char:upper() then
-            throw( "Class name '"..name.."' is not valid. Class names must begin with an uppercase character.")
+            nameErr "Class names must begin with an uppercase character"
         end
     end
 
-    local registryEntry = { type = name; raw = { __type = name }; mixin = {}; alias = {}; ownedKeys = {}; super = false; compiled = false; meta = { blacklist = { __index = true, __newindex = true }; whitelist = {}; mode = false } }
-    classReg[ name ] = registryEntry
+    local classReg = {
+        type = name,
 
-    local classMt = { __index = registryEntry.raw, __tostring = function() return ( registryEntry.compiled and "Compiled " or "" ) .. "Class '"..name.."'" end, __call = function( self, ... ) return self:spawn( ... ) end}
+        static = {},
+        keys = {},
+        ownedStatics = {},
+        ownedKeys = {},
 
-    function classMt:__newindex( key, value )
-        if reserved[ key ] then
-            throw( "Key name '"..key.."' is reserved." )
-        elseif self:isCompiled() then
-            throw( "Failed to set key on compiled class. Illegal action." )
+        initialWrappers = {},
+        initialKeys = {},
+
+        mixins = {},
+        alias = {},
+
+        constructor = false,
+        super = false,
+
+        compiled = false,
+        abstract = false
+    }
+
+    -- Class metatable
+    local classMt = {}
+    function classMt:__tostring()
+        return (classReg.compiled and "[Compiled] " or "") .. "Class '"..name.."'"
+    end
+
+    local keys, owned = classReg.keys, classReg.ownedKeys
+    local staticKeys, staticOwned = classReg.static, classReg.ownedStatics
+    function classMt:__newindex( k, v )
+        if classReg.compiled then
+            throw(
+                "Failed to set key on class base.", "",
+                "This class base is compiled, once a class base is compiled new keys cannot be added to it",
+                "\nPerhaps you meant to set the static key '"..name..".static."..k.."' instead."
+            )
         end
 
-        registryEntry.raw[ key ] = value
-        registryEntry.ownedKeys[ key ] = value == nil and nil or true
+        keys[ k ] = v
+        owned[ k ] = type( v ) == "nil" and nil or true
     end
-
-    local class = {}
-    function class.type()
-        return name
-    end
-
-    function class.isCompiled()
-        return registryEntry.compiled
-    end
-
-    function class.compile()
-        compileCurrent()
-    end
-
-    function class:spawn( ... )
-        if not registryEntry.compiled then
-            throw("Cannot spawn instance of class '"..name.."'. The class has not been compiled.")
+    function classMt:__index( k )
+        if owned[ k ] then
+            throw (
+                "Access to key '"..k.."' denied.",
+                "Instance keys cannot be accessed from a class base, regardless of compiled state",
+                classReg.ownedStatics[ k ] and "\nPerhaps you meant to access the static variable '" .. name .. ".static.".. k .. "' instead" or nil
+            )
+        elseif staticOwned[ k ] then
+            return staticKeys[ k ]
         end
-
-        return spawn( self, ... )
+    end
+    function classMt:__call( ... )
+        return spawn( name, ... )
     end
 
-    setmetatable( class, classMt )
+    -- Static metatable
+    local staticMt = { __index = staticKeys }
+    function staticMt:__newindex( k, v )
+        staticKeys[ k ] = v
+        staticOwned[ k ] = type( v ) == "nil" and nil or true
+    end
 
-    classes[ name ] = class
-    _G[ name ] = class
+    -- Class object
+    local classObj = { __type = name }
+    classObj.static = setmetatable( {}, staticMt )
+    classObj.compile = compileCurrent
 
-    current = class
-    currentReg = registryEntry
+    function classObj:isCompiled() return classReg.compiled end
+
+    setmetatable( classObj, classMt )
+
+    -- Export
+    currentRegistry = classReg
+    classRegistry[ name ] = classReg
+
+    currentClass = classObj
+    classes[ name ] = classObj
+
+    _G[ name ] = classObj
 
     return propertyCatch
 end
 
 function extends( name )
-    if not isBuilding() then
-        throw("Cannot extend to target '"..name.."'. No class is being built.")
-    end
+    isBuilding(
+        string.format( ERROR_GLOBAL, "extend", "target class '"..tostring( name ).."'" ), "",
+        string.format( ERROR_NOT_BUILDING, "extends" )
+    )
 
-    if currentReg.super then
-        throw("Cannot extend to target '"..name.."'. The class '"..current:type().."' has already extended to '"..currentReg.super.."'.")
-    else
-        currentReg.super = { target = name; matrix = {}; wrappers = {} }
-    end
-
+    currentRegistry.super = {
+        target = name
+    }
     return propertyCatch
 end
 
 function mixin( name )
-    if not isBuilding() then
-        throw("Cannot mixin target '"..name.."'. No class is being built.")
-    elseif currentReg.mixin[ name ] then
-        throw("Cannot mixin target '"..name.."' to class '"..current:type().."'. The target has already been mixed in to this class.")
-    else
-        if not getClass( name, true ) then
-            throw("Cannot mixin target '"..name.."' to class '"..current:type().."'. Failed to locate target class.")
-        end
-
-        currentReg.mixin[ name ] = true
+    if type( name ) ~= "string" then
+        throw("Invalid mixin target '"..tostring( name ).."'")
     end
 
-    return propertyCatch
-end
+    isBuilding(
+        string.format( ERROR_GLOBAL, "mixin", "target class '".. name .."'" ),
+        string.format( ERROR_NOT_BUILDING, "mixin" )
+    )
 
-function alias( target )
-    if not isBuilding() then
-        throw("Cannot add alias target. No class is being built.")
+    local mixins = currentRegistry.mixins
+    if mixins[ name ] then
+        throw(
+            string.format( ERROR_GLOBAL, "mixin class '".. name .."'", "class '"..currentRegistry.type)
+            "'".. name .."' has already been mixed in to this target class."
+        )
     end
 
-    local tbl = ( type( target ) == "table" and target ) or ( type( _G[ target ] ) == "table" and _G[ target ] )
-    if not tbl then
-        throw("Failed to lookup alias target '"..tostring( target ).."' in global environment.")
+    if not getClass( name, true ) then
+        throw(
+            string.format( ERROR_GLOBAL, "mixin class '".. name .."'", "class '"..currentRegistry.type ),
+            "The mixin class '".. name .."' failed to load"
+        )
     end
 
-    local currentAlias = currentReg.alias
-    for key, redirect in pairs( tbl ) do
-        currentAlias[ key ] = redirect
-    end
-
+    mixins[ name ] = true
     return propertyCatch
 end
 
 function abstract()
-    if not isBuilding() then
-        throw("Cannot enforce abstract class policy. No class is being built.")
-    end
+    isBuilding(
+        "Failed to enforce abstract class policy\n",
+        string.format( ERROR_NOT_BUILDING, "abstract" )
+    )
 
-    currentReg.abstract = true
+    currentRegistry.abstract = true
     return propertyCatch
 end
 
-local function apply( str, tbl, invert )
-    for item in str:gmatch("(%w+)[,]?") do
-        tbl[ "__"..item ] = not invert or nil
+function alias( target )
+    local FAIL_MSG = "Failed to implement alias targets\n"
+    isBuilding( FAIL_MSG, string.format( ERROR_NOT_BUILDING, "alias" ) )
+
+    local tbl = type( target ) == "table" and target or (
+        type( target ) == "string" and (
+            type( _G[ target ] ) == "table" and _G[ target ] or throw( FAIL_MSG, "Failed to find '"..tostring( target ).."' table in global environment." )
+        ) or throw( FAIL_MSG, "Expected type table as target, got '"..tostring( target ).."' of type "..type( target ) )
+    )
+
+    local cAlias = currentRegistry.alias
+    for alias, redirect in pairs( tbl ) do
+        cAlias[ alias ] = redirect
     end
-end
-
-local function applySetting( mt, blacklist )
-    if ( blacklist and mt.mode == "w" ) or ( not blacklist and mt.mode == "b" ) then
-        return throw("Cannot "..( blacklist and "blacklist" or "whitelist" ).." meta methods. The class has applied a '"..( blacklist and "whitelist" or "blacklist" ).."' rule which cannot be used alongside the '"..(blacklist and "blacklist" or "whitelist").."' rule." )
-    end
-
-    mt.mode = blacklist and "b" or "w"
-end
-
-function blacklist( str )
-    if not isBuilding() then
-        throw("Cannot blacklist meta methods on building class. No class is being built.")
-    end
-    local mt = currentReg.meta
-
-    applySetting( mt, true )
-    apply( str, mt.blacklist )
 
     return propertyCatch
 end
 
-function unblacklist( str )
-    if not isBuilding() then
-        throw("Cannot unblacklist meta methods on building class. No class is being built.")
+function configureConstructor( config, clearOrdered, clearRequired )
+    isBuilding(
+        "Failed to configure class constructor\n",
+        string.format( ERROR_NOT_BUILDING, "configureConstructor" )
+    )
+
+    if type( config ) ~= "table" then
+        throw (
+            "Failed to configure class constructor\n",
+            "Expected type 'table' as first argument"
+        )
     end
-    local mt = currentReg.meta
 
-    applySetting( mt, true )
-    apply( str, mt.blacklist, true )
+    local constructor = {
+        clearOrdered = clearOrdered or nil,
+        clearRequired = clearRequired or nil
+    }
+    for key, value in pairs( config ) do constructor[ key ] = value end
 
+    currentRegistry.constructor = constructor
     return propertyCatch
 end
 
-function whitelist( str )
-    if not isBuilding() then
-        throw("Cannot whitelist meta methods on building class. No class is being built.")
-    end
-    local mt = currentReg.meta
+--[[ Class Library ]]--
+Titanium = {}
 
-    applySetting( mt )
-    apply( str, mt.whitelist )
-
-    return propertyCatch
-end
-
-function configureConstructor( config )
-    if not isBuilding() then
-        throw("Cannot configure constructor of building class. No class is being built.")
-    elseif type( config ) ~= "table" then
-        throw("Cannot configure constructor of building class. Invalid constructor configuration")
-    end
-
-    currentReg.meta.constructor = config
-end
-
--- Class Library
-function classLib.getClass( name )
+function Titanium.getClass( name )
     return classes[ name ]
 end
 
-function classLib.getClasses()
+function Titanium.getClasses()
     return classes
 end
 
-function classLib.isClass( target ) return type( target ) == "table" and target.__type and classes[ target.__type ] end
-
-function classLib.isInstance( target ) return classLib.isClass( target ) and target.__instance end
-
-function classLib.typeOf( target, classType, isInstance ) return ( ( isInstance and classLib.isInstance( target ) ) or ( not isInstance and classLib.isClass( target ) and not classLib.isInstance( target ) ) ) and target.__type == classType end
-
-function classLib.setClassLoader( fn )
-    if type( fn ) ~= "function" then throw( "Failed to set MISSING_CLASS_LOADER. Value '"..tostring( fn ).." ("..type( fn )..")' is invalid." ) end
-
-    MISSING_CLASS_LOADER = fn
+function Titanium.isClass( target )
+    return type( target ) == "table" and type( target.__type ) == "string" and verifyClassEntry( target.__type )
 end
 
-local function searchAndReplace( text, keyword )
-    local start, stop, value = text:find( keyword.." (.[^%s]+)" )
+function Titanium.isInstance( target )
+    return Titanium.isClass( target ) and target.__instance
+end
 
-    if start and stop and value then
-        if value:find( "\"" ) or value:find( "\'" ) then return text end
-        text = text:gsub( keyword.." "..value, keyword.." \""..value.."\"", 1 )
+function Titanium.typeOf( target, classType, instance )
+    if not Titanium.isClass( target ) or ( instance and not Titanium.isInstance( target ) ) then
+        return false
     end
 
-    return text
+    local targetReg = classRegistry[ target.__type ]
+
+    return targetReg.type == classType or ( targetReg.super and Titanium.typeOf( classes[ targetReg.super.target ], classType ) ) or false
+end
+
+function Titanium.setClassLoader( fn )
+    if type( fn ) ~= "function" then
+        throw( "Failed to set class loader", "Value '"..tostring( fn ).."' is invalid, expected function" )
+    end
+
+    missingClassLoader = fn
 end
 
 local preprocessTargets = {"class", "extends", "alias", "mixin"}
-function classLib.preprocess( text )
+function Titanium.preprocess( text )
+    local keyword
     for i = 1, #preprocessTargets do
-        text = searchAndReplace( text, preprocessTargets[ i ] )
+        keyword = preprocessTargets[ i ]
+
+        for value in text:gmatch( keyword .. " ([_%a][_%w]*)%s" ) do
+            text = text:gsub( keyword .. " " .. value, keyword.." \""..value.."\"" )
+        end
     end
 
-    local name = text:match( "abstract class (\".[^%s]+\")" )
-    if name then text = text:gsub( "abstract class "..name, "class "..name.." abstract()", 1 ) end
+    for name in text:gmatch( "abstract class (\".[^%s]+\")" ) do
+        text = text:gsub( "abstract class "..name, "class "..name.." abstract()" )
+    end
 
     return text
 end

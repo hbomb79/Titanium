@@ -1,0 +1,32 @@
+--[[
+    A pane is a very simple node that simply draws a box at 'X', 'Y' with dimensions 'width', 'height'.
+]]
+
+class Pane extends Node {
+    backgroundColour = colours.black
+}
+
+--[[
+    @instance
+    @desc Resolves arguments and calls super constructor
+]]
+function Pane:__init__( ... )
+    self:resolve( ... )
+    self:super()
+end
+
+--[[
+    @instance
+    @desc Clears the canvas, the canvas background colour becomes 'backgroundColour' during the clear.
+]]
+function Pane:draw()
+    local raw = self.raw
+    if raw.changed then
+        raw.canvas:clear()
+        raw.changed = false
+    end
+end
+
+configureConstructor({
+    orderedArguments = {"X", "Y", "width", "height", "backgroundColour"}
+}, true)

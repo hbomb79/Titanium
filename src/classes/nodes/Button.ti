@@ -1,0 +1,97 @@
+--[[
+    A Button is a node that can be clicked to trigger a callback.
+    The button can containtext which can span multiple lines, however if too much text is entered it will be truncated to fit the button dimensions.
+]]
+
+class Button extends Node mixin MTextDisplay mixin MActivatable {
+    activeColour = colours.white;
+    activeBackgroundColour = colours.cyan;
+
+    allowMouse = true;
+}
+
+--[[
+    @constructor
+    @desc Accepts button arguments and resolves them.
+    @param <string - text>, [number - X], [number - Y], [number - width], [number - height]
+]]
+function Button:__init__( ... )
+    self:resolve( ... )
+    self:super()
+end
+
+--[[
+    @instance
+    @desc Sets the button to 'active' when the button is clicked
+    @param <MouseEvent - event>, <boolean - handled>, <boolean - within>
+]]
+function Button:onMouseClick( event, handled, within )
+    if not handled then
+        self.active = within
+
+        if within then
+            event:handle()
+        end
+    end
+end
+
+--[[
+    @instance
+    @desc Sets the button to inactive when the mouse button is released. If released on button while active 'onTrigger' callback is fired.
+    @param <MouseEvent - event>, <boolean - handled>, <boolean - within>
+]]
+function Button:onMouseUp( event, handled, within )
+    if within and not handled and self.active then
+        if self:can "onTrigger" then
+            self:onTrigger( event, handled, within )
+        end
+    end
+
+    self.active = false
+end
+
+--[[
+    @instance
+    @desc Draws the text to the node canvas
+]]
+function Button:draw()
+    local raw = self.raw
+    if raw.changed then
+        local active = raw.active
+        raw.canvas:clear( active and raw.activeBackgroundColour, active and raw.activeColour )
+        self:drawText( active and raw.activeBackgroundColour, active and raw.activeColour )
+
+        raw.changed = false
+    end
+end
+
+--[[
+    @instance
+    @desc Sets the text of the button and then wraps the new text for display.
+    @param <string - text>
+]]
+function Button:setText( text )
+    if self.text == text then return end
+
+    self.text = text
+    self:wrapText()
+end
+
+--[[
+    @instance
+    @desc Sets the width of the button and then re-wraps the text to fit in the dimensions.
+    @param <number - width>
+]]
+function Button:setWidth( width )
+    self.super:setWidth( width )
+    self:wrapText()
+end
+
+configureConstructor {
+    orderedArguments = { "text" },
+    requiredArguments = { "text" },
+    argumentTypes = { text = "string", activeColour = "number", activeBackgroundColour = "number" }
+} alias {
+    activeColor = "activeColour",
+    activeBackgroundColor = "activeBackgroundColour"
+}

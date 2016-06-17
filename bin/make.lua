@@ -1,7 +1,7 @@
 --[[
     Titanium build script - Basic
 
-	Compatible with ComputerCraft
+    Compatible with ComputerCraft
 ]]
 
 local ignore = {
@@ -37,12 +37,12 @@ local preLoadFiles = {}
 if fs.exists( "src/loadFirst.cfg" ) then
     local h = io.open( "src/loadFirst.cfg", "r" )
 
-	for name in h:lines() do
-		preLoadFiles[ #preLoadFiles ] = name
-		print( "Assigning file '"..name.."' as preload" )
-	end
+    for name in h:lines() do
+        preLoadFiles[ #preLoadFiles ] = name
+        print( "Assigning file '"..name.."' as preload" )
+    end
 
-	h:close()
+    h:close()
 end
 
 local h, file
@@ -72,7 +72,7 @@ local function loadFile( name, verify )
 
     local content = files[ name ]
     if content then
-        local output, err = loadstring( classLib and not scriptFiles[ name ] and classLib.preprocess( content ) or content, name )
+        local output, err = loadstring( Titanium and not scriptFiles[ name ] and Titanium.preprocess( content ) or content, name )
         if not output or err then return error( "Failed to load Lua chunk. File '"..name.."' has a syntax error: "..tostring( err ), 0 ) end
 
         local ok, err = pcall( output )
@@ -80,7 +80,7 @@ local function loadFile( name, verify )
 
         if verify then
             local className = name:gsub( "%..*", "" )
-            local class = classLib.getClass( className )
+            local class = Titanium.getClass( className )
 
             if class then
                 if not class:isCompiled() then class:compile() end
@@ -94,21 +94,30 @@ end
 -- Load our class file
 loadFile( "Class.lua" )
 
-classLib.setClassLoader(function( name )
-	local fName = name..".ti"
+Titanium.setClassLoader(function( name )
+    local fName = name..".ti"
 
-	if not files[ fName ] then
-		return error("Failed to find file '"..fName..", to load missing class '"..name.."'.", 3)
-	else
-		loadFile( fName, true )
-	end
+    if not files[ fName ] then
+        return error("Failed to find file '"..fName..", to load missing class '"..name.."'.", 3)
+    else
+        loadFile( fName, true )
+    end
 end)
 
 -- Load any files specified by our config file
 for i = 1, #preLoad do loadFile( preLoad[ i ] ) end
 
--- Load all other files
-for name, _ in pairs( files ) do loadFile( name, not scriptFiles[ name ] ) end
+-- Load all class files
+for name in pairs( files ) do
+    if not scriptFiles[ name ] then
+        loadFile( name, true )
+    end
+end
+
+-- Load all script files
+for name in pairs( scriptFiles ) do
+    loadFile( name, false )
+end
 ]])
 
 fileHandle.close()

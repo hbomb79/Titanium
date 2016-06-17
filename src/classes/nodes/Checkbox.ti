@@ -1,0 +1,92 @@
+--[[
+    The checkbox is a node that can be toggled on and off
+]]
+
+class Checkbox extends Node mixin MActivatable mixin MTogglable {
+    checkedMark = "x";
+    uncheckedMark = " ";
+
+    activeColour = colours.white;
+    activeBackgroundColour = colours.red;
+
+    toggledColour = colours.red;
+    toggledBackgroundColour = colours.white;
+
+    toggled = false;
+
+    allowMouse = true;
+}
+
+--[[
+    @constructor
+    @desc Resolves arguments and calls super constructor
+    @param <number - X>, <number - Y>
+]]
+function Checkbox:__init__( ... )
+    self:resolve( ... )
+    self:super()
+end
+
+--[[
+    @instance
+    @desc Sets the checkbox to 'active' when clicked
+    @param <MouseEvent - event>, <boolean - handled>, <boolean - within>
+]]
+function Checkbox:onMouseClick( event, handled, within )
+    if not handled then
+        self.active = within
+
+        if within then
+            event:handle()
+        end
+    end
+end
+
+--[[
+    @instance
+    @desc Sets the checkbox to inactive when the mouse button is released. If released on checkbox while active 'onToggle' callback is fired and the checkbox is toggled.
+    @param <MouseEvent - event>, <boolean - handled>, <boolean - within>
+]]
+function Checkbox:onMouseUp( event, handled, within )
+    if not handled and within and self.active then
+        self:toggle( event, handled, within )
+
+        event:handle()
+    end
+
+    self.active = false
+end
+
+--[[
+    @instance
+    @desc If a label which specifies this node as its 'labelFor' paramater is clicked this function will be called, causing the checkbox to toggle
+    @param <LabelInstance - label>, <MouseEvent - event>, <boolean - handled>, <boolean - within>
+]]
+function Checkbox:onLabelClicked( label, event, handled, within )
+    self:toggle( event, handled, within, label )
+    event:handle()
+end
+
+--[[
+    @instance
+    @desc Draws the checkbox to the canvas
+]]
+function Checkbox:draw()
+    local raw = self.raw
+    if raw.changed then
+        local toggled, active = raw.toggled, raw.active
+        raw.canvas:drawPoint(
+            1, 1,
+            toggled and raw.checkedMark or raw.uncheckedMark,
+            active and raw.activeColour or toggled and raw.toggledColour or raw.colour,
+            active and raw.activeBackgroundColour or toggled and raw.toggledBackgroundColour or raw.backgroundColour
+        )
+
+        raw.changed = false
+    end
+end
+
+configureConstructor( {
+    orderedArguments = { "X", "Y" },
+    requiredArguments = { "X", "Y" }
+}, true, true )

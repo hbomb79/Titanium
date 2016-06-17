@@ -1,0 +1,20 @@
+--[[
+    A mixin to reuse code commonly written when developing nodes that can be (de)activated.
+]]
+
+abstract class MActivatable {
+    active = false;
+}
+
+--[[
+    @instance
+    @desc Sets the 'active' property to the 'active' argument passed. When the 'active' property changes the node will become 'changed'.
+    @param <boolean - active>
+]]
+function MActivatable:setActive( active )
+    local raw = self.raw
+    if raw.active == active then return end
+
+    raw.active = active
+    self.changed = true
+end

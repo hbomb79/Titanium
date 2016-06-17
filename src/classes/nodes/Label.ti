@@ -1,0 +1,63 @@
+--[[
+    A Label is a node which displays a single line of text. The text cannot be changed by the user directly, however the text can be changed by the program.
+--]]
+
+class Label extends Node {
+    labelFor = false;
+
+    allowMouse = true;
+}
+
+--[[
+    @constructor
+    @param <string - text>, [number - X], [number - Y]
+]]
+function Label:__init__( ... )
+    self:resolve( ... )
+    self.raw.width = #self.text
+
+    self:super()
+end
+
+--[[
+    @instance
+    @desc Mouse click event handler. On mouse click the labels for (labelFor) will be notified via 'onLabelClicked'.
+    @param <MouseEvent Instance - event>, <boolean - handled>, <boolean - within>
+]]
+function Label:onMouseClick( event, handled, within )
+    local labelFor = self.labelFor
+    if labelFor and within and not handled and labelFor:can "onLabelClicked" then
+        labelFor:onLabelClicked( self, event, handled, within )
+    end
+end
+
+--[[
+    @instance
+    @desc Clears the Label's canvas and draws a line of text if the label has changed.
+]]
+function Label:draw()
+    local raw = self.raw
+    if raw.changed then
+        raw.canvas:drawTextLine( 1, 1, raw.text )
+
+        raw.changed = false
+    end
+end
+
+--[[
+    @instance
+    @desc Sets the text of a node. Once set, the nodes 'changed' status is set to true along with its parent(s)
+    @param <string - text>
+]]
+function Label:setText( text )
+    if self.text == text then return end
+
+    self.text = text
+    self.width = #text
+end
+
+configureConstructor({
+    orderedArguments = { "text", "X", "Y" },
+    requiredArguments = { "text" },
+    argumentTypes = { text = "string" }
+}, true)

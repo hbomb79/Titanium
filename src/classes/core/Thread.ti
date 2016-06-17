@@ -1,0 +1,56 @@
+class Thread {
+    running = false;
+
+    func = false;
+    co = false;
+
+    filter = false;
+    exception = false;
+
+    titaniumEvents = false;
+}
+
+function Thread:__init__( ... )
+    self:resolve( ... )
+    self:start()
+end
+
+function Thread:start()
+    self.co = coroutine.create( self.func )
+    self.running = true
+    self.filter = false
+end
+
+function Thread:stop()
+    --TODO
+end
+
+function Thread:handle( ... )
+    if not self.running then return false end
+
+    local tEvents, cFilter, eMain, co, ok, filter = self.titaniumEvents, self.filter, select( 1, ... ), self.co
+    if tEvents then
+        if not cFilter or ( eMain:is( cFilter ) or eMain:is( "terminate" ) ) then
+            ok, filter = coroutine.resume( co, eMain )
+        end
+    else
+        if not cFilter or ( eMain == cFilter or eMain == "terminate" ) then
+            ok, filter = coroutine.resume( co, ... )
+        end
+    end
+
+    if ok then
+        if coroutine.status( co ) == "dead" then
+            self.running = false
+        end
+
+        self.filter = filter
+    else
+        self.exception = filter
+    end
+end
+
+configureConstructor {
+    orderedArguments = { "func", "titaniumEvents", "id" },
+    requiredArguments = { "func" }
+}

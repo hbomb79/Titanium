@@ -1,0 +1,63 @@
+local string_sub, string_upper = string.sub, string.upper
+
+class MouseEvent extends Event {
+    inBounds = false;
+    main = "MOUSE";
+}
+
+--[[
+    @constructor
+    @desc Sets the values given in their respective instance keys. Stores all values into a table 'data'.
+    @param <string - name>, <number - button>, <number - X>, <number - Y>, [string - sub]
+]]
+function MouseEvent:__init__( name, button, X, Y, sub )
+    self.name = name
+    self.button = button
+    self.X = X
+    self.Y = Y
+
+    self.sub = sub or string_upper( string_sub( name, 7 ) )
+
+    self.data = { name, button, X, Y }
+end
+
+--[[
+    @instance
+    @desc Returns true if the mouse event was inside of the bounds provided.
+    @param <number - x>, <number - y>, <number - w>, <number - h>
+    @return <boolean - inBounds>
+]]
+function MouseEvent:within( x, y, w, h )
+    local X, Y = self.X, self.Y
+
+    return X >= x and Y >= y and X <= -1 + x + w and Y <= -1 + y + h
+end
+
+--[[
+    @instance
+    @desc Returns true if the mouse event was inside the bounds of the parent provided (x, y, width and height)
+    @param <NodeContainer - parent>
+]]
+function MouseEvent:withinParent( parent )
+    return self:within( parent.X, parent.Y, parent.width, parent.height )
+end
+
+--[[
+    @instance
+    @desc Clones 'self' and adjusts it's X & Y positions so that they're relative to 'parent'.
+    @param <NodeContainer - parent>
+    @return <MouseEvent Instance - clone>
+
+    Note: The clone's 'handle' method has been adjusted to also call 'handle' on the master event obj (self).
+]]
+function MouseEvent:clone( parent )
+    local clone = MouseEvent( self.name, self.button, self.X - parent.X, self.Y - parent.Y, self.sub )
+
+    clone.handled = self.handled
+    clone.handle = function()
+        clone.handled = true
+        self:handle() --TODO: Make sure 'self' refers to the object which 'clone' was invoked on, not the clone.
+    end
+
+    return clone
+end

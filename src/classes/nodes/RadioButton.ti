@@ -78,6 +78,17 @@ function RadioButton.static.deselectInGroup( group )
     for i = 1, #g do g[ i ].toggled = false end
 end
 
+function RadioButton.static.getValue( group )
+    local g = RadioButton.groups[ group ]
+    if g then
+        local radio
+        for i = 1, #g do
+            radio = g[ i ]
+            if radio.toggled then return radio.value end
+        end
+    end
+end
+
 configureConstructor({
     orderedArguments = { "X", "Y", "group" },
     requiredArguments = true,

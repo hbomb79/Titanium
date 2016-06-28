@@ -4,7 +4,20 @@
 
 abstract class MActivatable {
     active = false;
+
+    activeColour = colours.white;
+    activeBackgroundColour = colours.cyan;
 }
+
+--[[
+    @constructor
+    @desc Registers properties used by this class with the theme handler if the object mixes in 'MThemeable'
+]]
+function MActivatable:MActivatable()
+    if Titanium.mixesIn( self, "MThemeable" ) then
+        self:register( "active", "activeColour", "activeBackgroundColour" )
+    end
+end
 
 --[[
     @instance
@@ -18,3 +31,10 @@ function MActivatable:setActive( active )
     raw.active = active
     self.changed = true
 end
+
+configureConstructor {
+    argumentTypes = { active = "boolean", activeColour = "colour", activeBackgroundColour = "colour" }
+} alias {
+    activeColor = "activeColour",
+    activeBackgroundColor = "activeBackgroundColour"
+}

@@ -71,13 +71,12 @@ function XML:parse()
             elseif token.type == "XML_ATTRIBUTE" then
                 local next = self:stepForward()
 
-                if next.type ~= "XML_ASSIGNMENT" then
-                    self:throw("Unexpected "..next.type.." token. Expected XML_ASSIGNMENT (=) to complete attribute ("..token.value..") definition", next)
-                elseif next.value ~= "=" then
-                    self:throw("Unexpected XML_ASSIGNMENT. Invalid symbol ("..next.value..")", next)
+                if next.type == "XML_ASSIGNMENT" then
+                    settingAttribute = token.value
+                else
+                    top.arguments[ token.value ] = true
+                    self.position = self.position - 1
                 end
-
-                settingAttribute = token.value
             elseif token.type == "XML_CONTENT" then
                 if not top.type then
                     self:throw("Unexpected XML_CONTENT. Invalid content: "..token.value)
@@ -126,5 +125,38 @@ end
 function XML:throw( e, token )
     local token = token or self:getCurrentToken()
     self.exception = "XML Parse Error. Line "..token.line..", char "..token.char .. ": "..e
-    error( self.exception )
+    return error( self.exception, 2 )
+end
+
+--[[
+    @static
+    @desc When lexing the XML arguments they are all stored as strings as a result of the string operations to find tokens.
+          This function converts a value to the type given (#2)
+    @param <var - argumentValue>, <string - desiredType>
+    @return <desiredType* - value>
+
+    *Note: desiredType is passed as type string, however the return is the value type defined inside the string. eg: desiredType: "number" will return a number, not a string.
+]]
+function XML.static.convertArgType( argumentValue, desiredType )
+    local vType = type( argumentValue )
+
+    if not desiredType or not argumentValue or vType == desiredType then
+        return argumentValue
+    end
+
+    if desiredType == "string" then
+        return tostring( argumentValue )
+    elseif desiredType == "number" then
+        return tonumber( argumentValue ) or error( "Failed to cast argument to number. Value: "..tostring( argumentValue ).." is not a valid number" )
+    elseif desiredType == "boolean" then
+        if argumentValue == "true" then return true
+        elseif argumentValue == "false" then return false
+        else
+            return error( "Failed to cast argument to boolean. Value: "..tostring( argumentValue ).." is not a valid boolean (true or false)" )
+        end
+    elseif desiredType == "colour" or desiredType == "color" then
+        return tonumber( argumentValue ) or colours[ argumentValue ] or colors[ argumentValue ] or error( "Failed to cast argument to colour (number). Value: "..tostring( argumentValue ).." is not a valid colour" )
+    else
+        return error( "Failed to cast argument. Unknown target type '"..tostring( desiredType ).."'" )
+    end
 end

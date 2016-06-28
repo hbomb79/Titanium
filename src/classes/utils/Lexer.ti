@@ -16,6 +16,7 @@ class Lexer {
     tokens = {};
 
     openTag = false;
+    definingAttribute = false;
     currentAttribute = false;
 
     line = 1;
@@ -128,7 +129,7 @@ end
 ]]
 function Lexer:tokenize()
     self:trimStream()
-    local stream, openTag, currentAttribute = self.stream, self.openTag, self.currentAttribute
+    local stream, openTag, currentAttribute, definingAttribute = self.stream, self.openTag, self.currentAttribute, self.definingAttribute
     local first = stream:sub( 1, 1 )
 
     if stream:find "^<(%w+)" then
@@ -142,10 +143,11 @@ function Lexer:tokenize()
         self:consume( 2 )
         self.openTag = false
     elseif openTag and stream:find "^%w+" then
-        self:pushToken({type = currentAttribute and "XML_ATTRIBUTE_VALUE" or "XML_ATTRIBUTE", value = self:consumePattern "^%w+"})
+        self:pushToken({type = definingAttribute and "XML_ATTRIBUTE_VALUE" or "XML_ATTRIBUTE", value = self:consumePattern "^%w+"})
 
-        if not currentAttribute then
+        if not definingAttribute then
             self.currentAttribute = true
+            return
         end
     elseif not openTag and stream:find "^([^<]+)" then
         local content = self:consumePattern "^([^<]+)"
@@ -158,9 +160,13 @@ function Lexer:tokenize()
         self:pushToken({type = "XML_ASSIGNMENT", value = "="})
         self:consume( 1 )
 
+        if currentAttribute then
+            self.definingAttribute = true
+        end
+
         return
     elseif first == "'" or first == "\"" then
-        self:pushToken({type = currentAttribute and "XML_STRING_ATTRIBUTE_VALUE" or "XML_STRING", value = self:consumeString( first )})
+        self:pushToken({type = definingAttribute and "XML_STRING_ATTRIBUTE_VALUE" or "XML_STRING", value = self:consumeString( first )})
     elseif first == ">" then
         self:pushToken({type = "XML_CLOSE"})
         self.openTag = false
@@ -169,7 +175,8 @@ function Lexer:tokenize()
         self:throw("Unexpected block '"..stream:match("(.-)%s").."'")
     end
 
-    if currentAttribute then self.currentAttribute = false end
+    if self.currentAttribute then self.currentAttribute = false end
+    if self.definingAttribute then self.definingAttribute = false end
 end
 
 --[[

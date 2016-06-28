@@ -32,11 +32,11 @@ function Thread:handle( ... )
     if tEvents then
         if not cFilter or ( eMain:is( cFilter ) or eMain:is( "terminate" ) ) then
             ok, filter = coroutine.resume( co, eMain )
-        end
+        else return end
     else
         if not cFilter or ( eMain == cFilter or eMain == "terminate" ) then
             ok, filter = coroutine.resume( co, ... )
-        end
+        else return end
     end
 
     if ok then
@@ -47,6 +47,7 @@ function Thread:handle( ... )
         self.filter = filter
     else
         self.exception = filter
+        self.running = false
     end
 end
 

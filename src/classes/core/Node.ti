@@ -4,7 +4,7 @@
     Objects such as labels, buttons and text inputs are nodes.
 --]]
 
-abstract class Node extends Component {
+abstract class Node extends Component mixin MThemeable {
     static = {
         eventMatrix = {
             mouse_click = "onMouseClick",
@@ -32,8 +32,6 @@ abstract class Node extends Component {
 
     changed = true;
     parent = false;
-
-    __node = true;
 }
 
 --[[
@@ -41,7 +39,17 @@ abstract class Node extends Component {
     @desc Creates a NodeCanvas (bound to self) and stores it inside of `self.canvas`. This canvas is drawn to the parents canvas at draw time.
 ]]
 function Node:__init__()
+    self:register( "X", "Y", "colour", "backgroundColour", "enabled", "visible" )
+
     self.raw.canvas = NodeCanvas( self )
+end
+
+--[[
+    @constructor
+    @desc Finishes construction by hooking the theme manager into the node.
+]]
+function Node:__postInit__()
+    self:hook()
 end
 
 --[[
@@ -120,3 +128,7 @@ function Node:apply( template, weak )
     template:applyTo( self, weak )
     return self
 end
+
+configureConstructor {
+    argumentTypes = { enabled = "boolean", visible = "boolean" }
+}

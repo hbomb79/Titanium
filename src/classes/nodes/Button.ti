@@ -4,9 +4,6 @@
 ]]
 
 class Button extends Node mixin MTextDisplay mixin MActivatable {
-    activeColour = colours.white;
-    activeBackgroundColour = colours.cyan;
-
     allowMouse = true;
 }
 
@@ -18,6 +15,8 @@ class Button extends Node mixin MTextDisplay mixin MActivatable {
 function Button:__init__( ... )
     self:resolve( ... )
     self:super()
+
+    self:register("width", "height")
 end
 
 --[[
@@ -89,9 +88,5 @@ end
 
 configureConstructor {
     orderedArguments = { "text" },
-    requiredArguments = { "text" },
-    argumentTypes = { text = "string", activeColour = "number", activeBackgroundColour = "number" }
-} alias {
-    activeColor = "activeColour",
-    activeBackgroundColor = "activeBackgroundColour"
+    requiredArguments = { "text" }
 }

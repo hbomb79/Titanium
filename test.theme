@@ -1,0 +1,23 @@
+<Label class="sub">
+    <colour>lightGrey</colour>
+</Label>
+
+<Label class="header">
+    <colour>cyan</colour>
+</Label>
+
+<Button>
+    <backgroundColour>cyan</backgroundColour>
+    <activeBackgroundColour>lightBlue</activeBackgroundColour>
+    <colour>white</colour>
+    <verticalAlign>centre</verticalAlign>
+    <horizontalAlign>centre</horizontalAlign>
+</Button>
+
+<RadioButton>
+    <backgroundColour>128</backgroundColour>
+    <activeBackgroundColour>256</activeBackgroundColour>
+
+    <toggledBackgroundColour>cyan</toggledBackgroundColour>
+    <toggledColour>white</toggledColour>
+</RadioButton>

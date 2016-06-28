@@ -1,0 +1,87 @@
+--[[
+    The MThemeManager mixin should be used by classes that want to manage objects which are themeable, the main example being the 'Application' class.
+]]
+
+abstract class MThemeManager {
+    themes = {}
+}
+
+--[[
+    @instance
+    @desc Adds the given theme into this objects `themes` table
+    @param <Theme Instance - theme>
+]]
+function MThemeManager:addTheme( theme )
+    self:removeTheme( theme )
+    table.insert( self.themes, theme )
+
+    self:update()
+end
+
+--[[
+    @instance
+    @desc Removes the given theme from this objects `themes` table. Returns true if a theme was removed, false otherwise.
+    @param <Theme Instance - theme>
+    @return <boolean - success>
+]]
+function MThemeManager:removeTheme( theme )
+    local themes = self.themes
+    for i = 1, #themes do
+        if themes[ i ] == theme then
+            table.remove( themes, i )
+            self:update()
+
+            return true
+        end
+    end
+end
+
+function MThemeManager:update( target )
+    local target = target or self.nodes
+    for i = 1, #target do target[ i ]:onThemeUpdate() end
+end
+
+--[[
+    @instance
+    @desc Returns the value set either directly or via themes managed by this object (self)
+    @param <Class Instance - object>, <string - target>
+    @return <var* - value>
+]]
+function MThemeManager:fetchValue( object, target )
+    local themes, value, requireImportant = self.themes
+    if object.mainValues[ target ] then
+        value = object.mainValues[ target ]
+        requireImportant = true
+    end
+
+    local objectClasses = next( object.classes ) and object.classes or false
+    local rules, theme, rule, ruleClasses
+    for i = 1, #themes do
+        theme = themes[ i ]
+        rules = theme.rules[ object.__type ]
+        if rules then
+            for r = 1, #rules do
+                rule = rules[ r ]
+                ruleClasses = rule.classes
+
+                if rule.property == target and ( not requireImportant or ( requireImportant and rule.important ) ) then
+                    if ruleClasses and objectClasses then
+                        local allow = true
+                        for x = 1, #ruleClasses do
+                            if not objectClasses[ ruleClasses[ x ] ] then
+                                allow = false
+                                break
+                            end
+                        end
+
+                        if allow then value = rule.value end
+                    elseif not ruleClasses then
+                        value = rule.value
+                    end
+                end
+            end
+        end
+    end
+
+    return value
+end

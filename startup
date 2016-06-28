@@ -1,67 +1,23 @@
 dofile "bin/make.lua" -- Build an on-the-fly version of Titanium (un-minified)
 dofile "build/titanium.lua" -- Run the compiled Titanium script
 
-Manager = Application()
-Manager.backgroundColour = 1
-Manager.colour = 128
-
-local radio_button = Template({
-    backgroundColour = 256;
-    colour = colours.white;
-
-    activeBackgroundColour = 128;
-    activeColour = colours.white;
-
-    toggledBackgroundColour = colours.cyan;
-    toggledColour = colours.white;
-})
-local sub_header = Template({
-    colour = 256
-})
-local main_button = Template({
-    horizontalAlign = "centre";
-    verticalAlign = "centre";
-    backgroundColour = 128;
-    color = 256;
+local terminalWidth, terminalHeight = term.getSize()
+Manager = Application( 1, 1, terminalWidth, terminalHeight, {
+    colour = 128,
+    backgroundColour = 1,
+    terminatable = true
 })
 
--- Header
-Manager:addNode( Label "Test Application" )
-Manager:addNode( Label("Titanium", 1, 2, { colour = 256 }) )
+Manager:addTheme( Theme.fromFile("test", "test.theme") )
+Manager:importFromTML "test.tml"
 
--- Body
-Manager:addNode( Label("Is this awesome?", 2, 5, {colour = colours.cyan}) )
-
-local yes_radio = Manager + RadioButton( 2, 6, "test" ):apply( radio_button )
-local no_radio = Manager + RadioButton( 9, 6, "test" ):apply( radio_button )
-
-local yes_label = Manager + Label("Yup", 4, 6)--:apply( sub_header )
-local no_label = Manager + Label("Nah", 11, 6)--:apply( sub_header )
-
-yes_label.labelFor = yes_radio
-no_label.labelFor = no_radio
-
-local allow_exit = Manager + Checkbox( 12, 10 ):apply( radio_button )
-local allow_exit_label = Manager + Label("Allow exit", 2, 10)
-
-allow_exit_label.labelFor = allow_exit
-
-local exit_button = Manager + Button( "Exit", 2, 11, 6, 3 ):apply( main_button )
-exit_button.onTrigger = function()
-    if allow_exit.toggled then
+Manager:getNode "exit_button".onTrigger = function( self )
+    if RadioButton.getValue "rating" == "yes" then
         Manager:stop()
     end
 end
 
-testThread = Manager + Thread( function()
-    while true do
-        local e = { os.pullEvent("char") }
-        if e[2] == "r" then
-            os.reboot()
-        elseif e[2] == "s" then
-            Manager:stop()
-        end
-    end
-end )
+Manager:getNode "yes_label".labelFor = Manager:getNode "yes_rating"
+Manager:getNode "no_label".labelFor = Manager:getNode "no_rating"
 
 Manager:start()

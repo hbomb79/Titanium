@@ -1,0 +1,132 @@
+--[[
+    The MThemeable mixin facilitates the use of themes on objects.
+    It allows properties to be registered allowing the object to monitor property changes and apply them correctly.
+
+    The mixin stores all properties set directly on the object in `mainValues`. These values are prioritised over values from themes unless the theme rule is designated as 'important'.
+]]
+
+abstract class MThemeable {
+    static = { isUpdating = false };
+    hooked = false;
+
+    properties = {};
+    classes = {};
+
+    mainValues = {};
+    setterBackup = {};
+}
+
+--[[
+    @instance
+    @desc Registers the properties provided. These properties are monitored for changes.
+    @param <string - property>, ...
+]]
+function MThemeable:register( ... )
+    if self.hooked then return error "Cannot register new properties while hooked. Unhook the theme handler before registering new properties" end
+
+    local args = { ... }
+    for i = 1, #args do
+        self.properties[ args[ i ] ] = true
+    end
+end
+
+--[[
+    @instance
+    @desc Unregisters properties provided
+    @param <string - property>, ...
+]]
+function MThemeable:unregister( ... )
+    if self.hooked then return error "Cannot unregister properties while hooked. Unhook the theme handler before unregistering properties" end
+
+    local args = { ... }
+    for i = 1, #args do
+        self.properties[ args[ i ] ] = nil
+    end
+end
+
+--[[
+    @instance
+    @desc Hooks into the instance by changing setters of registered properties so that the theme manager is notified of the change.
+]]
+function MThemeable:hook()
+    if self.hooked then return error "Failed to hook theme handler. Already hooked" end
+
+    for property in pairs( self.properties ) do
+        local setterName, setterFn = Titanium.getSetterName( property )
+        if self:can( setterName ) then
+            self.setterBackup[ property ] = self.raw[ setterName ]
+            setterFn = self.raw[ setterName ]
+        end
+
+        self[ setterName ] = function( instance, value )
+            local newValue
+            if MThemeable.isUpdating then
+                newValue = value
+            else
+                self.mainValues[ property ] = value
+                newValue = self.application:fetchValue( self, property )
+            end
+
+            if setterFn then
+                setterFn( self, instance, newValue )
+            else self[ property ] = newValue end
+        end
+
+        if self.__resolved[ property ] then self.mainValues[ property ] = self[ property ] end
+    end
+    self.hooked = true
+end
+
+--[[
+    @instance
+    @desc Reverses the hooking process by restoring the old setters (stored on hook)
+]]
+function MThemeable:unhook()
+    if not self.hooked then return error "Failed to unhook theme handler. Already unhooked" end
+
+    local setters, setter = self.setterBackup
+    for property in pairs( self.properties ) do
+        setter = setters[ property ]
+        if setter then self.raw[ Titanium.getSetterName( property ) ] = setter end
+    end
+
+    self.setterBackup, self.hooked = {}, false
+end
+
+--[[
+    @instance
+    @desc Fetches the value from the application by checking themes for valid rules. If a theme value is found it is applied directly (this does trigger the setter)
+    @param <string - property>
+]]
+function MThemeable:updateProperty( property )
+    if not self.properties[ property ] then
+        return error( "Failed to update property '"..tostring( property ).."'. Property not registered" )
+    end
+
+    local val = self.application:fetchValue( self, property )
+    if val then
+        MThemeable.static.isUpdating = true
+        self[ property ] = val
+        MThemeable.static.isUpdating = false
+    end
+end
+
+--[[
+    @instance
+    @desc Updates each registered property
+]]
+function MThemeable:updateProperties()
+    for property in pairs( self.properties ) do self:updateProperty( property ) end
+end
+
+function MThemeable:addClass( class )
+    self.classes[ class ] = true
+end
+
+function MThemeable:removeClass( class )
+    self.classes[ class ] = nil
+end
+
+function MThemeable:onThemeUpdate()
+    self:updateProperties()
+end

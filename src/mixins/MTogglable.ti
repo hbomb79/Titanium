@@ -4,7 +4,20 @@
 
 abstract class MTogglable {
     toggled = false;
+
+    toggledColour = colours.red;
+    toggledBackgroundColour = colours.white;
 }
+
+--[[
+    @constructor
+    @desc Registers properties used by this class with the theme handler if the object mixes in 'MThemeable'
+]]
+function MTogglable:MTogglable()
+    if Titanium.mixesIn( self, "MThemeable" ) then
+        self:register("toggled", "toggledColour", "toggledBackgroundColour")
+    end
+end
 
 --[[
     @instance
@@ -29,3 +42,14 @@ function MTogglable:setToggled( toggled, ... )
         self.changed = true
     end
 end
+
+configureConstructor {
+    argumentTypes = {
+        toggled = "boolean",
+        toggledColour = "colour",
+        toggledBackgroundColour = "colour"
+    }
+} alias {
+    toggledColor = "toggledColour",
+    toggledBackgroundColor = "toggledBackgroundColour"
+}

@@ -6,14 +6,6 @@ class Checkbox extends Node mixin MActivatable mixin MTogglable {
     checkedMark = "x";
     uncheckedMark = " ";
 
-    activeColour = colours.white;
-    activeBackgroundColour = colours.red;
-
-    toggledColour = colours.red;
-    toggledBackgroundColour = colours.white;
-
-    toggled = false;
-
     allowMouse = true;
 }
 
@@ -25,6 +17,8 @@ class Checkbox extends Node mixin MActivatable mixin MTogglable {
 function Checkbox:__init__( ... )
     self:resolve( ... )
     self:super()
+
+    self:register("checkedMark", "uncheckedMark")
 end
 
 --[[
@@ -88,5 +82,9 @@ end
 
 configureConstructor( {
     orderedArguments = { "X", "Y" },
-    requiredArguments = { "X", "Y" }
+    requiredArguments = { "X", "Y" },
+    argumentTypes = {
+        checkedMark = "string",
+        uncheckedMark = "string"
+    }
 }, true, true )

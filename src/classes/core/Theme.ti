@@ -1,0 +1,91 @@
+--[[
+    The Theme class is a basic class designed to hold styling rules.
+
+    Themes are added to objects using the MThemeManager mixin (or a custom implementation). These themes then dictate the appearance of objects that utilize 'MThemeable'.
+]]
+
+class Theme {
+    name = false;
+
+    rules = {};
+}
+
+--[[
+    @constructor
+    @desc Constructs the Theme by setting the name.
+    @param <string - name>, [string - source]
+]]
+function Theme:__init__( name, source )
+    self.name = type( name ) == "string" and name or error("Failed to initialise Theme. Name '"..tostring( name ).."' is invalid, expected string.")
+
+    if source then self.rules = Theme.parse( source ) end
+end
+
+--[[
+    @static
+    @desc Parses XML source code by lexing/parsing it into an XML tree. The XML is then parsed into theme rules
+    @param <string - source>
+    @return <table - rules>
+]]
+function Theme.static.parse( source )
+    local tree, totalRules = XML( source ).tree, {}
+
+    if tree then
+        local ruleParent
+        for i = 1, #tree do
+            ruleParent = tree[ i ]
+
+            if type( totalRules[ ruleParent.type ] ) ~= "table" then
+                totalRules[ ruleParent.type ] = {}
+            end
+
+            if not Titanium.getClass( ruleParent.type ) then
+                return error( "Failed to parse XML into theme data. Class '"..ruleParent.type.."' doesn't exist" )
+            end
+            local parentReg = Titanium.getClass( ruleParent.type ).getRegistry()
+            local alias, argumentTypes = parentReg.alias, parentReg.constructor and parentReg.constructor.argumentTypes or {}
+
+            local parentClasses = (function( classString ) local classes = {}; for className in classString:gmatch("%w+") do classes[ #classes + 1 ] = className end return #classes > 0 and classes or false end)( ruleParent.arguments["class"] or "" )
+            local rules = ruleParent.children
+            if rules then
+                local rule
+                for r = 1, #rules do
+                    rule = rules[ r ]
+
+                    if rule.children then
+                        return error( "Invalid XML. Found nested theme definition inside of '"..rule.type.."' rule for object '"..ruleParent.type.."'")
+                    elseif not rule.content then
+                        return error( "Invalid XML. Rule '"..rule.type.."' for object '"..ruleParent.type.."' contains no property value (XML_CONTENT)." )
+                    end
+
+                    table.insert( totalRules[ ruleParent.type ], {
+                        property = rule.type,
+                        value = XML.convertArgType( rule.content, argumentTypes[ alias[ rule.type ] or rule.type ] ),
+                        important = rule.arguments.important,
+                        classes = parentClasses
+                    })
+                end
+            end
+        end
+    end
+
+    return totalRules
+end
+
+--[[
+    @static
+    @desc Creates a Theme instance with the name passed and the source as the contents of the file at 'path'.
+    @param <string - name>, <string - path>
+    @return <Theme Instance - Theme>
+]]
+function Theme.static.fromFile( name, path )
+    if not fs.exists( path ) then
+        return error( "Path '"..tostring( path ).."' cannot be found" )
+    end
+
+    local h = fs.open( path, "r" )
+    local content = h.readAll()
+    h.close()
+
+    return Theme( name, content )
+end

@@ -234,7 +234,7 @@ Titanium.setClassLoader(function( name )
 end)
 
 -- Load any files specified by our config file
-for i = 1, #preLoad do loadFile( preLoad[ i ] ) end
+for i = 1, #preLoad do loadFile( preLoad[ i ], not scriptFiles[ preLoad[ i ] ] ) end
 
 -- Load all class files
 for name in pairs( files ) do if not scriptFiles[ name ] then

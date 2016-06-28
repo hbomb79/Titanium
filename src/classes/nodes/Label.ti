@@ -17,6 +17,7 @@ function Label:__init__( ... )
     self.raw.width = #self.text
 
     self:super()
+    self:register "text"
 end
 
 --[[

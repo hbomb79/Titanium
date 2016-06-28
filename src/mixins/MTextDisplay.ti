@@ -20,6 +20,16 @@ abstract class MTextDisplay {
 }
 
 --[[
+    @constructor
+    @desc Registers properties used by this class with the theme handler if the object mixes in 'MThemeable'
+]]
+function MTextDisplay:MTextDisplay()
+    if Titanium.mixesIn( self, "MThemeable" ) then
+        self:register( "text", "verticalAlign", "horizontalAlign", "verticalPadding", "horizontalPadding" )
+    end
+end
+
+--[[
     @instance
     @desc Generates a table of text lines by wrapping on newlines or when the line gets too long.
 ]]
@@ -81,3 +91,15 @@ function MTextDisplay:drawText( bg, tc )
         canvas:drawTextLine( xOffset + 1, i + yOffset, line, tc, bg )
     end
 end
+
+configureConstructor {
+    argumentTypes = {
+        verticalPadding = "number",
+        horizontalPadding = "number",
+
+        verticalAlign = "string",
+        horizontalAlign = "string",
+
+        text = "string"
+    }
+}

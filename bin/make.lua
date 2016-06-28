@@ -38,7 +38,7 @@ if fs.exists( "src/loadFirst.cfg" ) then
     local h = io.open( "src/loadFirst.cfg", "r" )
 
     for name in h:lines() do
-        preLoadFiles[ #preLoadFiles ] = name
+        preLoadFiles[ #preLoadFiles + 1 ] = name
         print( "Assigning file '"..name.."' as preload" )
     end
 
@@ -105,7 +105,7 @@ Titanium.setClassLoader(function( name )
 end)
 
 -- Load any files specified by our config file
-for i = 1, #preLoad do loadFile( preLoad[ i ] ) end
+for i = 1, #preLoad do loadFile( preLoad[ i ], not scriptFiles[ preLoad[ i ] ] ) end
 
 -- Load all class files
 for name in pairs( files ) do

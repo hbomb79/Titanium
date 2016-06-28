@@ -49,7 +49,7 @@ end
 
 configureConstructor {
     orderedArguments = { "X", "Y", "width", "height" },
-    argumentTypes = { X = "number", Y = "number", width = "number", height = "number", colour = "number", backgroundColour = "number" }
+    argumentTypes = { X = "number", Y = "number", width = "number", height = "number", colour = "colour", backgroundColour = "colour" }
 } alias {
     color = "colour",
     backgroundColor = "backgroundColour"

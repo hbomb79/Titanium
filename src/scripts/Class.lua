@@ -4,7 +4,7 @@
     Copyright (c) Harry Felton 2016
 ]]
 
-classes, classRegistry, currentClass, currentRegistry = {}, {}
+local classes, classRegistry, currentClass, currentRegistry = {}, {}
 local reserved = {
     static = true,
     super = true,
@@ -26,6 +26,9 @@ local setters = setmetatable( {}, { __index = function( self, name )
 
     return self[ name ]
 end })
+
+local isNumber = {}
+for i = 0, 15 do isNumber[2 ^ i] = true end
 
 --[[ Constants ]]--
 local ERROR_BUG = "\nPlease report this via GitHub @ hbomb79/Titanium"
@@ -225,7 +228,7 @@ local function compileSupers( targets )
                     end
                 end
             end
-            function matrixMt:__call( ... )
+            function matrixMt:__call( instance, ... )
                 local init = self.__init__
                 if type( init ) == "function" then
                     return init( self, ... )
@@ -248,8 +251,24 @@ local function compileSupers( targets )
         return matrix
     end
 end
+local function mergeValues( a, b )
+    if type( a ) == "table" and type( b ) == "table" then
+        local merged = deepCopy( a ) or throw( "Invalid base table for merging." )
+
+        if #b == 0 and next( b ) then
+            for key, value in pairs( b ) do merged[ key ] = value end
+        elseif #b > 0 then
+            for i = 1, #b do table.insert( merged, i, b[ i ] ) end
+        end
+
+        return merged
+    end
+
+    return b == nil and a or b
+end
+local constructorTargets = { "orderedArguments", "requiredArguments", "argumentTypes", "useProxy" }
 local function compileConstructor( superReg )
-    local constructorConfiguration, constructorKeys = {}, { "orderedArguments", "requiredArguments", "argumentTypes", "useProxy" }
+    local constructorConfiguration = {}
 
     local superConfig, currentConfig = superReg.constructor, currentRegistry.constructor
     if not currentConfig and superConfig then
@@ -261,25 +280,9 @@ local function compileConstructor( superReg )
         return
     end
 
-    local function mergeValues( a, b )
-        if type( a ) == "table" and type( b ) == "table" then
-            local merged = deepCopy( a ) or throw( "Invalid base table for merging." )
-
-            if #b == 0 and next( b ) then
-                for key, value in pairs( b ) do merged[ key ] = value end
-            elseif #b > 0 then
-                for i = 1, #b do table.insert( merged, i, b[ i ] ) end
-            end
-
-            return merged
-        end
-
-        return b == nil and a or b -- if b is set return it as it overrides a
-    end
-
     local constructorKey
-    for i = 1, #constructorKeys do
-        constructorKey = constructorKeys[ i ]
+    for i = 1, #constructorTargets do
+        constructorKey = constructorTargets[ i ]
         if not ( ( constructorKey == "orderedArguments" and currentConfig.clearOrdered ) or ( constructorKey == "requiredArguments" and currentConfig.clearRequired ) ) then
             currentConfig[ constructorKey ] = mergeValues( superConfig[ constructorKey ], currentConfig[ constructorKey ] )
         end
@@ -290,10 +293,12 @@ local function compileCurrent()
         "Cannot compile current class.",
         "No class is being built at time of call. Declare a class be invoking 'compileCurrent'"
     )
-    local ownedKeys, ownedStatics = currentRegistry.ownedKeys, currentRegistry.ownedStatics
+    local ownedKeys, ownedStatics, allMixins = currentRegistry.ownedKeys, currentRegistry.ownedStatics, currentRegistry.allMixins
 
     -- Mixins
+    local cConstructor = currentRegistry.constructor
     for target in pairs( currentRegistry.mixins ) do
+        allMixins[ target ] = true
         local reg = classRegistry[ target ]
 
         local t = { { reg.keys, currentRegistry.keys, ownedKeys }, { reg.static, currentRegistry.static, ownedStatics }, { reg.alias, currentRegistry.alias, currentRegistry.alias } }
@@ -303,6 +308,18 @@ local function compileCurrent()
                 if not owned[ key ] then
                     target[ key ] = value
                 end
+            end
+        end
+
+        local constructor = reg.constructor
+        if constructor then
+            if constructor.clearOrdered then cConstructor.orderedArguments = nil end
+            if constructor.clearRequired then cConstructor.requiredArguments = nil end
+
+            local target
+            for i = 1, #constructorTargets do
+                target = constructorTargets[ i ]
+                cConstructor[ target ] = mergeValues( cConstructor[ target ], constructor[ target ] )
             end
         end
     end
@@ -329,6 +346,10 @@ local function compileCurrent()
             if currentAlias[ alias ] == nil then
                 currentAlias[ alias ] = redirect
             end
+        end
+
+        for mName in pairs( classRegistry[ supers[ 1 ].__type ].allMixins ) do
+            allMixins[ mName ] = true
         end
 
         compileConstructor( classRegistry[ supers[ 1 ].__type ] )
@@ -460,6 +481,7 @@ local function spawn( target, ... )
     end
 
     local resolved
+    local resolvedArguments = {}
     function instanceObj:resolve( ... )
         if resolved then return false end
 
@@ -486,11 +508,14 @@ local function spawn( target, ... )
         end
 
         local function handleArgument( position, name, value )
-            if configTypes[ name ] and type( value ) ~= configTypes[ name ] then
+            local desiredType = configTypes[ name ]
+            desiredType = (desiredType and desiredType == "colour" or desiredType == "color") and "number" or desiredType --TODO: Check if number is valid (maybe?)
+
+            if desiredType and type( value ) ~= desiredType then
                 return throw("Failed to resolve '"..tostring( target ).."' constructor arguments. Invalid type for argument '"..name.."'. Type "..configTypes[ name ].." expected, "..type( value ).." was received.")
             end
 
-            argumentsRequired[ name ] = nil
+            resolvedArguments[ name ], argumentsRequired[ name ] = true, nil
             if proxyAll or proxyMatrix[ name ] then
                 self[ name ] = value
             else
@@ -538,6 +563,7 @@ local function spawn( target, ... )
         resolved = true
         return true
     end
+    instanceObj.__resolved = resolvedArguments
 
     function instanceObj:can( method )
         return wrappers[ method ] or false
@@ -569,6 +595,12 @@ local function spawn( target, ... )
 
     setmetatable( instanceObj, instanceMt )
     if type( instanceObj.__init__ ) == "function" then instanceObj:__init__( ... ) end
+
+    for mName in pairs( classReg.allMixins ) do
+        if type( instanceObj[ mName ] ) == "function" then instanceObj[ mName ]( instanceObj ) end
+    end
+
+    if type( instanceObj.__postInit__ ) == "function" then instanceObj:__postInit__( ... ) end
 
     return instanceObj
 end
@@ -618,6 +650,7 @@ function class( name )
         initialKeys = {},
 
         mixins = {},
+        allMixins = {},
         alias = {},
 
         constructor = false,
@@ -675,6 +708,8 @@ function class( name )
     classObj.compile = compileCurrent
 
     function classObj:isCompiled() return classReg.compiled end
+
+    function classObj:getRegistry() return classReg end
 
     setmetatable( classObj, classMt )
 
@@ -785,6 +820,10 @@ end
 --[[ Class Library ]]--
 Titanium = {}
 
+function Titanium.getGetterName( property ) return getters[ property ] end
+
+function Titanium.getSetterName( property ) return setters[ property ] end
+
 function Titanium.getClass( name )
     return classes[ name ]
 end
@@ -809,6 +848,12 @@ function Titanium.typeOf( target, classType, instance )
     local targetReg = classRegistry[ target.__type ]
 
     return targetReg.type == classType or ( targetReg.super and Titanium.typeOf( classes[ targetReg.super.target ], classType ) ) or false
+end
+
+function Titanium.mixesIn( target, mixinName )
+    if not Titanium.isClass( target ) then return false end
+
+    return classRegistry[ target.__type ].allMixins[ mixinName ]
 end
 
 function Titanium.setClassLoader( fn )

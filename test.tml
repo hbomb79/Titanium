@@ -1,0 +1,11 @@
+<Label X=2 Y=2 text="Titanium" class="header"/>
+<Label X=2 Y=3 text="Test Application" class="sub"/>
+
+<Label X=41 Y=15 text="Allow Exit"/>
+<Label X=41 Y=16 text="Yes" class="sub" id="yes_label"/>
+<RadioButton value="yes" X=45 Y=16 group="rating" id="yes_rating"/>
+
+<Label X=47 Y=16 text="No" class="sub" id="no_label"/>
+<RadioButton value="no" X=50 Y=16 group="rating" id="no_rating"/>
+
+<Button text="Exit" X=41 Y=18 width=10 id="exit_button"/>

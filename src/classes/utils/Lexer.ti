@@ -96,27 +96,21 @@ function Lexer:consumeString( opener )
     local stream, closingIndex = self.stream
 
     if stream:find( opener, 2 ) then
-        if stream:find( "\\", 2 ) then
-            local str, c, escaped = {}
-            for i = 2, #stream do
-                c = stream:sub( i, i )
+        local str, c, escaped = {}
+        for i = 2, #stream do
+            c = stream:sub( i, i )
 
-                if escaped then
-                    str[ #str + 1 ] = Lexer.escapeChars[ c ] or c
-                    escaped = false
-                elseif c == "\\" then
-                    escaped = true
-                elseif c == opener then
-                    self:consume( i )
-                    return table.concat( str )
-                else
-                    str[ #str + 1 ] = c
-                end
+            if escaped then
+                str[ #str + 1 ] = Lexer.escapeChars[ c ] or c
+                escaped = false
+            elseif c == "\\" then
+                escaped = true
+            elseif c == opener then
+                self:consume( i )
+                return table.concat( str )
+            else
+                str[ #str + 1 ] = c
             end
-        else
-            local closingIndex = stream:find( opener, 2 )
-            self:consume( closingIndex )
-            return stream:sub( 2, closingIndex - 1 )
         end
     end
 

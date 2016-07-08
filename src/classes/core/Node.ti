@@ -120,6 +120,23 @@ function Node:handle( eventObj )
     end
 end
 
+--[[
+    @instance
+    @desc Returns the absolute X, Y position of a node rather than its position relative to it's parent.
+    @return <number - X>, <number - Y>
+]]
+function Node:getAbsolutePosition()
+    local parent, application = self.parent, self.application
+    if parent then
+        if parent == application then
+            return -1 + application.X + self.X, -1 + application.Y + self.Y
+        end
+
+        local pX, pY = self.parent:getAbsolutePosition()
+        return -1 + pX + self.X, -1 + pY + self.Y
+    else return self.X, self.Y end
+end
+
 configureConstructor {
     argumentTypes = { enabled = "boolean", visible = "boolean" }
 }

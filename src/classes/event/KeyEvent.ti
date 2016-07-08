@@ -1,0 +1,19 @@
+class KeyEvent {
+    main = "KEY";
+
+    sub = false;
+
+    keyCode = false;
+    keyName = false;
+}
+
+function KeyEvent:__init__( name, key, held, sub )
+    self.name = name
+    self.sub = sub or name == "key_up" and "UP" or "DOWN"
+    self.held = held
+
+    self.keyCode = key
+    self.keyName = keys.getName( key )
+
+    self.data = { name, key, held }
+end

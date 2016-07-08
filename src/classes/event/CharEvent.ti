@@ -1,0 +1,9 @@
+class CharEvent {
+    main = "CHAR";
+    char = false;
+}
+
+function CharEvent:__init__( name, char )
+    self.name = name
+    self.char = char
+end

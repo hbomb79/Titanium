@@ -57,7 +57,7 @@ function Button:draw()
     local raw = self.raw
     if raw.changed then
         local active = raw.active
-        raw.canvas:clear( active and raw.activeBackgroundColour, active and raw.activeColour )
+        raw.canvas:clear( active and raw.activeBackgroundColour )
         self:drawText( active and raw.activeBackgroundColour, active and raw.activeColour )
 
         raw.changed = false

@@ -6,6 +6,10 @@
     <colour>cyan</colour>
 </Label>
 
+<Label class="hasValue">
+    <colour important>128</colour>
+</Label>
+
 <Button>
     <backgroundColour>cyan</backgroundColour>
     <activeBackgroundColour>lightBlue</activeBackgroundColour>

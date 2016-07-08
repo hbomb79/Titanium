@@ -20,4 +20,19 @@ end
 Manager:getNode "yes_label".labelFor = Manager:getNode "yes_rating"
 Manager:getNode "no_label".labelFor = Manager:getNode "no_rating"
 
+local nameDisplay = Manager:getNode "name_display"
+Manager:getNode "name_input".onTrigger = function( self )
+    local value = self.value
+    if value == "" then nameDisplay:removeClass "hasValue" else nameDisplay:addClass "hasValue" end
+    nameDisplay:updateProperties()
+
+    if #value > 40 then
+        nameDisplay.text = value:sub( 1, 37 ).."..."
+    elseif value == "" then
+        nameDisplay.text = "Enter your name"
+    else
+        nameDisplay.text = value
+    end
+end
+
 Manager:start()

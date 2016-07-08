@@ -120,15 +120,6 @@ function Node:handle( eventObj )
     end
 end
 
-function Node:apply( template, weak )
-    if not Titanium.typeOf( template, "Template", true ) then
-        return error "Cannot apply template, invalid template passed"
-    end
-
-    template:applyTo( self, weak )
-    return self
-end
-
 configureConstructor {
     argumentTypes = { enabled = "boolean", visible = "boolean" }
 }

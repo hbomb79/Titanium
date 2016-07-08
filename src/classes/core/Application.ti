@@ -111,6 +111,27 @@ function Application:getNode( id, recursive )
     end
 end
 
+function Application:focusNode( node )
+    if not Titanium.typeOf( node, "Node", true ) then
+        return error "Failed to update application focused node. Invalid node object passed."
+    end
+
+    self:unfocusNode()
+    self.focusedNode = node
+
+    if node:can "onFocus" then node:onFocus( self ) end
+    node.changed = true
+end
+
+function Application:unfocusNode()
+    local node = self.focusedNode
+    if not node then return
+    elseif node:can "onUnfocus" then node:onUnfocus( self ) end
+    node.changed = true
+
+    self.focusedNode = nil
+end
+
 --[[
     @instance
     @desc Adds a new thread named 'name' running 'func'. This thread will receive events caught by the Application engine

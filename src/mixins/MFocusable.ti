@@ -1,0 +1,38 @@
+--[[
+    A focusable object is an object, that once 'focused' can function differently. Unlike 'activatable' objects, which while active appear differently.
+
+    An 'input' is a good example of a focusable node, it is activatable (while being clicked) but it also focusable (allows you to type after being focused).
+]]
+
+abstract class MFocusable {
+    focused = false;
+}
+
+function MFocusable:setFocused( focused )
+    local raw = self.raw
+    if raw.focused == focused then return end
+
+    if focused then self:focus() else self:unfocus() end
+    self.changed = true
+end
+
+function MFocusable:focus()
+    self.focused = true
+    if self.application then self.application:focusNode( self ) end
+end
+
+function MFocusable:unfocus()
+    self.focused = false
+    if self.application then self.application:unfocusNode( self ) end
+end
+
+configureConstructor {
+    argumentTypes = {
+        focusedBackgroundColour = "colour",
+        focusedColour = "colour",
+        focused = "boolead"
+    }
+} alias {
+    focusedColor = "focusedColour",
+    focusedBackgroundColor = "focusedBackgroundColour"
+}

@@ -1,0 +1,141 @@
+class Input extends Node mixin MActivatable mixin MFocusable {
+    position = 0;
+    value = "";
+
+    allowMouse = true;
+    allowKey = true;
+    allowChar = true;
+}
+
+--[[
+    @constructor
+    @desc Constructs the instance by resolving arguments and registering used properties
+]]
+function Input:__init__( ... )
+    self:resolve( ... )
+    self:register "width"
+
+    self:super()
+end
+
+--[[
+    @instance
+    @desc Draws the inputs background and text to the parent canvas
+]]
+function Input:draw()
+    local raw = self.raw
+    if raw.changed then
+        local canvas, position, width, value, col = raw.canvas, self.position, self.width, self.value, raw.active and raw.activeBackgroundColour or ( raw.focused and raw.focusedBackgroundColour )
+
+        canvas:clear( col )
+        canvas:drawTextLine( position >= width and width - position or 1, 1, self.value, 1, col )
+
+        raw.changed = false
+    end
+end
+
+--[[
+    @instance
+    @desc Sets the input to active if clicked on, sets active and focused to false if the mouse click was not on the input.
+    @param <MouseEvent - event>, <boolean - handled>, <boolean - within>
+]]
+function Input:onMouseClick( event, handled, within )
+    if within and not handled then
+        self.active = true
+    else
+        self.active = false
+        self.focused = false
+    end
+end
+
+--[[
+    @instance
+    @desc If the mouse up missed the input or the event was already handled, active and false are set to false.
+          If within and not handled and input is active focused is set to true. Active is set to false on all conditions.
+    @param <MouseEvent - event>, <boolean - handled>, <boolean - within>
+]]
+function Input:onMouseUp( event, handled, within )
+    if not within or handled then
+        self.focused = false
+    elseif within and not handled and self.active then
+        self.focused = true
+    end
+
+    self.active = false
+end
+
+--[[
+    @instance
+    @desc Catches char events and inserts the character pressed into the input's value.
+    @param <CharEvent - event>, <boolean - handled>
+]]
+function Input:onChar( event, handled )
+    if not self.focused or handled then return end
+
+    local value, position = self.value, self.position
+    self.value = value:sub( 1, position ) .. event.char .. value:sub( position + 1 )
+    self.changed = true
+    event.handled = true
+    self.position = self.position + 1
+end
+
+--[[
+    @instance
+    @desc Catches key down events and performs an action depending on the key pressed
+    @param <KeyEvent - event>, <boolean - handled>
+]]
+function Input:onKeyDown( event, handled )
+    if not self.focused or handled then return end
+
+    local value, position = self.value, self.position
+    local valueLen = #value
+    if event.sub == "DOWN" then
+        local key = event.keyName
+        if key == "backspace" then
+            if position > 0 then
+                self.value, self.position = value:sub( 1, position - 1 ) .. value:sub( position + 1 ), position - 1
+            end
+        elseif key == "delete" then
+            if position < valueLen then
+                self.value = value:sub( 1, position ) .. value:sub( position + 2 )
+            end
+        elseif key == "left" then
+            self.position, self.changed = math.max( 0, self.position - 1 ), true
+        elseif key == "right" then
+            self.position, self.changed = math.min( valueLen, self.position + 1 ), true
+        elseif key == "end" then
+            self.position, self.changed = valueLen, true
+        elseif key == "home" then
+            self.position, self.changed = 1, true
+        elseif key == "enter" then
+            if self:can "onTrigger" then self:onTrigger() end
+        end
+    end
+end
+
+function Input:setValue( val )
+    self.value = val
+    self.changed = true
+end
+
+--[[
+    @instance
+    @desc When called, returns the state of the caret, its position (absolute) and colour.
+    @return <boolean - caretEnabled>, <number - caretX>, <number - caretY>, <colour - caretColour>
+]]
+function Input:getCaretInfo()
+    local position, value, width = self.position, self.value, self.width
+    local sX, sY = self:getAbsolutePosition()
+
+    if position >= width then
+        return true, -1 + sX + width, sY, self.focusedColour
+    else
+        return true, sX + position, sY, self.focusedColour
+    end
+end
+
+
+configureConstructor({
+    orderedArguments = { "X", "Y", "width" },
+    argumentTypes = { value = "string", position = "number" }
+}, true)

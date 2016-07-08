@@ -13,12 +13,12 @@ abstract class Node extends Component mixin MThemeable {
             mouse_scroll = "onMouseScroll",
 
             key = "onKeyDown",
-            key_up = "onKeyUp"
+            key_up = "onKeyUp",
+            char = "onChar"
         },
         anyMatrix = {
             MOUSE = "onMouse",
-            KEY = "onKey",
-            CHAR = "onChar"
+            KEY = "onKey"
         }
     };
 

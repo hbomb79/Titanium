@@ -69,16 +69,17 @@ end
     **Note: Removed node will only be returned if a node was removed (and thus success 'true')
 ]]
 function Application:removeNode( target )
-    if not Titanium.typeOf( node, "Node", true ) then
+    local searchName = type( target ) == "string"
+
+    if not searchName and not Titanium.typeOf( target, "Node", true ) then
         return error( "Cannot perform search for node using target '"..tostring( target ).."' to remove." )
     end
 
-    local searchName = type( target ) == "string"
     local nodes, node, nodeName = self.nodes, nil
     for i = 1, #nodes do
         node = nodes[ i ]
 
-        if ( searchName and node.name == target ) or ( not searchName and node == target ) then
+        if ( searchName and node.id == target ) or ( not searchName and node == target ) then
             node.parent = nil
             node.application = nil
 

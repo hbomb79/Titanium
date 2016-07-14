@@ -103,11 +103,14 @@ function MThemeable:updateProperty( property )
         return error( "Failed to update property '"..tostring( property ).."'. Property not registered" )
     end
 
-    local val = self.application:fetchValue( self, property )
-    if val then
-        MThemeable.static.isUpdating = true
-        self[ property ] = val
-        MThemeable.static.isUpdating = false
+    local app = self.application
+    if app then
+        local val = app:fetchValue( self, property )
+        if val then
+            MThemeable.static.isUpdating = true
+            self[ property ] = val
+            MThemeable.static.isUpdating = false
+        end
     end
 end
 

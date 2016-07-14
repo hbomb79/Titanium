@@ -1,6 +1,18 @@
+--[[
+    The Input class provides the user with the ability to insert a single line of text.
+]]
+
 class Input extends Node mixin MActivatable mixin MFocusable {
     position = 0;
+    scroll = 0;
     value = "";
+
+    selection = false;
+    selectedColour = false;
+    selectedBackgroundColour = colours.lightBlue;
+
+    placeholder = false;
+    placeholderColour = 256;
 
     allowMouse = true;
     allowKey = true;
@@ -25,12 +37,38 @@ end
 function Input:draw()
     local raw = self.raw
     if raw.changed then
-        local canvas, position, width, value, col = raw.canvas, self.position, self.width, self.value, raw.active and raw.activeBackgroundColour or ( raw.focused and raw.focusedBackgroundColour )
-
+        local canvas, col = self.canvas, raw.focused and raw.focusedBackgroundColour or ( raw.active and raw.activeBackgroundColour )
         canvas:clear( col )
-        canvas:drawTextLine( position >= width and width - position or 1, 1, self.value, 1, col )
+
+        local canvas, position, width, value, selection = raw.canvas, self.position, self.width, self.value, self.selection
+
+        if self.focused or not self.placeholder or #value > 0 then
+            if self.selection then
+                local start, stop = selection < position and selection or position, selection > position and selection + 1 or position + 1
+                local startPos = 1 - self.scroll
+
+                canvas:drawTextLine( startPos, 1, value:sub( 1, start + 1 ), 1, col )
+                canvas:drawTextLine( startPos + start, 1, value:sub( start + 1, stop + 1 ), 1, self.selectedBackgroundColour )
+                canvas:drawTextLine( startPos + stop, 1, value:sub( stop + 1 ), 1, col )
+            else
+                canvas:drawTextLine( -self.scroll + 1, 1, self.value, 1, col )
+            end
+        else canvas:drawTextLine(1, 1, self.placeholder:sub( 1, self.width ), self.placeholderColour, col ) end
 
         raw.changed = false
+    end
+end
+
+--[[
+    @instance
+    @desc Attempts to reposition the scroll of the input box depending on the position indicator
+    @param <number - indicator>
+]]
+function Input:repositionScroll( indicator )
+    if indicator >= self.width and indicator > ( self.scroll + self.width - 1 ) then
+        self.scroll = math.min( indicator - self.width + 1, #self.value - self.width + 1 )
+    elseif indicator <= self.scroll then
+        self.scroll = math.max( self.scroll - ( self.scroll - indicator ), 0 )
     end
 end
 
@@ -43,8 +81,7 @@ function Input:onMouseClick( event, handled, within )
     if within and not handled then
         self.active = true
     else
-        self.active = false
-        self.focused = false
+        self.active, self.focused = false, false
     end
 end
 
@@ -58,7 +95,16 @@ function Input:onMouseUp( event, handled, within )
     if not within or handled then
         self.focused = false
     elseif within and not handled and self.active then
-        self.focused = true
+        if self.focused then
+            local application, pos, width, scroll = self.application, self.position, self.width, self.scroll
+            local clickedPos = math.min( #self.value, event.X - self.X + self.scroll )
+
+            if application:isPressed( keys.leftShift ) or application:isPressed( keys.rightShift ) then
+                if clickedPos ~= pos then
+                    self.selection = clickedPos
+                else self.selection = false end
+            else self.position, self.selection = clickedPos, false end
+        else self.focused = true end
     end
 
     self.active = false
@@ -72,11 +118,17 @@ end
 function Input:onChar( event, handled )
     if not self.focused or handled then return end
 
-    local value, position = self.value, self.position
-    self.value = value:sub( 1, position ) .. event.char .. value:sub( position + 1 )
-    self.changed = true
+    local value, position, selection = self.value, self.position, self.selection
+    if selection then
+        local start, stop = math.min( selection, position ), math.max( selection, position )
+        self.value, self.selection, self.position = value:sub( 1, start ) .. event.char .. value:sub( stop + 2 ), false, start + 1
+        self.changed = true
+    else
+        self.value = value:sub( 1, position ) .. event.char .. value:sub( position + 1 )
+        self.position = self.position + 1
+    end
+
     event.handled = true
-    self.position = self.position + 1
 end
 
 --[[
@@ -90,32 +142,90 @@ function Input:onKeyDown( event, handled )
     local value, position = self.value, self.position
     local valueLen = #value
     if event.sub == "DOWN" then
-        local key = event.keyName
-        if key == "backspace" then
-            if position > 0 then
-                self.value, self.position = value:sub( 1, position - 1 ) .. value:sub( position + 1 ), position - 1
+        local key, selection, position, application = event.keyName, self.selection, self.position, self.application
+        local isPressed, start, stop = application:isPressed( keys.leftShift ) or application:isPressed( keys.rightShift )
+
+        if selection then
+            start, stop = selection < position and selection or position, selection > position and selection + 1 or position + 1
+        else start, stop = position - 1, position end
+
+        if key == "enter" then
+            if self:can "onTrigger" then self:onTrigger( self.value, self.selection and self:getSelectedValue() ) end
+        elseif selection then
+            if key == "delete" or key == "backspace" then
+                self.value, self.position = value:sub( 1, start ) .. value:sub( stop + 1 ), start
+            elseif not isPressed then
+                self.position = key == "left" and start or key == "right" and stop - 1 or position
             end
-        elseif key == "delete" then
-            if position < valueLen then
-                self.value = value:sub( 1, position ) .. value:sub( position + 2 )
+        end
+
+        local cSelection = self.selection or self.position
+        local function set( offset )
+            if isPressed then self.selection = cSelection + offset
+            else self.position = self.position + offset end
+        end
+
+        if key == "left" then set( -1 )
+        elseif key == "right" then set( 1 ) else
+            if key == "home" then
+                set( isPressed and -cSelection or -position )
+            elseif key == "end" then
+                set( isPressed and valueLen - cSelection or valueLen - position )
+            elseif key == "backspace" then
+                self.value, self.position = self.value:sub( stop + 1 ), 0
             end
-        elseif key == "left" then
-            self.position, self.changed = math.max( 0, self.position - 1 ), true
-        elseif key == "right" then
-            self.position, self.changed = math.min( valueLen, self.position + 1 ), true
-        elseif key == "end" then
-            self.position, self.changed = valueLen, true
-        elseif key == "home" then
-            self.position, self.changed = 1, true
-        elseif key == "enter" then
-            if self:can "onTrigger" then self:onTrigger() end
+        end
+
+        if not isPressed then
+            if key == "backspace" and start >= 0 and not selection then
+                self.value, self.position = value:sub( 1, start ) .. value:sub( stop + 1 ), start
+            elseif key == "delete" and not selection then
+                self.value = value:sub( 1, stop ) .. value:sub( stop + 2 )
+            else
+                if key ~= "left" and key ~= "right" and key ~= "home" and key ~= "end" then
+                    self.selection = false
+                end
+            end
         end
     end
 end
 
-function Input:setValue( val )
-    self.value = val
+--[[
+    @instance
+    @desc If the given selection is a number, it will be adjusted to fit within the bounds of the input and set. If not, the value will be raw set.
+    @param <number|boolean - selection>
+]]
+function Input:setSelection( selection )
+    if type( selection ) == "number" then
+        local newSelection = math.max( math.min( selection, #self.value ), 0 )
+        self.selection = newSelection ~= self.position and newSelection or false
+    else self.selection = selection end
+
+    self:repositionScroll( self.selection or self.position )
     self.changed = true
+end
+
+--[[
+    @instance
+    @desc Returns the value of the input that is selected
+    @return <string - selectedValue>
+]]
+function Input:getSelectedValue()
+    local selection, position = self.selection, self.position
+    return self.value:sub( ( selection < position and selection or position ) + 1, ( selection > position and selection or position ) + 1 )
+end
+
+--[[
+    @instance
+    @desc If the given position is equal to the (inputs) selection, the selection will be reset.
+          If not equal, the value will be adjusted to fit inside the bounds of the input and then set.
+    @param <number - pos>
+]]
+function Input:setPosition( pos )
+    if self.selection == pos then self.selection = false end
+    self:repositionScroll( pos )
+
+    self.position, self.changed = math.max( math.min( pos, #self.value ), 0 ), true
 end
 
 --[[
@@ -127,15 +237,12 @@ function Input:getCaretInfo()
     local position, value, width = self.position, self.value, self.width
     local sX, sY = self:getAbsolutePosition()
 
-    if position >= width then
-        return true, -1 + sX + width, sY, self.focusedColour
-    else
-        return true, sX + position, sY, self.focusedColour
-    end
+    return not self.selection, sX + ( position - self.scroll ), sY, self.focusedColour
 end
 
 
 configureConstructor({
     orderedArguments = { "X", "Y", "width" },
-    argumentTypes = { value = "string", position = "number" }
+    argumentTypes = { value = "string", position = "number", selection = "number", placeholder = "string", placeholderColour = "colour" },
+    useProxy = { "toggled" }
 }, true)

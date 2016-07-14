@@ -6,10 +6,11 @@
 <RadioButton value="yes" X=45 Y=16 group="rating" id="yes_rating"/>
 
 <Label X=47 Y=16 text="No" class="sub" id="no_label"/>
-<RadioButton value="no" X=50 Y=16 group="rating" id="no_rating"/>
+<RadioButton value="no" X=50 Y=16 group="rating" id="no_rating" toggled/>
 
 <Label text="Name" X=2 Y=6/>
-<Input X=2 Y=7 backgroundColour=128 width=15 focusedBackgroundColour=256 id="name_input"/>
+<Input X=2 Y=7 backgroundColour=128 width=18 focusedBackgroundColour=256 id="name_input" placeholder="Your Name"/>
 <Label X=2 Y=8 text="Enter your name" id="name_display" colour=256/>
+<Label X=2 Y=10 text="" id="selected_name_display" colour=256/>
 
 <Button text="Exit" X=41 Y=18 width=10 id="exit_button"/>

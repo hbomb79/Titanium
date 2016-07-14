@@ -6,12 +6,18 @@ class RadioButton extends Checkbox {
     group = false;
 }
 
-function RadioButton:select( ... )
-    if self.toggled then return end
+function RadioButton:__init__( ... )
+    self:super( ... )
 
+    if self.toggled then
+        RadioButton.deselectInGroup( self.group, self )
+    end
+end
+
+function RadioButton:select( ... )
     RadioButton.deselectInGroup( self.group )
 
-    self:toggle()
+    self.toggled = true
     if self:can "onSelect" then
         self:onSelect( ... )
     end
@@ -72,10 +78,10 @@ function RadioButton.static.isInGroup( node, group )
     return false
 end
 
-function RadioButton.static.deselectInGroup( group )
+function RadioButton.static.deselectInGroup( group, target )
     local g = RadioButton.groups[ group ]
 
-    for i = 1, #g do g[ i ].toggled = false end
+    for i = 1, #g do if ( not target or ( target and g[ i ] ~= target ) ) then g[ i ].toggled = false end end
 end
 
 function RadioButton.static.getValue( group )

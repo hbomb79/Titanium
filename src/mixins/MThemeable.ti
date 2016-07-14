@@ -124,10 +124,12 @@ end
 
 function MThemeable:addClass( class )
     self.classes[ class ] = true
+    self:updateProperties()
 end
 
 function MThemeable:removeClass( class )
     self.classes[ class ] = nil
+    self:updateProperties()
 end
 
 function MThemeable:onThemeUpdate()

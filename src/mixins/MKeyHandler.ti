@@ -1,0 +1,25 @@
+abstract class MKeyHandler {
+    static = {
+        keyAlias = {}
+    };
+
+    keys = {};
+    cooldown = false;
+}
+
+function MKeyHandler:handleKey( event )
+    local keyCode = event.keyCode
+    if event.sub == "DOWN" then
+        self.keys[ keyCode ] = event.held
+    else
+        self.keys[ keyCode ] = nil
+    end
+end
+
+function MKeyHandler:isPressed( keyCode )
+    return self.keys[ keyCode ] ~= nil
+end
+
+function MKeyHandler:isHeld( keyCode )
+    return self.keys[ keyCode ]
+end

@@ -3,7 +3,7 @@
     The program loop, nodes, threads and animations are handled by the Application object.
 --]]
 
-class Application extends Component mixin MThemeManager {
+class Application extends Component mixin MThemeManager mixin MKeyHandler {
     width = 51;
     height = 19;
 
@@ -291,7 +291,10 @@ end
     @param <table - event>
 ]]
 function Application:handle( eName, ... )
-    local eventObject, nodes, node = Event.spawn( eName, ... ), self.nodes
+    local eventObject = Event.spawn( eName, ... )
+    if eventObject.main == "KEY" then self:handleKey( eventObject ) end
+
+    local nodes, node = self.nodes
     for i = #nodes, 1, -1 do
         -- The node will update itself depending on the event. Once all are updated they are drawn if changed.
         nodes[ i ]:handle( eventObject )

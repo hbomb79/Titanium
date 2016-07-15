@@ -1,0 +1,57 @@
+--[[
+    The callback manager is a mixin that can be used by classes that want to provide an easy way for a developer to assign actions on certain conditions.
+
+    These conditions may include node specific callbacks, like a button click or input submission.
+]]
+
+abstract class MCallbackManager {
+    callbacks = {}
+}
+
+--[[
+    @instance
+    @desc Assigns a function 'fn' to 'callbackName'.
+    @param <string - name>, <function - fn>, [string - id]
+]]
+function MCallbackManager:on( callbackName, fn, id )
+    if not ( type( callbackName ) == "string" and type( fn ) == "function" ) or ( id and type( id ) ~= "string" ) then
+        return error "Expected string, function, [string]"
+    end
+
+    local callbacks = self.callbacks
+    if not callbacks[ callbackName ] then callbacks[ callbackName ] = {} end
+
+    table.insert( callbacks[ callbackName ], { fn, id } )
+end
+
+--[[
+    @instance
+    @desc Removes all callbacks for a certain condition. If an id is provided only callbacks matching that id will be executed.
+    @param <string - callbackName>, [string - id]
+]]
+function MCallbackManager:off( callbackName, id )
+    if id then
+        local callbacks = self.callbacks[ callbackName ]
+
+        if callbacks then
+            for i = #callbacks, 1, -1 do
+                if callbacks[ i ][ 2 ] == id then
+                    table.remove( callbacks, i )
+                end
+            end
+        end
+    else self.callbacks[ callbackName ] = nil end
+end
+
+--[[
+    @instance
+    @desc Executes all assigned functions for 'callbackName' with 'self' and the arguments passed to this function.
+    @param <string - callbackName>, [vararg - ...]
+]]
+function MCallbackManager:executeCallbacks( callbackName, ... )
+    local callbacks = self.callbacks[ callbackName ]
+
+    if callbacks then
+        for i = 1, #callbacks do callbacks[ i ][ 1 ]( self, ... ) end
+    end
+end

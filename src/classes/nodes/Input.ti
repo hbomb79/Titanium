@@ -156,6 +156,7 @@ function Input:onKeyDown( event, handled )
                 self.value, self.position = value:sub( 1, start ) .. value:sub( stop + 1 ), start
             elseif not isPressed then
                 self.position = key == "left" and start or key == "right" and stop - 1 or position
+                self.selection = false
             end
         end
 

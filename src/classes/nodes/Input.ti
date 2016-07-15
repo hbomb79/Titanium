@@ -180,7 +180,7 @@ function Input:onKeyDown( event, handled )
             if key == "backspace" and start >= 0 and not selection then
                 self.value, self.position = value:sub( 1, start ) .. value:sub( stop + 1 ), start
             elseif key == "delete" and not selection then
-                self.value = value:sub( 1, stop ) .. value:sub( stop + 2 )
+                self.value, self.changed = value:sub( 1, stop ) .. value:sub( stop + 2 ), true
             else
                 if key ~= "left" and key ~= "right" and key ~= "home" and key ~= "end" then
                     self.selection = false

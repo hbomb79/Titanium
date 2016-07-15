@@ -36,6 +36,10 @@ function MThemeManager:removeTheme( theme )
     end
 end
 
+function MThemeManager:importTheme( name, location )
+    self:addTheme( Theme.fromFile( name, location ) )
+end
+
 function MThemeManager:update( target )
     local target = target or self.nodes
     for i = 1, #target do target[ i ]:onThemeUpdate() end

@@ -26,7 +26,9 @@ end
     @param <MouseEvent Instance - event>, <boolean - handled>, <boolean - within>
 ]]
 function Label:onMouseClick( event, handled, within )
-    local labelFor = self.labelFor
+    if not self.labelFor then return end
+
+    local labelFor = self.application:getNode( self.labelFor, true )
     if labelFor and within and not handled and labelFor:can "onLabelClicked" then
         labelFor:onLabelClicked( self, event, handled, within )
     end

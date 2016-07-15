@@ -8,37 +8,25 @@ Manager = Application( 1, 1, terminalWidth, terminalHeight, {
     terminatable = true
 })
 
-Manager:addTheme( Theme.fromFile("test", "test.theme") )
+Manager:importTheme( "test", "test.theme" )
 Manager:importFromTML "test.tml"
 
-Manager:getNode "exit_button".onTrigger = function( self )
+Manager:getNode "exit_button":on("trigger", function( self )
     if RadioButton.getValue "rating" == "yes" then
         Manager:stop()
     end
-end
+end)
 
-Manager:getNode "yes_label".labelFor = Manager:getNode "yes_rating"
-Manager:getNode "no_label".labelFor = Manager:getNode "no_rating"
-
-local nameDisplay, selectedNameDisplay, nameInput = Manager:getNode "name_display", Manager:getNode "selected_name_display", Manager:getNode "name_input"
-Manager:getNode "name_input".onTrigger = function( self, value, selectedValue )
-    if value == "" then nameDisplay:removeClass "hasValue" else nameDisplay:addClass "hasValue" end
-
-    if #value > 40 then
-        nameDisplay.text = value:sub( 1, 40 )..("."):rep( math.min( #value - 40, 3 ) )
-    elseif value == "" then
-        nameDisplay.text = "Enter your name"
+Manager:getNode "name_input":on("trigger", function( self, value, selectedValue )
+    local nameDisplay = Manager:getNode "name_display"
+    if value == "" then
+        nameDisplay:removeClass "hasValue"
     else
-        nameDisplay.text = value
+        nameDisplay:addClass "hasValue"
     end
 
-    if selectedValue then selectedNameDisplay.text = "Selected: "..selectedValue
-    else selectedNameDisplay.text = "" end
-end
-
-nameInput.value = "Titanium text input test. Testing, testing 123"
-nameInput.position = 100
-
-nameInput:focus()
+    nameDisplay.text = (not value or value == "") and "No entered text" or ( #value > 40 and value:sub( 1, 40 ).."..." or value )
+    Manager:getNode "selected_name_display".text = selectedValue and "Selected: "..selectedValue or "No selected text"
+end)
 
 Manager:start()

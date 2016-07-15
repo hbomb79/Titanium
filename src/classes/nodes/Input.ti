@@ -150,7 +150,7 @@ function Input:onKeyDown( event, handled )
         else start, stop = position - 1, position end
 
         if key == "enter" then
-            if self:can "onTrigger" then self:onTrigger( self.value, self.selection and self:getSelectedValue() ) end
+            self:executeCallbacks( "trigger", self.value, self.selection and self:getSelectedValue() )
         elseif selection then
             if key == "delete" or key == "backspace" then
                 self.value, self.position = value:sub( 1, start ) .. value:sub( stop + 1 ), start

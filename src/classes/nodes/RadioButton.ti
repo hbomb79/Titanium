@@ -18,9 +18,7 @@ function RadioButton:select( ... )
     RadioButton.deselectInGroup( self.group )
 
     self.toggled = true
-    if self:can "onSelect" then
-        self:onSelect( ... )
-    end
+    self:executeCallbacks "select"
 end
 
 function RadioButton:onMouseUp( event, handled, within )

@@ -41,9 +41,7 @@ end
 ]]
 function Button:onMouseUp( event, handled, within )
     if within and not handled and self.active then
-        if self:can "onTrigger" then
-            self:onTrigger( event, handled, within )
-        end
+        self:executeCallbacks "trigger"
     end
 
     self.active = false

@@ -34,9 +34,7 @@ end
 ]]
 function MTogglable:setToggled( toggled, ... )
     if self.toggled ~= toggled then
-        if self:can "onToggle" then
-            self:onToggle( ... )
-        end
+        self:executeCallbacks "toggle"
 
         self.raw.toggled = toggled
         self.changed = true

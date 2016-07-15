@@ -37,23 +37,25 @@ end
 function Input:draw()
     local raw = self.raw
     if raw.changed then
-        local canvas, col = self.canvas, raw.focused and raw.focusedBackgroundColour or ( raw.active and raw.activeBackgroundColour )
-        canvas:clear( col )
+        local canvas, tc, bg = raw.canvas, raw.colour, raw.backgroundColour
+        if raw.focused then tc, bg = raw.focusedColour, raw.focusedBackgroundColour
+        elseif raw.active then tc, bg = raw.activeColour, raw.activeBackgroundColour end
 
-        local canvas, position, width, value, selection = raw.canvas, self.position, self.width, self.value, self.selection
+        canvas:clear( bg )
 
+        local position, width, value, selection = self.position, self.width, self.value, self.selection
         if self.focused or not self.placeholder or #value > 0 then
             if self.selection then
                 local start, stop = selection < position and selection or position, selection > position and selection + 1 or position + 1
                 local startPos = -self.scroll + 1
 
-                canvas:drawTextLine( startPos, 1, value:sub( 1, start + 1 ), 1, col )
-                canvas:drawTextLine( startPos + start, 1, value:sub( start + 1, stop + 1 ), 1, self.selectedBackgroundColour )
-                canvas:drawTextLine( startPos + stop, 1, value:sub( stop + 1 ), 1, col )
+                canvas:drawTextLine( startPos, 1, value:sub( 1, start + 1 ), tc, bg )
+                canvas:drawTextLine( startPos + start, 1, value:sub( start + 1, stop + 1 ), tc, self.focused and self.selectedBackgroundColour or bg )
+                canvas:drawTextLine( startPos + stop, 1, value:sub( stop + 1 ), tc, bg )
             else
-                canvas:drawTextLine( -self.scroll + 1, 1, self.value, 1, col )
+                canvas:drawTextLine( -self.scroll + 1, 1, self.value, tc, bg )
             end
-        else canvas:drawTextLine( 1, 1, self.placeholder:sub( 1, self.width ), self.placeholderColour, col ) end
+        else canvas:drawTextLine( 1, 1, self.placeholder:sub( 1, self.width ), self.placeholderColour, bg ) end
 
         raw.changed = false
     end

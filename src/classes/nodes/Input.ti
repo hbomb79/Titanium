@@ -171,7 +171,7 @@ function Input:onKeyDown( event, handled )
                 set( isPressed and -cSelection or -position )
             elseif key == "end" then
                 set( isPressed and valueLen - cSelection or valueLen - position )
-            elseif key == "backspace" then
+            elseif key == "backspace" and isPressed then
                 self.value, self.position = self.value:sub( stop + 1 ), 0
             end
         end
@@ -234,10 +234,9 @@ end
     @return <boolean - caretEnabled>, <number - caretX>, <number - caretY>, <colour - caretColour>
 ]]
 function Input:getCaretInfo()
-    local position, value, width = self.position, self.value, self.width
     local sX, sY = self:getAbsolutePosition()
 
-    return not self.selection, sX + ( position - self.scroll ), sY, self.focusedColour
+    return not self.selection, sX + ( self.position - self.scroll ), sY, self.focusedColour
 end
 
 

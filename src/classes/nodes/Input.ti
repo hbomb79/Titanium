@@ -45,7 +45,7 @@ function Input:draw()
         if self.focused or not self.placeholder or #value > 0 then
             if self.selection then
                 local start, stop = selection < position and selection or position, selection > position and selection + 1 or position + 1
-                local startPos = 1 - self.scroll
+                local startPos = -self.scroll + 1
 
                 canvas:drawTextLine( startPos, 1, value:sub( 1, start + 1 ), 1, col )
                 canvas:drawTextLine( startPos + start, 1, value:sub( start + 1, stop + 1 ), 1, self.selectedBackgroundColour )
@@ -53,7 +53,7 @@ function Input:draw()
             else
                 canvas:drawTextLine( -self.scroll + 1, 1, self.value, 1, col )
             end
-        else canvas:drawTextLine(1, 1, self.placeholder:sub( 1, self.width ), self.placeholderColour, col ) end
+        else canvas:drawTextLine( 1, 1, self.placeholder:sub( 1, self.width ), self.placeholderColour, col ) end
 
         raw.changed = false
     end
@@ -69,7 +69,7 @@ function Input:repositionScroll( indicator )
         self.scroll = math.min( indicator - self.width + 1, #self.value - self.width + 1 )
     elseif indicator <= self.scroll then
         self.scroll = math.max( self.scroll - ( self.scroll - indicator ), 0 )
-    end
+    else self.scroll = math.max( math.min( self.scroll, #self.value - self.width + 1 ), 0 ) end
 end
 
 --[[
@@ -178,7 +178,8 @@ function Input:onKeyDown( event, handled )
 
         if not isPressed then
             if key == "backspace" and start >= 0 and not selection then
-                self.value, self.position = value:sub( 1, start ) .. value:sub( stop + 1 ), start
+                self.value = value:sub( 1, start ) .. value:sub( stop + 1 )
+                self.position = start
             elseif key == "delete" and not selection then
                 self.value, self.changed = value:sub( 1, stop ) .. value:sub( stop + 2 ), true
             else
@@ -223,9 +224,9 @@ end
 ]]
 function Input:setPosition( pos )
     if self.selection == pos then self.selection = false end
-    self:repositionScroll( pos )
-
     self.position, self.changed = math.max( math.min( pos, #self.value ), 0 ), true
+
+    self:repositionScroll( self.position )
 end
 
 --[[

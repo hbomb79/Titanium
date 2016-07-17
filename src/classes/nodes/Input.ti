@@ -130,6 +130,8 @@ function Input:onChar( event, handled )
         self.position = self.position + 1
     end
 
+    self:executeCallbacks "change"
+
     event.handled = true
 end
 

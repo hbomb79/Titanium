@@ -1,16 +1,13 @@
 dofile "bin/make.lua" -- Build an on-the-fly version of Titanium (un-minified)
 dofile "build/titanium.lua" -- Run the compiled Titanium script
 
-local terminalWidth, terminalHeight = term.getSize()
-Manager = Application( 1, 1, terminalWidth, terminalHeight, {
+Manager = Application():set {
     colour = 128,
     backgroundColour = 1,
     terminatable = true
-})
+}
 
-Manager:importTheme( "test", "test.theme" )
 Manager:importFromTML "test.tml"
-
 Manager:getNode "exit_button":on("trigger", function( self )
     if RadioButton.getValue "rating" == "yes" then
         Manager:stop()

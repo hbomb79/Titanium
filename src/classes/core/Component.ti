@@ -9,6 +9,18 @@ abstract class Component {
     Y = 1;
 }
 
+function Component:set( tbl )
+    if type( tbl ) ~= "table" then
+        return error "Table expected"
+    end
+
+    for property, value in pairs( tbl ) do
+        self[ property ] = value
+    end
+
+    return self
+end
+
 function Component:setX( X )
     self.X = X
     self.changed = true

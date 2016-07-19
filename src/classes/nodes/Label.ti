@@ -6,6 +6,7 @@ class Label extends Node {
     labelFor = false;
 
     allowMouse = true;
+    active = false;
 }
 
 --[[
@@ -22,16 +23,27 @@ end
 
 --[[
     @instance
-    @desc Mouse click event handler. On mouse click the labels for (labelFor) will be notified via 'onLabelClicked'.
+    @desc Mouse click event handler. On click the label will wait for a mouse up, if found labelFor is notified
     @param <MouseEvent Instance - event>, <boolean - handled>, <boolean - within>
 ]]
 function Label:onMouseClick( event, handled, within )
+    self.active = self.labelFor and within and not handled
+end
+
+--[[
+    @instance
+    @desc If the mouse click handler has set the label to active, trigger the onLabelClicked callback
+    @param <MouseEvent Instance - event>, <boolean - handled>, <boolean - within>
+]]
+function Label:onMouseUp( event, handled, within )
     if not self.labelFor then return end
 
     local labelFor = self.application:getNode( self.labelFor, true )
-    if labelFor and within and not handled and labelFor:can "onLabelClicked" then
+    if self.active and not handled and within and labelFor:can "onLabelClicked" then
         labelFor:onLabelClicked( self, event, handled, within )
     end
+
+    self.active = false
 end
 
 --[[

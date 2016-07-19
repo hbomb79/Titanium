@@ -21,13 +21,14 @@ end
 --[[
     @instance
     @desc Removes the given theme from this objects `themes` table. Returns true if a theme was removed, false otherwise.
-    @param <Theme Instance - theme>
+    @param <Instance 'Theme'/string name - target>
     @return <boolean - success>
 ]]
-function MThemeManager:removeTheme( theme )
+function MThemeManager:removeTheme( target )
+    local searchName = ( type( target ) == "string" and true ) or ( not Titanium.typeOf( target, "Theme", true ) and error "Invalid target to remove" )
     local themes = self.themes
     for i = 1, #themes do
-        if themes[ i ] == theme then
+        if ( searchName and themes[ i ].name == target ) or ( not searchName and themes[ i ] == target ) then
             table.remove( themes, i )
             self:update()
 

@@ -32,50 +32,6 @@ end
 
 --[[
     @instance
-    @desc Draws the inputs background and text to the parent canvas
-]]
-function Input:draw()
-    local raw = self.raw
-    if raw.changed then
-        local canvas, tc, bg = raw.canvas, raw.colour, raw.backgroundColour
-        if raw.focused then tc, bg = raw.focusedColour, raw.focusedBackgroundColour
-        elseif raw.active then tc, bg = raw.activeColour, raw.activeBackgroundColour end
-
-        canvas:clear( bg )
-
-        local position, width, value, selection = self.position, self.width, self.value, self.selection
-        if self.focused or not self.placeholder or #value > 0 then
-            if self.selection then
-                local start, stop = selection < position and selection or position, selection > position and selection + 1 or position + 1
-                local startPos = -self.scroll + 1
-
-                canvas:drawTextLine( startPos, 1, value:sub( 1, start + 1 ), tc, bg )
-                canvas:drawTextLine( startPos + start, 1, value:sub( start + 1, stop + 1 ), tc, self.focused and self.selectedBackgroundColour or bg )
-                canvas:drawTextLine( startPos + stop, 1, value:sub( stop + 1 ), tc, bg )
-            else
-                canvas:drawTextLine( -self.scroll + 1, 1, self.value, tc, bg )
-            end
-        else canvas:drawTextLine( 1, 1, self.placeholder:sub( 1, self.width ), self.placeholderColour, bg ) end
-
-        raw.changed = false
-    end
-end
-
---[[
-    @instance
-    @desc Attempts to reposition the scroll of the input box depending on the position indicator
-    @param <number - indicator>
-]]
-function Input:repositionScroll( indicator )
-    if indicator >= self.width and indicator > ( self.scroll + self.width - 1 ) then
-        self.scroll = math.min( indicator - self.width + 1, #self.value - self.width + 1 )
-    elseif indicator <= self.scroll then
-        self.scroll = math.max( self.scroll - ( self.scroll - indicator ), 0 )
-    else self.scroll = math.max( math.min( self.scroll, #self.value - self.width + 1 ), 0 ) end
-end
-
---[[
-    @instance
     @desc Sets the input to active if clicked on, sets active and focused to false if the mouse click was not on the input.
     @param <MouseEvent - event>, <boolean - handled>, <boolean - within>
 ]]
@@ -194,6 +150,55 @@ function Input:onKeyDown( event, handled )
             end
         end
     end
+end
+
+function Input:onLabelClicked( label, event, handled, within )
+    self.focused = true
+    event:handle()
+end
+
+--[[
+    @instance
+    @desc Draws the inputs background and text to the parent canvas
+]]
+function Input:draw()
+    local raw = self.raw
+    if raw.changed then
+        local canvas, tc, bg = raw.canvas, raw.colour, raw.backgroundColour
+        if raw.focused then tc, bg = raw.focusedColour, raw.focusedBackgroundColour
+        elseif raw.active then tc, bg = raw.activeColour, raw.activeBackgroundColour end
+
+        canvas:clear( bg )
+
+        local position, width, value, selection = self.position, self.width, self.value, self.selection
+        if self.focused or not self.placeholder or #value > 0 then
+            if self.selection then
+                local start, stop = selection < position and selection or position, selection > position and selection + 1 or position + 1
+                local startPos = -self.scroll + 1
+
+                canvas:drawTextLine( startPos, 1, value:sub( 1, start + 1 ), tc, bg )
+                canvas:drawTextLine( startPos + start, 1, value:sub( start + 1, stop + 1 ), tc, self.focused and self.selectedBackgroundColour or bg )
+                canvas:drawTextLine( startPos + stop, 1, value:sub( stop + 1 ), tc, bg )
+            else
+                canvas:drawTextLine( -self.scroll + 1, 1, self.value, tc, bg )
+            end
+        else canvas:drawTextLine( 1, 1, self.placeholder:sub( 1, self.width ), self.placeholderColour, bg ) end
+
+        raw.changed = false
+    end
+end
+
+--[[
+    @instance
+    @desc Attempts to reposition the scroll of the input box depending on the position indicator
+    @param <number - indicator>
+]]
+function Input:repositionScroll( indicator )
+    if indicator >= self.width and indicator > ( self.scroll + self.width - 1 ) then
+        self.scroll = math.min( indicator - self.width + 1, #self.value - self.width + 1 )
+    elseif indicator <= self.scroll then
+        self.scroll = math.max( self.scroll - ( self.scroll - indicator ), 0 )
+    else self.scroll = math.max( math.min( self.scroll, #self.value - self.width + 1 ), 0 ) end
 end
 
 --[[

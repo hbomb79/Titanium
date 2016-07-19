@@ -22,8 +22,15 @@ Manager:getNode "name_input":on("trigger", function( self, value, selectedValue 
         nameDisplay:addClass "hasValue"
     end
 
-    nameDisplay.text = (not value or value == "") and "No entered text" or ( #value > 40 and value:sub( 1, 40 ).."..." or value )
+    nameDisplay.text = ( not value or value == "" ) and "No entered text" or ( #value > 40 and value:sub( 1, 40 ).."..." or value )
     Manager:getNode "selected_name_display".text = selectedValue and "Selected: "..selectedValue or "No selected text"
+end)
+
+local themed = false
+Manager:getNode "toggle":on("trigger", function( self )
+    themed = not themed
+    if not themed then Manager:removeTheme "test"
+    else Manager:importTheme( "test", "test.theme" ) end
 end)
 
 Manager:start()

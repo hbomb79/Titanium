@@ -25,3 +25,11 @@
     <toggledBackgroundColour>cyan</toggledBackgroundColour>
     <toggledColour>white</toggledColour>
 </RadioButton>
+
+<Input>
+    <backgroundColour>128</backgroundColour>
+    <colour>256</colour>
+
+    <focusedBackgroundColour>256</focusedBackgroundColour>
+    <focusedColour>128</focusedColour>
+</Input>

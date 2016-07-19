@@ -13,6 +13,7 @@ abstract class MThemeable {
     classes = {};
 
     mainValues = {};
+    defaultValues = {};
     setterBackup = {};
 }
 
@@ -72,7 +73,11 @@ function MThemeable:hook()
             else self[ property ] = newValue end
         end
 
-        if self.__resolved[ property ] then self.mainValues[ property ] = self[ property ] end
+        if self.__resolved[ property ] then
+            self.mainValues[ property ] = self[ property ]
+        else
+            self.defaultValues[ property ] = self[ property ]
+        end
     end
     self.hooked = true
 end
@@ -106,11 +111,15 @@ function MThemeable:updateProperty( property )
     local app = self.application
     if app then
         local val = app:fetchValue( self, property )
+        MThemeable.static.isUpdating = true
+
         if val then
-            MThemeable.static.isUpdating = true
             self[ property ] = val
-            MThemeable.static.isUpdating = false
+        elseif ( not val and ( self[ property ] ~= self.mainValues[ property ] ) ) then
+            self[ property ] = self.mainValues[ property ] or self.defaultValues[ property ]
         end
+
+        MThemeable.static.isUpdating = false
     end
 end
 

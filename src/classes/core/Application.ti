@@ -84,6 +84,10 @@ function Application:removeNode( target )
             node.parent = nil
             node.application = nil
 
+            if self.focusedNode == node then
+                node.focused = false
+            end
+
             self.changed = true
 
             table.remove( nodes, i )

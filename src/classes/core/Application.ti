@@ -3,7 +3,7 @@
     The program loop, nodes, threads and animations are handled by the Application object.
 --]]
 
-class Application extends Component mixin MThemeManager mixin MKeyHandler {
+class Application extends Component mixin MThemeManager mixin MKeyHandler mixin MCallbackManager {
     width = 51;
     height = 19;
 
@@ -120,14 +120,15 @@ function Application:focusNode( node )
     self:unfocusNode()
     self.focusedNode = node
 
-    if node:can "onFocus" then node:onFocus( self ) end
+    node:executeCallbacks( "focus", self )
     node.changed = true
 end
 
 function Application:unfocusNode()
     local node = self.focusedNode
-    if not node then return
-    elseif node:can "onUnfocus" then node:onUnfocus( self ) end
+    if not node then return end
+
+    node:executeCallbacks( "unfocus", self )
     node.changed = true
 
     self.focusedNode = nil
@@ -300,6 +301,7 @@ function Application:handle( eName, ... )
         nodes[ i ]:handle( eventObject )
     end
 
+    self:executeCallbacks( eName, ... )
     self:handleThreads( eventObject, eName, ... )
 end
 

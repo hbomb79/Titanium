@@ -72,8 +72,8 @@ function Checkbox:draw()
         raw.canvas:drawPoint(
             1, 1,
             toggled and raw.checkedMark or raw.uncheckedMark,
-            active and raw.activeColour or toggled and raw.toggledColour or raw.colour,
-            active and raw.activeBackgroundColour or toggled and raw.toggledBackgroundColour or raw.backgroundColour
+            toggled and raw.toggledColour or active and raw.activeColour or raw.colour,
+            toggled and raw.toggledBackgroundColour or active and raw.activeBackgroundColour or raw.backgroundColour
         )
 
         raw.changed = false

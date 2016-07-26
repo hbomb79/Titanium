@@ -19,4 +19,4 @@
 <Button text="Toggle Pane" X=2 Y=16 height=1 width=13 id="pane_toggle"/>
 <Button text="Config" width=8 height=1 X=42 Y=2 id="config_toggle"/>
 
-<Pane width=20 height=19 X=42 backgroundColour=grey id="pane"/>
+<Pane width=20 height=19 X=52 backgroundColour=grey id="pane"/>

@@ -6,6 +6,9 @@ Manager = Application():set {
     terminatable = true
 }
 
+local masterTheme = Theme.fromFile( "masterTheme", "example/ui/master.theme" )
+Manager:addTheme( masterTheme )
+
 Manager:importFromTML "example/ui/master.tml"
 Manager:getNode "exit_button":on("trigger", function( self )
     if RadioButton.getValue "rating" == "yes" then
@@ -25,23 +28,18 @@ Manager:getNode "name_input":on("trigger", function( self, value, selectedValue 
     Manager:getNode "selected_name_display".text = selectedValue and "Selected: "..selectedValue or "No selected text"
 end)
 
-local themed = false
+local themed = true
 Manager:getNode "toggle":on("trigger", function( self )
     themed = not themed
     if not themed then Manager:removeTheme "masterTheme"
-    else Manager:importTheme( "masterTheme", "example/ui/master.theme" ) end
+    else Manager:addTheme( masterTheme ) end
 end)
 
-Manager:importTheme( "masterTheme", "example/ui/master.theme" )
 local pane, paneStatus, currentAnimation = Manager:getNode "pane"
 Manager:getNode "pane_toggle":on("trigger", function()
     paneStatus = not paneStatus
     if currentAnimation then Manager:removeAnimation( currentAnimation ) end
 
-    if paneStatus then
-        currentAnimation = pane:animate("X", 32, 0.6, "outExpo") -- Appears on screen fast then slows down to a stop rapidly
-    else
-        currentAnimation = pane:animate("X", 52, 0.2, "inQuad") -- Starts slow and then accelerates off the screen
-    end
+    currentAnimation = pane:animate("X", paneStatus and 32 or 52, paneStatus and 0.6 or 0.2, paneStatus and "outExpo" or "inQuad")
 end)
 Manager:start()

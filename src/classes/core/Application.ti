@@ -3,7 +3,7 @@
     The program loop, nodes, threads and animations are handled by the Application object.
 --]]
 
-class Application extends Component mixin MThemeManager mixin MKeyHandler mixin MCallbackManager {
+class Application extends Component mixin MThemeManager mixin MKeyHandler mixin MCallbackManager mixin MAnimationManager {
     width = 51;
     height = 19;
 

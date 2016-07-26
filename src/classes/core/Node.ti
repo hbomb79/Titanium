@@ -137,6 +137,12 @@ function Node:getAbsolutePosition()
     else return self.X, self.Y end
 end
 
+function Node:animate( property, final, duration, easing )
+    if not self.application then return end
+
+    return self.application:addAnimation( Tween( self, property, final, duration, easing ) )
+end
+
 configureConstructor {
     argumentTypes = { enabled = "boolean", visible = "boolean" }
 }

@@ -306,8 +306,9 @@ function Application:handle( eName, ... )
 
     local nodes, node = self.nodes
     for i = #nodes, 1, -1 do
+        node = nodes[ i ]
         -- The node will update itself depending on the event. Once all are updated they are drawn if changed.
-        nodes[ i ]:handle( eventObject )
+        if node then node:handle( eventObject ) end
     end
 
     self:executeCallbacks( eName, ... )

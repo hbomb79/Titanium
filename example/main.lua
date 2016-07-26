@@ -36,15 +36,18 @@ Manager:getNode "toggle":on("trigger", function( self )
 end)
 
 local pane, paneStatus, currentAnimation = Manager:getNode "pane"
-Manager:getNode "pane_toggle":on("trigger", function()
+local function paneToggle()
     paneStatus = not paneStatus
     if currentAnimation then Manager:removeAnimation( currentAnimation ) end
 
     currentAnimation = pane:animate("X", paneStatus and 32 or 52, paneStatus and 0.6 or 0.2, paneStatus and "outExpo" or "inQuad")
-end)
+end
 
 Manager:registerHotkey("close", "leftCtrl-leftShift-t", function()
     Manager:stop()
 end)
+
+Manager:getNode "pane_toggle":on("trigger", paneToggle)
+Manager:registerHotkey("paneToggle", "leftCtrl-p", paneToggle)
 
 Manager:start()

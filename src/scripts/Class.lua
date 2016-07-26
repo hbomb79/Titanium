@@ -450,7 +450,7 @@ local function spawn( target, ... )
             setting[ k ] = true
             self[ setFn ]( self, v )
             setting[ k ] = nil
-        elseif type( v ) == "function" then
+        elseif type( v ) == "function" and useSetters then
             wrappers[ k ] = true
             raw[ k ] = createFunctionWrapper( v, 1 )
         else

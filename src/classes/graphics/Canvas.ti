@@ -77,11 +77,8 @@ end
     @param <Canvas - canvas>, [number - offsetX], [number - offsetY]
 ]]
 function Canvas:drawTo( canvas, offsetX, offsetY )
-    local owner = self.owner
-    canvas = canvas or owner.canvas
-
-    offsetX = offsetX - 1 or 0
-    offsetY = offsetY - 1 or 0
+    local offsetX = offsetX - 1 or 0
+    local offsetY = offsetY - 1 or 0
 
     local sRaw, tRaw = self.raw, canvas.raw
     local width, height, buffer = sRaw.width, sRaw.height, sRaw.buffer

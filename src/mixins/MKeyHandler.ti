@@ -1,12 +1,25 @@
+--[[
+    The key handler mixin facilitates common features of objects that utilize key events. The mixin can manage hotkeys and will check them for validity
+    when a key event is caught.
+]]
+
 abstract class MKeyHandler {
     static = {
         keyAlias = {}
     };
 
     keys = {};
+    hotkeys = {};
     cooldown = false;
 }
 
+--[[
+    @instance
+    @desc 'Handles' a key by updating its status in 'keys'. If the event was a key down, it's status will be set to false if not held and true if it is.
+          If the event is a key down, the key's status will be set to nil (use this to detect if a key is not pressed).
+          The registered hotkeys will be updated everytime this function is called.
+    @param <KeyEvent - event>
+]]
 function MKeyHandler:handleKey( event )
     local keyCode = event.keyCode
     if event.sub == "DOWN" then
@@ -14,12 +27,69 @@ function MKeyHandler:handleKey( event )
     else
         self.keys[ keyCode ] = nil
     end
+
+    self:checkHotkeys( keyCode )
 end
 
+--[[
+    @instance
+    @desc Returns true if a key is pressed (regardless of held state) and false otherwise
+    @param <number - keyCode>
+    @return <boolean - isPressed>
+]]
 function MKeyHandler:isPressed( keyCode )
     return self.keys[ keyCode ] ~= nil
 end
 
+--[[
+    @instance
+    @desc Returns true if the key is pressed and held, or false otherwise
+    @param <number - keyCode>
+    @return <boolean - isHeld>
+]]
 function MKeyHandler:isHeld( keyCode )
     return self.keys[ keyCode ]
+end
+
+--[[
+    @instance
+    @desc Breaks 'hotkey' into key names and check their status. The last element of the hotkey must be pressed last (be the active key)
+          Hotkey format "leftCtrl-leftShift-t" (keyName-keyName-keyName)
+    @param <string - hotkey>, [number - key]
+    @return <boolean - hotkeyMatch>
+]]
+function MKeyHandler:matchesHotkey( hotkey, key )
+    for segment in hotkey:gmatch "(%w-)%-" do
+		if self.keys[ keys[ segment ] ] == nil then
+			return false
+        end
+	end
+
+	return key == keys[ hotkey:gsub( ".+%-", "" ) ]
+end
+
+--[[
+    @instance
+    @desc Registers a hotkey by adding it's callback and hotkey string to the handlers 'hotkeys'.
+    @param <string - name>, <string - hotkey>, <function - callback>
+]]
+function MKeyHandler:registerHotkey( name, hotkey, callback )
+    if not ( type( name ) == "string" and type( hotkey ) == "string" and type( callback ) == "function" ) then
+        return error "Expected string, string, function"
+    end
+
+    self.hotkeys[ name ] = { hotkey, callback }
+end
+
+--[[
+    @instance
+    @desc Iterates through the registered hotkeys and checks for matches using 'matchesHotkey'. If a hotkey matches it's registered callback is invoked
+    @param [number - key]
+]]
+function MKeyHandler:checkHotkeys( key )
+    for _, hotkey in pairs( self.hotkeys ) do
+        if self:matchesHotkey( hotkey[ 1 ], key ) then
+            hotkey[ 2 ]( self, key )
+        end
+    end
 end

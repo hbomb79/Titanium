@@ -42,4 +42,9 @@ Manager:getNode "pane_toggle":on("trigger", function()
 
     currentAnimation = pane:animate("X", paneStatus and 32 or 52, paneStatus and 0.6 or 0.2, paneStatus and "outExpo" or "inQuad")
 end)
+
+Manager:registerHotkey("close", "leftCtrl-leftShift-t", function()
+    Manager:stop()
+end)
+
 Manager:start()

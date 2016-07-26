@@ -33,4 +33,15 @@ Manager:getNode "toggle":on("trigger", function( self )
     else Manager:importTheme( "test", "test.theme" ) end
 end)
 
+local pane, paneStatus, currentAnimation = Manager:getNode "pane"
+Manager:getNode "pane_toggle":on("trigger", function()
+    paneStatus = not paneStatus
+    if currentAnimation then Manager:removeAnimation( currentAnimation ) end
+
+    if paneStatus then
+        currentAnimation = pane:animate("X", 32, 0.7, "outExpo") -- Appears on screen fast then slows down to a stop rapidly
+    else
+        currentAnimation = pane:animate("X", 52, 0.5, "inCubic") -- Starts slow and then accelerates off the screen
+    end
+end)
 Manager:start()

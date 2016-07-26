@@ -1,0 +1,79 @@
+class Tween {
+    static = {
+        easing = {}
+    };
+
+    object = false;
+
+    property = false;
+    initial = false;
+    final = false;
+
+    duration = 0;
+    clock = 0;
+}
+
+function Tween:__init__( ... )
+    self:resolve( ... )
+    if not Titanium.isInstance( self.object ) then
+        return error("Argument 'object' for tween must be a Titanium instance. '"..tostring( self.object ).."' is not a Titanium instance.")
+    end
+
+    local easing = self.easing or Tween.static.easing.linear
+    if type( easing ) == "string" then
+        self.easing = Tween.static.easing[ easing ] or error("Easing type '"..tostring( easing ).."' could not be found in 'Tween.static.easing'.")
+    elseif type( easing ) == "function" then
+        self.easing = easing
+    else
+        return error "Tween easing invalid. Must be a function to be invoked or name of easing type"
+    end
+
+    self.initial = self.object[ self.property ]
+    self.clock = 0
+end
+
+function Tween:performEasing()
+    self.object[ self.property ] = math.floor( self.easing( self.clock, self.initial, self.final - self.initial, self.duration ) + .5 )
+end
+
+function Tween:update( dt )
+    return self:setClock( self.clock + dt )
+end
+
+function Tween:reset()
+    return self:setClock( 0 )
+end
+
+function Tween:setClock( clock )
+    if clock <= 0 then
+        self.clock = 0
+    elseif clock >= self.duration then
+        self.clock = self.duration
+    else
+        self.clock = clock
+    end
+
+    self:performEasing()
+    return self.clock >= self.duration
+end
+
+function Tween.static.addEasing( easingName, easingFunction )
+    if type( easingFunction ) ~= "function" then
+        return error "Easing function must be of type 'function'"
+    end
+
+    Tween.static.easing[ easingName ] = easingFunction
+
+    return Tween
+end
+
+configureConstructor {
+    orderedArguments = { "object", "property", "final", "duration", "easing" },
+    requiredArguments = { "object", "property", "final", "duration" },
+    argumentTypes = {
+        property = "string",
+        final = "number",
+        duration = "number",
+        easing = "string"
+    }
+}

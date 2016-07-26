@@ -13,13 +13,18 @@ class Tween {
     clock = 0;
 }
 
+--[[
+    @constructor
+    @desc Constructs the tween instance, converting the 'easing' property into a function (if it's a string) and also stores the initial value of the property for later use.
+    @param <Object - object>, <string - property>, <number - final>, <number - duration>, [string/function - easing]
+]]
 function Tween:__init__( ... )
     self:resolve( ... )
     if not Titanium.isInstance( self.object ) then
         return error("Argument 'object' for tween must be a Titanium instance. '"..tostring( self.object ).."' is not a Titanium instance.")
     end
 
-    local easing = self.easing or Tween.static.easing.linear
+    local easing = self.easing or "linear"
     if type( easing ) == "string" then
         self.easing = Tween.static.easing[ easing ] or error("Easing type '"..tostring( easing ).."' could not be found in 'Tween.static.easing'.")
     elseif type( easing ) == "function" then
@@ -32,18 +37,39 @@ function Tween:__init__( ... )
     self.clock = 0
 end
 
+--[[
+    @instance
+    @desc Sets the 'property' of 'object' to the rounded (down) result of the easing function selected. Passes the current clock time, the initial value, the difference between the initial and final values and the total Tween duration.
+]]
 function Tween:performEasing()
     self.object[ self.property ] = math.floor( self.easing( self.clock, self.initial, self.final - self.initial, self.duration ) + .5 )
 end
 
+--[[
+    @instance
+    @desc Updates the tween by increasing 'clock' by 'dt' via the setter 'setClock'
+    @param <number - dt>
+    @return <boolean - finished>
+]]
 function Tween:update( dt )
     return self:setClock( self.clock + dt )
 end
 
+--[[
+    @instance
+    @desc Sets the clock time to zero
+    @param <boolean - finished>
+]]
 function Tween:reset()
     return self:setClock( 0 )
 end
 
+--[[
+    @instance
+    @desc Sets the current 'clock'. If the clock is a boundary number, it is adjusted to match the boundary - otherwise it is set as is. Once set, 'performEasing' is called and the state of the Tween (finished or not) is returned
+    @param <number - clock>
+    @return <boolean - finished>
+]]
 function Tween:setClock( clock )
     if clock <= 0 then
         self.clock = 0
@@ -57,13 +83,18 @@ function Tween:setClock( clock )
     return self.clock >= self.duration
 end
 
+--[[
+    @static
+    @desc Binds the function 'easingFunction' to 'easingName'. Whenever an animation that uses easing of type 'easingName' is updated, this function will be called to calculate the value
+    @param <string - easingName>, <function - easingFunction>
+    @return <Class Base - Tween>
+]]
 function Tween.static.addEasing( easingName, easingFunction )
     if type( easingFunction ) ~= "function" then
         return error "Easing function must be of type 'function'"
     end
 
     Tween.static.easing[ easingName ] = easingFunction
-
     return Tween
 end
 
@@ -73,7 +104,6 @@ configureConstructor {
     argumentTypes = {
         property = "string",
         final = "number",
-        duration = "number",
-        easing = "string"
+        duration = "number"
     }
 }

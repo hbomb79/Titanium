@@ -249,8 +249,9 @@ function Application:start()
         local event = { coroutine.yield() }
         local eName = event[ 1 ]
 
-        if eName == "timer" and event[ 2 ] == animationTimer then
+        if eName == "timer" and event[ 2 ] == self.timer then
             -- animationTimer = timer.new( .5 )
+            self:updateAnimations()
         elseif eName == "terminate" and self.terminatable then
             printError "Application Terminated"
             self:stop()

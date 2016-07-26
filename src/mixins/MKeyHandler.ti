@@ -24,11 +24,11 @@ function MKeyHandler:handleKey( event )
     local keyCode = event.keyCode
     if event.sub == "DOWN" then
         self.keys[ keyCode ] = event.held
+        self:checkHotkeys( keyCode )
     else
         self.keys[ keyCode ] = nil
+        self:checkHotkeys()
     end
-
-    self:checkHotkeys( keyCode )
 end
 
 --[[

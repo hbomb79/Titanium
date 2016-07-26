@@ -44,12 +44,11 @@ end
     @param [number - colour]
 ]]
 function Canvas:clear( colour )
-    local pixel, buffer = { " ", self.colour, colour or self.backgroundColour }, {}
+    local pixel, buffer = { " ", self.colour, colour or self.backgroundColour }, self.buffer
 
     for index = 1, self.width * self.height do
         buffer[ index ] = pixel
     end
-    self.buffer = buffer
 end
 
 --[[

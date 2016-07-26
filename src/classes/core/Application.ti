@@ -124,19 +124,22 @@ function Application:focusNode( node )
 
     self:unfocusNode()
     self.focusedNode = node
+    node.changed = true
+
 
     node:executeCallbacks( "focus", self )
-    node.changed = true
 end
 
 function Application:unfocusNode()
     local node = self.focusedNode
     if not node then return end
 
-    node:executeCallbacks( "unfocus", self )
+    self.focusedNode = nil
+
+    node.raw.focused = false
     node.changed = true
 
-    self.focusedNode = nil
+    node:executeCallbacks( "unfocus", self )
 end
 
 --[[

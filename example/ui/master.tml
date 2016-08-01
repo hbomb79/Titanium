@@ -17,7 +17,10 @@
 <Button text="Toggle Theme" X=2 Y=18 height=1 width=14 id="toggle"/>
 
 <Button text="Toggle Pane" X=2 Y=15 height=1 width=13 id="pane_toggle"/>
-<Label text="ctrl-p" X=5 Y=16 class="sub"/>
+
+<Label text="ctrl" id="left_ctrl_label" X=5 Y=16 class="sub"/>
+<Label text="-" X=9 Y=16 class="sub" id="hyphen_seperator"/>
+<Label text="p" id="p_char_label" X=10 Y=16 class="sub"/>
 
 <Button text="Config" width=8 height=1 X=42 Y=2 id="config_toggle"/>
 

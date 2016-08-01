@@ -56,6 +56,10 @@ function MAnimationManager:removeAnimation( animation )
     local anims = self.animations
     for i = 1, #anims do
         if anims[ i ] == animation then
+            if type( animation.promise ) == "function" then
+                animation:promise( self )
+            end
+
             return table.remove( anims, i )
         end
     end

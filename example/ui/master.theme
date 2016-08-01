@@ -10,6 +10,14 @@
     <colour important>128</colour>
 </Label>
 
+<Label class="held">
+    <colour>red</colour>
+</Label>
+
+<Label class="active">
+    <colour>lime</colour>
+</Label>
+
 <Button>
     <backgroundColour>cyan</backgroundColour>
     <activeBackgroundColour>lightBlue</activeBackgroundColour>

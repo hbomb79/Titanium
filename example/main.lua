@@ -35,19 +35,46 @@ Manager:getNode "toggle":on("trigger", function( self )
     else Manager:addTheme( masterTheme ) end
 end)
 
+local leftCtrlLabel, pCharLabel, hyphenSeperator = Manager:getNode "left_ctrl_label", Manager:getNode "p_char_label", Manager:getNode "hyphen_seperator"
 local pane, paneStatus, currentAnimation = Manager:getNode "pane"
-local function paneToggle()
+local function paneToggle( isKey )
     paneStatus = not paneStatus
     if currentAnimation then Manager:removeAnimation( currentAnimation ) end
 
-    currentAnimation = pane:animate("X", paneStatus and 32 or 52, paneStatus and 0.6 or 0.2, paneStatus and "outExpo" or "inQuad")
+    if isKey == true then
+        leftCtrlLabel:addClass "active"
+        hyphenSeperator:addClass "active"
+        pCharLabel:addClass "active"
+    end
+
+    currentAnimation = pane:animate("X", paneStatus and 32 or 52, paneStatus and 0.4 or 0.2, paneStatus and "outSine" or "inQuad", function()
+        leftCtrlLabel:removeClass "active"
+        pCharLabel:removeClass "active"
+        hyphenSeperator:removeClass "active"
+    end)
 end
 
 Manager:registerHotkey("close", "leftCtrl-leftShift-t", function()
     Manager:stop()
 end)
 
-Manager:getNode "pane_toggle":on("trigger", paneToggle)
-Manager:registerHotkey("paneToggle", "leftCtrl-p", paneToggle)
+Manager:getNode "pane_toggle":on("trigger", function() paneToggle() end)
+Manager:registerHotkey("paneToggle", "leftCtrl-p", function()
+    paneToggle( true )
+end)
+
+Manager:addThread(Thread(function()
+    while true do
+        local event = coroutine.yield()
+        if event.main == "KEY" then
+            local down = event.sub == "DOWN"
+            if event.keyName == "leftCtrl" then
+                leftCtrlLabel[ down and "addClass" or "removeClass" ]( leftCtrlLabel, "held" )
+            elseif event.keyName == "p" then
+                pCharLabel[ down and "addClass" or "removeClass" ]( pCharLabel, "held" )
+            end
+        end
+    end
+end, true))
 
 Manager:start()

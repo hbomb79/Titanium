@@ -1,18 +1,5 @@
 --[[
     @local
-    @desc A function that functions similarly to 'table.unpack', the difference being that this function doesn't stop at the first nil found.
-    @param <tbl - tbl> -- the table to unpack
-    @return [var - args...]
-]]
-local function unpackNils( tbl )
-    local str = {}
-    for i = 1, table.maxn( tbl ) do str[ i ] = "tbl[" .. i .. "]" end
-
-    return loadstring( "local tbl = ...; return " .. table.concat( str, "," ) )( tbl )
-end
-
---[[
-    @local
     @desc Creates a table of arguments using the classes constructor configuration. This table is then unpacked (and the result returned)
     @param <Class Base - class>, <table - target>
     @return [var - args...]
@@ -42,7 +29,7 @@ local function formArguments( class, target )
         returnArguments[ #ordered + 1 ] = trailingTable
     end
 
-    return unpackNils( returnArguments )
+    return unpack( returnArguments, 1, next(trailingTable) and #ordered + 1 or #ordered )
 end
 
 --[[

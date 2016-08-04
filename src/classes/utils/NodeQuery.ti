@@ -130,12 +130,7 @@ function NodeQuery.static.formQueryFromString( string )
         local targetClasses = {}
         local targetType, targetID, targetClass = part:match "([^%.#]*)#?([^%.#]*)(%.?[^#]*)"
 
-        if targetType == "" and targetID == "" and targetClass == "" then
-            return error( "Invalid query part found inside of query '"..string.."'. Afflicting part '"..part.."'" )
-        end
-
         for c in targetClass:gmatch "%.([^.]*)" do targetClasses[ #targetClasses + 1 ] = c end
-
         query[ #query + 1 ] = {
             type = targetType ~= "*" and ( targetType ~= "" and targetType ) or false,
             id = targetID ~= "" and targetID,

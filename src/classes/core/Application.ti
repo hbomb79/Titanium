@@ -117,6 +117,16 @@ function Application:getNode( id, recursive )
     end
 end
 
+--[[
+    @instance
+    @desc Returns a 'NodeQuery' instance containing the nodes that matched the query and methods to manipulate
+    @param <string - query>
+    @return <NodeQuery Instance - Query Result>
+]]
+function Application:query( query )
+    return NodeQuery( self, query )
+end
+
 function Application:focusNode( node )
     if not Titanium.typeOf( node, "Node", true ) then
         return error "Failed to update application focused node. Invalid node object passed."

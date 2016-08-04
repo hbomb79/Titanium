@@ -18,9 +18,9 @@
 
 <Button text="Toggle Pane" X=2 Y=15 height=1 width=13 id="pane_toggle"/>
 
-<Label text="ctrl" id="left_ctrl_label" X=5 Y=16 class="sub"/>
-<Label text="-" X=9 Y=16 class="sub" id="hyphen_seperator"/>
-<Label text="p" id="p_char_label" X=10 Y=16 class="sub"/>
+<Label text="ctrl" id="left" X=5 Y=16 class="sub hotkey_part"/>
+<Label text="-" X=9 Y=16 class="sub hotkey_part" id="hyphen_seperator"/>
+<Label text="p" id="right" X=10 Y=16 class="sub hotkey_part"/>
 
 <Button text="Config" width=8 height=1 X=42 Y=2 id="config_toggle"/>
 

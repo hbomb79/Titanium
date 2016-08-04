@@ -133,14 +133,58 @@ function MThemeable:updateProperties()
     for property in pairs( self.properties ) do self:updateProperty( property ) end
 end
 
+--[[
+    @instance
+    @desc Adds class 'class' and updated TML properties
+    @param <string - class>
+]]
 function MThemeable:addClass( class )
     self.classes[ class ] = true
     self:updateProperties()
 end
 
+--[[
+    @instance
+    @desc Removes class 'class' and updated TML properties
+    @param <string - class>
+]]
 function MThemeable:removeClass( class )
     self.classes[ class ] = nil
     self:updateProperties()
+end
+
+--[[
+    @instance
+    @desc Shortcut method to set class if 'has' is truthy or remove it otherwise (updates properties too)
+    @param <string - class>, [var - has]
+]]
+function MThemeable:setClass( class, has )
+    self.classes[ class ] = has and true or nil
+    self:updateProperties()
+end
+
+--[[
+    @instance
+    @desc Returns true if:
+          - Param passed is a table and all values inside the table are set as classes on this object
+          - Param is string and this object has that class
+    @param <string|table - class>
+    @return <boolean - has>
+]]
+function MThemeable:hasClass( t )
+    if type( t ) == "string" then
+        return self.classes[ t ]
+    elseif type( t ) == "table" then
+        for i = 1, #t do
+            if not self.classes[ t[ i ] ] then
+                return false
+            end
+        end
+
+        return true
+    else
+        return error("Invalid target '"..tostring( t ).."' for class check")
+    end
 end
 
 function MThemeable:onThemeUpdate()

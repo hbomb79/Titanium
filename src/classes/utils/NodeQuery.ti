@@ -1,0 +1,147 @@
+class NodeQuery {
+    result = false;
+
+    parent = false;
+    query = false;
+}
+
+function NodeQuery:__init__( parent, queryString )
+    if not ( Titanium.isInstance( parent ) and type( queryString ) == "string" ) then
+        return error "Node query requires Titanium instance and string query"
+    end
+
+    self.parent = parent
+    self.result = self:query( queryString )
+end
+
+--[[
+    @static
+    @desc Returns a table containing the nodes matching the conditions set in 'query'
+    @param <string - query>
+    @return <table - results>
+]]
+function NodeQuery:query( queryString )
+    local query = NodeQuery.formQueryFromString( queryString )
+    if type( query ) ~= "table" then return error( "Cannot perform query. Invalid query object passed" ) end
+
+    local nodes = self.parent.nodes or error "Cannot perform query. Parent 'nodes' invalid"
+    local results = {}
+    for n = 1, #nodes do
+        local node = nodes[ n ]
+        for q = 1, #query do
+            local queryPart = query[ q ]
+
+            if ( not queryPart.type or node.__type == queryPart.type ) and ( not queryPart.id or ( type( node.id ) == "string" and node.id == queryPart.id ) ) and ( not queryPart.classes or node:hasClass( queryPart.classes ) ) then
+                results[ #results + 1 ] = node
+                break
+            end
+        end
+    end
+
+    return results
+end
+
+--[[
+    @instance
+    @desc Addes class 'class' on each node inside the result set
+    @param <string - class>
+]]
+function NodeQuery:addClass( class )
+    self:executeOnNodes( "addClass", class )
+end
+
+--[[
+    @instance
+    @desc Removes class 'class' from each node in the result set
+    @param <string - class>
+]]
+function NodeQuery:removeClass( class )
+    self:executeOnNodes( "removeClass", class )
+end
+
+--[[
+    @instance
+    @desc Calles 'setClass' on each node in the result set
+    @param <string - class>, [var - cond]
+]]
+function NodeQuery:setClass( class, cond )
+    self:executeOnNodes( "setClass", class, cond )
+end
+
+--[[
+    @instance
+    @desc Returns true if the class 'class' exists on all nodes in the result set, false otherwise
+    @param <table|string - class>
+    @return <boolean - hasClass>
+]]
+function NodeQuery:hasClass( class )
+    local nodes = self.result
+    for i = 1, #nodes do
+        if not nodes[ i ]:hasClass( class ) then
+            return false
+        end
+    end
+
+    return true
+end
+
+--[[
+    @instance
+    @desc Calls 'set' on each node in the result set and passes the tbl given, allows batch setting of properties
+    @param <table - tbl>
+]]
+function NodeQuery:set( tbl )
+    self:executeOnNodes( "set", tbl )
+end
+
+--[[
+    @instance
+    @desc Calls 'animate' on each node in the result set
+]]
+function NodeQuery:animate( ... )
+    self:executeOnNodes( "animate", ... )
+end
+
+--[[
+    @instance
+    @desc Iterates over each node in the result set, calling 'fnName' with arguments '...' on each
+    @param <string - fnName>, [vararg - ...]
+]]
+function NodeQuery:executeOnNodes( fnName, ... )
+    local nodes, node = self.result
+    for i = 1, #nodes do
+        node = nodes[ i ]
+
+        if node:can( fnName ) then
+            node[ fnName ]( node, ... )
+        end
+    end
+end
+
+--[[
+    @static
+    @desc Returns a table containing the parts of the query given. Used by 'search' function
+    @param <string - query>
+    @return <table - queryParts>
+]]
+function NodeQuery.static.formQueryFromString( string )
+    local query = {}
+    for part in string:gmatch "%S+" do
+        local targetClasses = {}
+        local targetType, targetID, targetClass = part:match "([^%.#]*)#?([^%.#]*)(%.?[^#]*)"
+
+        if targetType == "" and targetID == "" and targetClass == "" then
+            return error( "Invalid query part found inside of query '"..string.."'. Afflicting part '"..part.."'" )
+        end
+
+        for c in targetClass:gmatch "%.([^.]*)" do targetClasses[ #targetClasses + 1 ] = c end
+
+        query[ #query + 1 ] = {
+            type = targetType ~= "*" and ( targetType ~= "" and targetType ) or false,
+            id = targetID ~= "" and targetID,
+            classes = targetClasses
+        }
+    end
+
+    return query
+end

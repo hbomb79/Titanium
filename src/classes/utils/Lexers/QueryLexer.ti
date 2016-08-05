@@ -1,0 +1,48 @@
+class QueryLexer extends Lexer {
+    static = {};
+}
+
+function QueryLexer:tokenize()
+    if self.stream:find "^%s" and not self.inCondition then
+        self:pushToken { type = "QUERY_SEPERATOR" }
+    end
+
+    self:trimStream()
+    local stream = self.stream
+
+    if self.inCondition then
+        self:tokenizeCondition( stream )
+    elseif stream:find "^%b[]" then
+        self:pushToken { type = "QUERY_COND_OPEN" }
+        self:consume( 1 )
+
+        self.inCondition = true
+    elseif stream:find "^#[^%s%.#%[]*" then
+        self:pushToken { type = "QUERY_ID", value = self:consumePattern "^#[^%s%.#%[]*" }
+    elseif stream:find "^%.[^%s#%[]*" then
+        self:pushToken { type = "QUERY_CLASS", value = self:consumePattern "^%.[^%s#%[]*" }
+    elseif stream:find "^[^%s#%.%[]*" then
+        self:pushToken { type = "QUERY_TYPE", value = self:consumePattern "^[^%s#%.%[]*" }
+    else
+        self:throw("Unexpected block '"..stream:match("(.-)%s").."'")
+    end
+end
+
+function QueryLexer:tokenizeCondition( stream )
+    if stream:find "%b[]" then
+        self:throw( "Nested condition found '"..tostring( stream:match "%b[]" ).."'" )
+    elseif stream:find "^%w+" then
+        self:pushToken { type = "QUERY_COND_ENTITY", value = self:consumePattern "^%w+" }
+    elseif stream:find "^%," then
+        self:pushToken { type = "QUERY_COND_SEPERATOR" }
+        self:consume( 1 )
+    elseif stream:find "^%p+" then
+        self:pushToken { type = "QUERY_COND_SYMBOL", value = self:consumePattern "^%p+" }
+    elseif stream:find "^%]" then
+        self:pushToken { type = "QUERY_COND_CLOSE" }
+        self:consume( 1 )
+        self.inCondition = false
+    else
+        self:throw("Invalid condition syntax. Expected property near '"..tostring( stream:match "%S*" ).."'")
+    end
+end

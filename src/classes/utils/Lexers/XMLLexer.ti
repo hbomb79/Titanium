@@ -1,0 +1,104 @@
+class XMLLexer extends "Lexer" {
+    static = {
+        escapeChars = {
+            a = "\a",
+            b = "\b",
+            f = "\f",
+            n = "\n",
+            r = "\r",
+            t = "\t",
+            v = "\v"
+        }
+    };
+
+    openTag = false;
+    definingAttribute = false;
+    currentAttribute = false;
+}
+
+--[[
+    @instance
+    @desc Searches for the next occurence of 'opener'. Once found all text between the first two occurences is selected and consumed resulting in a XML_STRING token.
+    @param <char - opener>
+    @return <string - consumedString>
+]]
+function XMLLexer:consumeString( opener )
+    local stream, closingIndex = self.stream
+
+    if stream:find( opener, 2 ) then
+        local str, c, escaped = {}
+        for i = 2, #stream do
+            c = stream:sub( i, i )
+
+            if escaped then
+                str[ #str + 1 ] = XMLLexer.escapeChars[ c ] or c
+                escaped = false
+            elseif c == "\\" then
+                escaped = true
+            elseif c == opener then
+                self:consume( i )
+                return table.concat( str )
+            else
+                str[ #str + 1 ] = c
+            end
+        end
+    end
+
+    self:throw( "Failed to lex stream. Expected string end ("..opener..")" )
+end
+
+--[[
+    @instance
+    @desc Converts the stream into tokens by way of pattern matching
+]]
+function XMLLexer:tokenize()
+    self:trimStream()
+    local stream, openTag, currentAttribute, definingAttribute = self.stream, self.openTag, self.currentAttribute, self.definingAttribute
+    local first = stream:sub( 1, 1 )
+
+    if stream:find "^<(%w+)" then
+        self:pushToken({type = "XML_OPEN", value = self:consumePattern "^<(%w+)"})
+        self.openTag = true
+    elseif stream:find "^</(%w+)>" then
+        self:pushToken({type = "XML_END", value = self:consumePattern "^</(%w+)>"})
+        self.openTag = false
+    elseif stream:find "^/>" then
+        self:pushToken({type = "XML_END_CLOSE"})
+        self:consume( 2 )
+        self.openTag = false
+    elseif openTag and stream:find "^%w+" then
+        self:pushToken({type = definingAttribute and "XML_ATTRIBUTE_VALUE" or "XML_ATTRIBUTE", value = self:consumePattern "^%w+"})
+
+        if not definingAttribute then
+            self.currentAttribute = true
+            return
+        end
+    elseif not openTag and stream:find "^([^<]+)" then
+        local content = self:consumePattern "^([^<]+)"
+
+        local newlines = select( 2, content:gsub("\n", "") )
+        if newlines then self:newline( newlines ) end
+
+        self:pushToken({type = "XML_CONTENT", value = content })
+    elseif first == "=" then
+        self:pushToken({type = "XML_ASSIGNMENT", value = "="})
+        self:consume( 1 )
+
+        if currentAttribute then
+            self.definingAttribute = true
+        end
+
+        return
+    elseif first == "'" or first == "\"" then
+        self:pushToken({type = definingAttribute and "XML_STRING_ATTRIBUTE_VALUE" or "XML_STRING", value = self:consumeString( first )})
+    elseif first == ">" then
+        self:pushToken({type = "XML_CLOSE"})
+        self.openTag = false
+        self:consume( 1 )
+    else
+        self:throw("Unexpected block '"..stream:match("(.-)%s").."'")
+    end
+
+    if self.currentAttribute then self.currentAttribute = false end
+    if self.definingAttribute then self.definingAttribute = false end
+end

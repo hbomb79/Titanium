@@ -1,6 +1,4 @@
-class QueryLexer extends Lexer {
-    static = {};
-}
+class QueryLexer extends Lexer
 
 function QueryLexer:tokenize()
     if self.stream:find "^%s" and not self.inCondition then

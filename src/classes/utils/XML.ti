@@ -14,7 +14,7 @@ class XML {
     @desc Creates a 'Lexer' instance with the source and stores the tokens provided. Invokes 'parse' once lexical analysis complete.
 ]]
 function XML:__init__( source )
-    local lex = Lexer( source )
+    local lex = XMLLexer( source )
     self.tokens = lex.tokens
 
     self:parse()

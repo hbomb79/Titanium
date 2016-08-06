@@ -24,16 +24,39 @@ function NodeQuery:query( queryString )
     local query = self.parsedQuery
     if type( query ) ~= "table" then return error( "Cannot perform query. Invalid query object passed" ) end
 
+    local function format( original, symbol, final )
+        local wrapper = type( original ) == "string" and '"' or ""
+        local finalWrapper = type( final ) == "string" and '"' or ""
+
+        return ("return %s%s%s %s %s%s%s"):format( wrapper, tostring( original ), wrapper, symbol, finalWrapper, tostring( final ), finalWrapper )
+    end
+
     local nodes = self.parent.nodes or error "Cannot perform query. Parent 'nodes' invalid"
     local results = {}
     for n = 1, #nodes do
         local node = nodes[ n ]
+
         for q = 1, #query do
             local queryPart = query[ q ]
 
             if ( not queryPart.type or node.__type == queryPart.type ) and ( not queryPart.id or ( type( node.id ) == "string" and node.id == queryPart.id ) ) and ( not queryPart.classes or node:hasClass( queryPart.classes ) ) then
-                results[ #results + 1 ] = node
-                break
+                local qCond, fail = queryPart.condition
+                if qCond then
+                    local cond
+                    for c = 1, #qCond do
+                        cond = qCond[ c ]
+
+                        local fn, err = loadstring( format( node[ cond.property ], cond.symbol, cond.value ) )
+                        if fn then
+                            if not fn() then fail = true; break end
+                        end
+                    end
+                end
+
+                if not fail then
+                    results[ #results + 1 ] = node
+                    break
+                end
             end
         end
     end

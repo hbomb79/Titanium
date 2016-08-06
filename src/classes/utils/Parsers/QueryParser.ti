@@ -42,6 +42,7 @@ function QueryParser:parse()
                 self:throw "Tried to seperate query, no query (empty) found on left of seperator."
             end
         elseif token.type == "QUERY_COND_OPEN" then
+            currentQuery.condition = self:parseCondition()
         else
             self:throw("Unexpected '"..token.type.."'")
         end

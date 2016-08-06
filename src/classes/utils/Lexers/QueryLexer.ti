@@ -27,15 +27,23 @@ function QueryLexer:tokenize()
 end
 
 function QueryLexer:tokenizeCondition( stream )
+    local first = stream:sub( 1, 1 )
     if stream:find "%b[]" then
         self:throw( "Nested condition found '"..tostring( stream:match "%b[]" ).."'" )
+    elseif stream:find "^%b''" or stream:find '^%b""' then
+        local cnt = self:consumePattern( first == "'" and "^%b''" or '^%b""' ):sub( 2, -2 )
+        if cnt:find "%b''" or cnt:find '%b""' then
+            self:throw( "Nested string found inside '"..tostring( cnt ).."'" )
+        end
+
+        self:pushToken { type = "QUERY_COND_STRING_ENTITY", value = cnt }
     elseif stream:find "^%w+" then
         self:pushToken { type = "QUERY_COND_ENTITY", value = self:consumePattern "^%w+" }
     elseif stream:find "^%," then
         self:pushToken { type = "QUERY_COND_SEPERATOR" }
         self:consume( 1 )
-    elseif stream:find "^%p+" then
-        self:pushToken { type = "QUERY_COND_SYMBOL", value = self:consumePattern "^%p+" }
+    elseif stream:find "^[%p~]+" then
+        self:pushToken { type = "QUERY_COND_SYMBOL", value = self:consumePattern "^[%p~]+" }
     elseif stream:find "^%]" then
         self:pushToken { type = "QUERY_COND_CLOSE" }
         self:consume( 1 )

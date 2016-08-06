@@ -1,0 +1,131 @@
+--[[
+    The XMLParser class is used to handle the lexing and parsing of XMLParser source into a parse tree.
+]]
+
+class XMLParser extends Parser {
+    tokens = false;
+    tree = false;
+}
+
+--[[
+    @constructor
+    @desc Creates a 'Lexer' instance with the source and stores the tokens provided. Invokes 'parse' once lexical analysis complete.
+]]
+function XMLParser:__init__( source )
+    local lex = XMLLexer( source )
+    self:super( lex.tokens )
+end
+
+--[[
+    @instance
+    @desc Iterates through every token and constructs a tree of XML layers
+]]
+function XMLParser:parse()
+    local stack, top, token = {{}}, false, self:stepForward()
+    local isTagOpen, settingAttribute
+
+    while token do
+        if settingAttribute then
+            if token.type == "XML_ATTRIBUTE_VALUE" or token.type == "XML_STRING_ATTRIBUTE_VALUE" then
+                top.arguments[ settingAttribute ] = token.value
+                settingAttribute = false
+            else
+                self:throw( "Unexpected "..token.type..". Expected attribute value following XML_ASSIGNMENT token." )
+            end
+        else
+            if token.type == "XML_OPEN" then
+                if isTagOpen then
+                    self:throw "Unexpected XML_OPEN token. Expected XML attributes or end of tag."
+                end
+                isTagOpen = true
+
+                top = { type = token.value, arguments = {} }
+                table.insert( stack, top )
+            elseif token.type == "XML_END" then
+                local toClose = table.remove( stack )
+                top = stack[ #stack ]
+
+                if not top then
+                    self:throw("Nothing to close with XML_END of type '"..token.value.."'")
+                elseif toClose.type ~= token.value then
+                    self:throw("Tried to close "..toClose.type.." with XML_END of type '"..token.value.."'")
+                end
+
+                if not top.children then top.children = {} end
+                table.insert( top.children, toClose )
+            elseif token.type == "XML_END_CLOSE" then
+                top = stack[ #stack - 1 ]
+
+                if not top then
+                    self:throw("Unexpected XML_END_CLOSE tag (/>)")
+                end
+
+                if not top.children then top.children = {} end
+                table.insert( top.children, table.remove( stack ) )
+            elseif token.type == "XML_CLOSE" then
+                isTagOpen = false
+            elseif token.type == "XML_ATTRIBUTE" then
+                local next = self:stepForward()
+
+                if next.type == "XML_ASSIGNMENT" then
+                    settingAttribute = token.value
+                else
+                    top.arguments[ token.value ] = true
+                    self.position = self.position - 1
+                end
+            elseif token.type == "XML_CONTENT" then
+                if not top.type then
+                    self:throw("Unexpected XML_CONTENT. Invalid content: "..token.value)
+                end
+
+                top.content = token.value
+            else
+                self:throw("Unexpected "..token.type)
+            end
+        end
+
+        if token.type == "XML_END" or token.type == "XML_END_CLOSE" then
+            isTagOpen = false
+        end
+
+        if top.content and top.children then
+            self:throw "XML layers cannot contain child nodes and XML_CONTENT at the same time"
+        end
+
+        token = self:stepForward()
+    end
+    self.tree = stack[ 1 ].children
+end
+
+--[[
+    @static
+    @desc When lexing the XML arguments they are all stored as strings as a result of the string operations to find tokens.
+          This function converts a value to the type given (#2)
+    @param <var - argumentValue>, <string - desiredType>
+    @return <desiredType* - value>
+
+    *Note: desiredType is passed as type string, however the return is the value type defined inside the string. eg: desiredType: "number" will return a number, not a string.
+]]
+function XMLParser.static.convertArgType( argumentValue, desiredType )
+    local vType = type( argumentValue )
+
+    if not desiredType or not argumentValue or vType == desiredType then
+        return argumentValue
+    end
+
+    if desiredType == "string" then
+        return tostring( argumentValue )
+    elseif desiredType == "number" then
+        return tonumber( argumentValue ) or error( "Failed to cast argument to number. Value: "..tostring( argumentValue ).." is not a valid number" )
+    elseif desiredType == "boolean" then
+        if argumentValue == "true" then return true
+        elseif argumentValue == "false" then return false
+        else
+            return error( "Failed to cast argument to boolean. Value: "..tostring( argumentValue ).." is not a valid boolean (true or false)" )
+        end
+    elseif desiredType == "colour" or desiredType == "color" then
+        return tonumber( argumentValue ) or colours[ argumentValue ] or colors[ argumentValue ] or error( "Failed to cast argument to colour (number). Value: "..tostring( argumentValue ).." is not a valid colour" )
+    else
+        return error( "Failed to cast argument. Unknown target type '"..tostring( desiredType ).."'" )
+    end
+end

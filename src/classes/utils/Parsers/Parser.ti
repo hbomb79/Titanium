@@ -1,0 +1,48 @@
+--[[
+    The parser class should be extended by classes that are used to parser lexer token output.
+]]
+
+abstract class Parser {
+    position = 0;
+    tokens = {};
+}
+
+--[[
+    @constructor
+    @desc Sets the tokens of the parser to those passed and begins parsing
+    @param <table - tokens>
+]]
+function Parser:__init__( tokens )
+    if type( tokens ) ~= "table" then
+        return error "Failed to parse. Invalid tokens"
+    end
+
+    self.tokens = tokens
+    self:parse()
+end
+
+--[[
+    @instance
+    @desc Returns the token at 'position'
+]]
+function Parser:getCurrentToken()
+    return self.tokens[ self.position ]
+end
+
+--[[
+    @instance
+    @desc Advances 'position' by one and returns the token at the new position
+]]
+function Parser:stepForward( amount )
+    self.position = self.position + ( amount or 1 )
+    return self:getCurrentToken()
+end
+
+--[[
+    @instance
+    @desc Throws a error prefixed with information about the token being parsed at the time of error.
+]]
+function Parser:throw( e, token )
+    local token = token or self:getCurrentToken()
+    return error( "Parser ("..tostring( self.__type )..") Error. Line "..token.line..", char "..token.char .. ": "..e, 2 )
+end

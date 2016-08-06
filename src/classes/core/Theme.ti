@@ -28,7 +28,7 @@ end
     @return <table - rules>
 ]]
 function Theme.static.parse( source )
-    local tree, totalRules = XML( source ).tree, {}
+    local tree, totalRules = XMLParser( source ).tree, {}
 
     if tree then
         local ruleParent
@@ -60,7 +60,7 @@ function Theme.static.parse( source )
 
                     table.insert( totalRules[ ruleParent.type ], {
                         property = rule.type,
-                        value = XML.convertArgType( rule.content, argumentTypes[ alias[ rule.type ] or rule.type ] ),
+                        value = XMLParser.convertArgType( rule.content, argumentTypes[ alias[ rule.type ] or rule.type ] ),
                         important = rule.arguments.important,
                         classes = parentClasses
                     })

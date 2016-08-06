@@ -15,13 +15,13 @@ local function formArguments( class, target )
     local ordered, set, target = constructor.orderedArguments, {}
     for i = 1, #ordered do
         target = ordered[ i ]
-        returnArguments[ i ] = XML.convertArgType( args[ target ], argumentTypes[ alias[ target ] or target ] )
+        returnArguments[ i ] = XMLParser.convertArgType( args[ target ], argumentTypes[ alias[ target ] or target ] )
         set[ ordered[ i ] ] = true
     end
 
     for argName, argValue in pairs( args ) do
         if not set[ argName ] then
-            trailingTable[ argName ] = XML.convertArgType( argValue, argumentTypes[ alias[ argName ] or argName ] )
+            trailingTable[ argName ] = XMLParser.convertArgType( argValue, argumentTypes[ alias[ argName ] or argName ] )
         end
     end
 
@@ -48,7 +48,7 @@ class TML {
 ]]
 function TML:__init__( parent, source )
     self.parent = parent
-    self.tree = XML( source ).tree
+    self.tree = XMLParser( source ).tree
 
     self:parseTree()
 end

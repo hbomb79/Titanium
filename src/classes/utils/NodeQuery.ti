@@ -2,16 +2,16 @@ class NodeQuery {
     result = false;
 
     parent = false;
-    query = false;
 }
 
 function NodeQuery:__init__( parent, queryString )
     if not ( Titanium.isInstance( parent ) and type( queryString ) == "string" ) then
         return error "Node query requires Titanium instance and string query"
     end
-
     self.parent = parent
-    self.result = self:query( queryString )
+
+    self.parsedQuery = QueryParser( queryString ).query
+    self.result = self:query()
 end
 
 --[[
@@ -21,7 +21,7 @@ end
     @return <table - results>
 ]]
 function NodeQuery:query( queryString )
-    local query = NodeQuery.formQueryFromString( queryString )
+    local query = self.parsedQuery
     if type( query ) ~= "table" then return error( "Cannot perform query. Invalid query object passed" ) end
 
     local nodes = self.parent.nodes or error "Cannot perform query. Parent 'nodes' invalid"
@@ -116,27 +116,4 @@ function NodeQuery:executeOnNodes( fnName, ... )
             node[ fnName ]( node, ... )
         end
     end
-end
-
---[[
-    @static
-    @desc Returns a table containing the parts of the query given. Used by 'search' function
-    @param <string - query>
-    @return <table - queryParts>
-]]
-function NodeQuery.static.formQueryFromString( string )
-    local query = {}
-    for part in string:gmatch "%S+" do
-        local targetClasses = {}
-        local targetType, targetID, targetClass = part:match "([^%.#]*)#?([^%.#]*)(%.?[^#]*)"
-
-        for c in targetClass:gmatch "%.([^.]*)" do targetClasses[ #targetClasses + 1 ] = c end
-        query[ #query + 1 ] = {
-            type = targetType ~= "*" and ( targetType ~= "" and targetType ) or false,
-            id = targetID ~= "" and targetID,
-            classes = targetClasses
-        }
-    end
-
-    return query
 end

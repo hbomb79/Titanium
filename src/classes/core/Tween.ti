@@ -16,7 +16,7 @@ class Tween {
 --[[
     @constructor
     @desc Constructs the tween instance, converting the 'easing' property into a function (if it's a string) and also stores the initial value of the property for later use.
-    @param <Object - object>, <string - property>, <number - final>, <number - duration>, [string/function - easing]
+    @param <Object - object>, <string - name>, <string - property>, <number - final>, <number - duration>, [string/function - easing]
 ]]
 function Tween:__init__( ... )
     self:resolve( ... )
@@ -99,9 +99,10 @@ function Tween.static.addEasing( easingName, easingFunction )
 end
 
 configureConstructor {
-    orderedArguments = { "object", "property", "final", "duration", "easing", "promise" },
-    requiredArguments = { "object", "property", "final", "duration" },
+    orderedArguments = { "object", "name", "property", "final", "duration", "easing", "promise" },
+    requiredArguments = { "object", "name", "property", "final", "duration" },
     argumentTypes = {
+        name = "string",
         property = "string",
         final = "number",
         duration = "number",

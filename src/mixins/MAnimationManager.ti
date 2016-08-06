@@ -16,6 +16,10 @@ function MAnimationManager:updateAnimations()
         anim = anims[ i ]
 
         if anim:update( dt ) then
+            if type( anim.promise ) == "function" then
+                anim:promise( self )
+            end
+
             self:removeAnimation( anim )
         end
     end
@@ -34,7 +38,7 @@ function MAnimationManager:addAnimation( animation )
         return error("Failed to add animation to manager. '"..tostring( animation ).."' is invalid, Tween instance expected")
     end
 
-    self:removeAnimation( animation )
+    self:removeAnimation( animation.name )
     table.insert( self.animations, animation )
 
     if not self.timer then
@@ -49,17 +53,16 @@ end
     @desc Removes an animation from this object, it will stop receiving updates from this object
 ]]
 function MAnimationManager:removeAnimation( animation )
-    if not Titanium.typeOf( animation, "Tween", true ) then
+    local searchName
+    if type( animation ) == "string" then
+        searchName = true
+    elseif not Titanium.typeOf( animation, "Tween", true ) then
         return error("Failed to remove animation from manager. '"..tostring( animation ).."' is invalid, Tween instance expected")
     end
 
     local anims = self.animations
     for i = 1, #anims do
-        if anims[ i ] == animation then
-            if type( animation.promise ) == "function" then
-                animation:promise( self )
-            end
-
+        if ( searchName and anims[ i ].name == animation ) or ( not searchName and anims[ i ] == animation ) then
             return table.remove( anims, i )
         end
     end

@@ -73,10 +73,8 @@ function QueryParser:parseCondition()
         elseif token.type == "QUERY_COND_SEPERATOR" and next( condition ) then
             conditions[ #conditions + 1 ] = condition
             condition = {}
-        elseif token.type == "QUERY_COND_CLOSE" then
-            if not condition.property or ( condition.property and condition.value ) then
-                break
-            end
+        elseif token.type == "QUERY_COND_CLOSE" and ( not condition.property or ( condition.property and condition.value ) ) then
+            break
         else
             self:throw( "Unexpected '"..token.type.."' inside of condition block" )
         end

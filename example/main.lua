@@ -40,16 +40,12 @@ Manager:getNode "toggle":on("trigger", function( self )
     else Manager:addTheme( app.masterTheme ) end
 end)
 
-local sidePane = app.sidePane
+local sidePane, paneStatus = app.sidePane
 local function paneToggle( isKey )
     paneStatus = not paneStatus
-    if sidePane.anim then Manager:removeAnimation( sidePane.anim ) end
 
-    if isKey == true then
-        sidePane.hotkeys:addClass "active"
-    end
-
-    sidePane.anim = sidePane.pane:animate("X", paneStatus and 32 or 52, paneStatus and 0.15 or 0.2, paneStatus and "outSine" or "inQuad", function()
+    if isKey == true then sidePane.hotkeys:addClass "active" end
+    sidePane.pane:animate("sidePaneAnimation", "X", paneStatus and 32 or 52, paneStatus and 0.15 or 0.2, paneStatus and "outSine" or "inQuad", function()
         sidePane.hotkeys:removeClass "active"
     end)
 end

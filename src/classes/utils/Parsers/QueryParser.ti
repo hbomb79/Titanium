@@ -14,10 +14,6 @@ end
 function QueryParser:parse()
     local allQueries, currentQuery = {}, {}
 
-    local function isCurrent()
-        return (currentQuery.classes and #currentQuery.classes > 0) or currentQuery.type or currentQuery.type
-    end
-
     local token = self:stepForward()
     while token do
         if token.type == "QUERY_TYPE" then
@@ -39,14 +35,13 @@ function QueryParser:parse()
 
             table.insert( currentQuery.classes, token.value )
         elseif token.type == "QUERY_SEPERATOR" then
-            if isCurrent() then
+            if next( currentQuery ) then
                 allQueries[ #allQueries + 1 ] = currentQuery
                 currentQuery = {}
             else
                 self:throw "Tried to seperate query, no query (empty) found on left of seperator."
             end
         elseif token.type == "QUERY_COND_OPEN" then
-            --TODO: Conditions
         else
             self:throw("Unexpected '"..token.type.."'")
         end

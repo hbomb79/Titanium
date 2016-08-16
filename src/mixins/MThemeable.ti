@@ -60,14 +60,12 @@ function MThemeable:hook()
         end
 
         self[ setterName ] = function( instance, value )
-            if not self.application then return end
-
-            local newValue
-            if MThemeable.isUpdating then
-                newValue = value
-            else
-                self.mainValues[ property ] = value
-                newValue = self.application:fetchValue( self, property )
+            local newValue = value
+            if self.application then
+                if not MThemeable.isUpdating then
+                    self.mainValues[ property ] = value
+                    newValue = self.application:fetchValue( self, property )
+                end
             end
 
             if setterFn then

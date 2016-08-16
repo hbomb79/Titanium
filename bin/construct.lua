@@ -63,7 +63,7 @@ local function scan( path, files )
 
     print("Scaning directory '"..path.."'")
     for file in lfs.dir( path ) do
-        if not isInTable( ignore, file ) and not string.find( file, ".*%.swp" ) then
+        if not isInTable( ignore, file ) and not string.find( file, ".*%.swp" ) and not string.find( file, ".*%.swo" ) then
             filePath = path .. "/" .. file
 
             local attrs = lfs.attributes( filePath )

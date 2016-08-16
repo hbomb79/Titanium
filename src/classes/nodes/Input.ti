@@ -160,10 +160,11 @@ end
 --[[
     @instance
     @desc Draws the inputs background and text to the parent canvas
+    @param [boolean - force]
 ]]
-function Input:draw()
+function Input:draw( force )
     local raw = self.raw
-    if raw.changed then
+    if raw.changed or force then
         local canvas, tc, bg = raw.canvas, raw.colour, raw.backgroundColour
         if raw.focused then tc, bg = raw.focusedColour, raw.focusedBackgroundColour
         elseif raw.active then tc, bg = raw.activeColour, raw.activeBackgroundColour end

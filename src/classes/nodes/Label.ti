@@ -49,10 +49,11 @@ end
 --[[
     @instance
     @desc Clears the Label's canvas and draws a line of text if the label has changed.
+    @param [boolean - force]
 ]]
-function Label:draw()
+function Label:draw( force )
     local raw = self.raw
-    if raw.changed then
+    if raw.changed or force then
         raw.canvas:drawTextLine( 1, 1, raw.text )
 
         raw.changed = false

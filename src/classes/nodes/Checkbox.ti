@@ -64,10 +64,11 @@ end
 --[[
     @instance
     @desc Draws the checkbox to the canvas
+    @param [boolean - force]
 ]]
-function Checkbox:draw()
+function Checkbox:draw( force )
     local raw = self.raw
-    if raw.changed then
+    if raw.changed or force then
         local toggled, active = raw.toggled, raw.active
         raw.canvas:drawPoint(
             1, 1,

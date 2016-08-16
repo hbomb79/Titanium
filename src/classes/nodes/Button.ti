@@ -50,10 +50,11 @@ end
 --[[
     @instance
     @desc Draws the text to the node canvas
+    @param [boolean - force]
 ]]
-function Button:draw()
+function Button:draw( force )
     local raw = self.raw
-    if raw.changed then
+    if raw.changed or force then
         local active = raw.active
         raw.canvas:clear( active and raw.activeBackgroundColour )
         self:drawText( active and raw.activeBackgroundColour, active and raw.activeColour )

@@ -21,10 +21,11 @@ end
 --[[
     @instance
     @desc Clears the canvas, the canvas background colour becomes 'backgroundColour' during the clear.
+    @param [boolean - force]
 ]]
-function Pane:draw()
+function Pane:draw( force )
     local raw = self.raw
-    if raw.changed then
+    if raw.changed or force then
         raw.canvas:clear()
         raw.changed = false
     end

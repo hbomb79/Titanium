@@ -87,9 +87,9 @@ end
 ]]
 function Container:setApplication( app )
     if Titanium.typeOf( app, "Application", true ) then
-    self.application = app
+        self.application = app
 
-    local nodes = self.nodes
+        local nodes = self.nodes
         for i = 1, #nodes do
             nodes[ i ].application = app
         end

@@ -63,39 +63,39 @@ function Container:draw( force )
 end
 
 --[[
-	@instance
-	@desc Redirects all events to child nodes. Mouse events are adjusted to become relative to this container. Event handlers on Container are still fired if present
-	@param <Event - event>
+    @instance
+    @desc Redirects all events to child nodes. Mouse events are adjusted to become relative to this container. Event handlers on Container are still fired if present
+    @param <Event - event>
 ]]
 function Container:handle( eventObj )
-	self.super:handle( eventObj )
+    self.super:handle( eventObj )
 
-	if eventObj.main == "MOUSE" then
-		eventObj = eventObj:clone( self )
-	end
+    if eventObj.main == "MOUSE" then
+        eventObj = eventObj:clone( self )
+    end
 
-	local nodes, node = self.nodes
-	for i = 1, #nodes do
-		nodes[ i ]:handle( eventObj )
-	end
+    local nodes, node = self.nodes
+    for i = 1, #nodes do
+        nodes[ i ]:handle( eventObj )
+    end
 end
 
 --[[
-	@instance
-	@desc Iterates over child nodes to ensure that nodes added to this container prior to Application set are updated (with the new Application)
-	@param <Application - app>
+    @instance
+    @desc Iterates over child nodes to ensure that nodes added to this container prior to Application set are updated (with the new Application)
+    @param <Application - app>
 ]]
 function Container:setApplication( app )
-	if Titanium.typeOf( app, "Application", true ) then
-		self.application = app
+    if Titanium.typeOf( app, "Application", true ) then
+    self.application = app
 
-		local nodes = self.nodes
-		for i = 1, #nodes do
-			nodes[ i ].application = app
-		end
-	else
-		return error("Failed to set Application. Invalid value passed '"..tostring( app ).."'")
-	end
+    local nodes = self.nodes
+        for i = 1, #nodes do
+            nodes[ i ].application = app
+        end
+    else
+        return error("Failed to set Application. Invalid value passed '"..tostring( app ).."'")
+    end
 end
 
 configureConstructor({

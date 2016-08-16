@@ -28,10 +28,8 @@ end
 ]]
 function Container:isNodeInBounds( node, width, height )
     local left, top = node.X, node.Y
-    local right, bottom = left + node.width, top + node.height
 
-    local width, height = width or self.width, height or self.height
-    return not ( right < 1 or left > width or top > height or bottom < 1 )
+    return not ( ( left + node.width ) < 1 or left > ( width or self.width ) or top > ( height or self.height ) or ( top + node.height ) < 1 )
 end
 
 --[[

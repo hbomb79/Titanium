@@ -14,7 +14,15 @@ function MNodeContainer:addNode( node )
     end
 
     node.parent = self
-    node.application = Titanium.typeOf( self.application, "Application", true ) and self.application or self
+	if Titanium.typeOf( self, "Application", true ) then
+		node.application = self
+	else
+		if Titanium.typeOf( self.application, "Application", true ) then
+			node.application = self.application
+		end
+	end
+
+	print("Set application of '"..tostring( node ).."' to '"..tostring( node.application ).."'")
 
     self.changed = true
 

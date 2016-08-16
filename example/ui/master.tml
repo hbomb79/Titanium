@@ -24,4 +24,20 @@
 
 <Button text="Config" width=8 height=1 X=42 Y=2 id="config_toggle"/>
 
-<Pane width=20 height=19 X=52 backgroundColour=grey id="pane"/>
+<Container id="pane" width=21 height=19 X=52 backgroundColour="grey">
+    <Label text="Settings" colour=1 X=2 Y=2/>
+
+    <Label text="Config 1" labelFor="config_1" X=2 Y=4 colour=256/>
+    <Checkbox X=11 Y=4 id="config_1" class="config_checkbox"/>
+
+    <Label text="Config 2" labelFor="config_2" X=2 Y=6 colour=256/>
+    <Checkbox X=11 Y=6 id="config_2" class="config_checkbox"/>
+
+    <Label text="Config 3" labelFor="config_3" X=2 Y=8 colour=256/>
+    <Checkbox X=11 Y=8 id="config_3" class="config_checkbox"/>
+
+    <Label text="Config 4" labelFor="config_4" X=2 Y=10 colour=256/>
+    <Checkbox X=11 Y=10 id="config_4" class="config_checkbox"/>
+
+    <Button text="Save Settings" width=17 height=3 verticalAlign="centre" X=3 Y=16 id="config_save"/>
+</Container>

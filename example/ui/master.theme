@@ -41,3 +41,11 @@
     <focusedBackgroundColour>256</focusedBackgroundColour>
     <focusedColour>128</focusedColour>
 </Input>
+
+<Checkbox class="config_checkbox">
+    <backgroundColour>cyan</backgroundColour>
+    <toggledBackgroundColour>lightGrey</toggledBackgroundColour>
+    <activeBackgroundColour>lightBlue</activeBackgroundColour>
+
+    <toggledColour>white</toggledColour>
+</Checkbox>

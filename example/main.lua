@@ -10,7 +10,7 @@ Manager:importFromTML "example/ui/master.tml"
 local app = {
     masterTheme = Theme.fromFile( "masterTheme", "example/ui/master.theme" ),
     sidePane = {
-        pane = Manager:query "Pane#pane",
+        pane = Manager:query "Container#pane",
         hotkeys = Manager:query "Label.hotkey_part",
 
         left = Manager:query "Label#left.hotkey_part",
@@ -45,10 +45,16 @@ local function paneToggle( isKey )
     paneStatus = not paneStatus
 
     if isKey == true then sidePane.hotkeys:addClass "active" end
-    sidePane.pane:animate("sidePaneAnimation", "X", paneStatus and 32 or 52, paneStatus and 0.15 or 0.2, paneStatus and "outSine" or "inQuad", function()
+    sidePane.pane:animate("sidePaneAnimation", "X", paneStatus and 31 or 52, paneStatus and 0.15 or 0.2, paneStatus and "outSine" or "inQuad", function()
         sidePane.hotkeys:removeClass "active"
     end)
 end
+
+Manager:getNode( "config_save", true ):on("trigger", function( self )
+    if paneStatus then
+        paneToggle()
+    end
+end)
 
 Manager:registerHotkey("close", "leftCtrl-leftShift-t", Manager.stop)
 Manager:getNode "pane_toggle":on("trigger", paneToggle)

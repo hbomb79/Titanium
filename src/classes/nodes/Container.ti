@@ -6,6 +6,8 @@ class Container extends Node mixin MNodeContainer
     @param [number - X], [number - Y], [number - width], [number - height], [table - nodes]
 ]]
 function Container:__init__( ... )
+    self:resolve( ... )
+
     local toset = self.nodes
     self.nodes = {}
 
@@ -15,7 +17,6 @@ function Container:__init__( ... )
         end
     end
 
-    self:resolve( ... )
     self:super()
 end
 

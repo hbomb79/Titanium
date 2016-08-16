@@ -45,7 +45,7 @@ function Theme.static.parse( source )
             local parentReg = Titanium.getClass( ruleParent.type ).getRegistry()
             local alias, argumentTypes = parentReg.alias, parentReg.constructor and parentReg.constructor.argumentTypes or {}
 
-            local parentClasses = (function( classString ) local classes = {}; for className in classString:gmatch("%w+") do classes[ #classes + 1 ] = className end return #classes > 0 and classes or false end)( ruleParent.arguments["class"] or "" )
+            local parentClasses = (function( classString ) local classes = {}; for className in classString:gmatch("%S+") do classes[ #classes + 1 ] = className end return #classes > 0 and classes or false end)( ruleParent.arguments["class"] or "" )
             local rules = ruleParent.children
             if rules then
                 local rule

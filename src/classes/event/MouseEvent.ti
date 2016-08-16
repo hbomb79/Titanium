@@ -51,7 +51,7 @@ end
     Note: The clone's 'handle' method has been adjusted to also call 'handle' on the master event obj (self).
 ]]
 function MouseEvent:clone( parent )
-    local clone = MouseEvent( self.name, self.button, self.X - parent.X, self.Y - parent.Y, self.sub )
+    local clone = MouseEvent( self.name, self.button, self.X - parent.X + 1, self.Y - parent.Y + 1, self.sub )
 
     clone.handled = self.handled
     clone.handle = function()

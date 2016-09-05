@@ -27,17 +27,31 @@
 <Container id="pane" width=21 height=19 X=52 backgroundColour="grey">
     <Label text="Settings" colour=1 X=2 Y=2/>
 
-    <Label text="Config 1" labelFor="config_1" X=2 Y=4 colour=256/>
-    <Checkbox X=11 Y=4 id="config_1" class="config_checkbox"/>
+    <ScrollContainer X=2 Y=4 width=20 height=10>
+        <Label text="Config 1" labelFor="config_1" X=2 Y=1 colour=256/>
+        <Checkbox X=11 Y=1 id="config_1" class="config_checkbox"/>
 
-    <Label text="Config 2" labelFor="config_2" X=2 Y=6 colour=256/>
-    <Checkbox X=11 Y=6 id="config_2" class="config_checkbox"/>
+        <Label text="Config 2" labelFor="config_2" X=2 Y=3 colour=256/>
+        <Checkbox X=11 Y=3 id="config_2" class="config_checkbox"/>
 
-    <Label text="Config 3" labelFor="config_3" X=2 Y=8 colour=256/>
-    <Checkbox X=11 Y=8 id="config_3" class="config_checkbox"/>
+        <Label text="Config 3" labelFor="config_3" X=2 Y=5 colour=256/>
+        <Checkbox X=11 Y=5 id="config_3" class="config_checkbox"/>
 
-    <Label text="Config 4" labelFor="config_4" X=2 Y=10 colour=256/>
-    <Checkbox X=11 Y=10 id="config_4" class="config_checkbox"/>
+        <Label text="Config 4" labelFor="config_4" X=2 Y=7 colour=256/>
+        <Checkbox X=11 Y=7 id="config_4" class="config_checkbox"/>
+
+        <Label text="Config 5" labelFor="config_5" X=2 Y=9 colour=256/>
+        <Checkbox X=11 Y=9 id="config_5" class="config_checkbox"/>
+
+        <Label text="Config 6" labelFor="config_6" X=2 Y=11 colour=256/>
+        <Checkbox X=11 Y=11 id="config_6" class="config_checkbox"/>
+
+        <Label text="Config 7" labelFor="config_7" X=2 Y=13 colour=256/>
+        <Checkbox X=11 Y=13 id="config_7" class="config_checkbox"/>
+
+        <Label text="Config 8" labelFor="config_8" X=2 Y=15 colour=256/>
+        <Checkbox X=11 Y=15 id="config_8" class="config_checkbox"/>
+    </ScrollContainer>
 
     <Button text="Save Settings" width=17 height=3 verticalAlign="centre" X=3 Y=16 id="config_save"/>
 </Container>

@@ -68,17 +68,24 @@ end
     @instance
     @desc Redirects all events to child nodes. Mouse events are adjusted to become relative to this container. Event handlers on Container are still fired if present
     @param <Event - event>
+    @return <boolean - propagate>
 ]]
 function Container:handle( eventObj )
-    self.super:handle( eventObj )
+    if not self.super:handle( eventObj ) then return end
 
     if eventObj.main == "MOUSE" then
         eventObj = eventObj:clone( self )
     end
 
-    local nodes, node = self.nodes
+    self:shipEvent( eventObj )
+
+    return true
+end
+
+function Container:shipEvent( event )
+    local nodes = self.nodes
     for i = 1, #nodes do
-        nodes[ i ]:handle( eventObj )
+        nodes[ i ]:handle( event )
     end
 end
 

@@ -92,6 +92,7 @@ end
     @instance
     @desc Handles events by triggering methods on the node depending on the event object passed
     @param <Event Instance* - eventObj>
+    @return <boolean - propagate>
 
     *Note: The event instance passed can be of variable type, ideally is extends 'Event' so that required methods are implemented on the eventObj.
 ]]
@@ -118,6 +119,8 @@ function Node:handle( eventObj )
             self[ anyFn ]( self, eventObj, handled, within )
         end
     end
+
+    return true
 end
 
 --[[

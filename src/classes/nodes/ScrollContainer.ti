@@ -80,7 +80,7 @@ end
 
 --[[ Core Functions ]]--
 function ScrollContainer:handle( eventObj )
-    local cache = self.cache
+    local cache, isWithin = self.cache, eventObj.isWithin
     local cloneEv
 
     if eventObj.main == "MOUSE" then
@@ -95,6 +95,7 @@ function ScrollContainer:handle( eventObj )
     if cloneEv then self:shipEvent( cloneEv ) end
     if not self.super.super:handle( eventObj ) then return end
 
+    eventObj.isWithin = isWithin
     return true
 end
 

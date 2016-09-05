@@ -42,7 +42,7 @@ end
     @param [boolean - force]
 ]]
 function Container:draw( force )
-    if self.changed or force or true then
+    if self.changed or force then
         local raw = self.raw
         local canvas = raw.canvas
 

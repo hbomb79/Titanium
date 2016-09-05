@@ -1,4 +1,8 @@
-class Container extends Node mixin MNodeContainer
+class Container extends Node mixin MNodeContainer {
+    allowMouse = true;
+    allowKey = true;
+    allowChar = true;
+}
 
 --[[
     @instance

@@ -73,13 +73,16 @@ end
 function Container:handle( eventObj )
     if not self.super:handle( eventObj ) then return end
 
+    local clone
     if eventObj.main == "MOUSE" then
-        eventObj = eventObj:clone( self )
+        clone = eventObj:clone( self )
+        clone.isWithin = clone.isWithin and eventObj:withinParent( self ) or false
     end
 
-    --TODO: MouseEvent.isWithin checks
-    self:shipEvent( eventObj )
-
+    self:shipEvent( clone or eventObj )
+    if clone and clone.isWithin and not clone.handled then
+        clone.handled = true
+    end
     return true
 end
 

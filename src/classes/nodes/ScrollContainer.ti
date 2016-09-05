@@ -1,0 +1,234 @@
+class ScrollContainer extends Container {
+    cache = {};
+
+    xScroll = 0;
+    yScroll = 0;
+
+    propagateMouse = true;
+
+    trayColour = 256;
+    scrollbarColour = 128;
+    activeScrollbarColour = colours.cyan;
+
+    mouse = {
+        selected = false;
+        origin = false;
+    };
+}
+--[[ Event Listeners ]]--
+function ScrollContainer:onMouseClick( event, handled, within )
+    if handled or not within then return end
+
+    local cache, mouse, key = self.cache, self.mouse
+    local X, Y = event.X - self.X + 1, event.Y - self.Y + 1
+
+    if cache.yScrollActive and X == self.width and Y <= cache.displayHeight then
+        key = "y"
+    elseif cache.xScrollActive and Y == self.height and X <= cache.displayWidth then
+        key = "x"
+    else return end
+
+    local scrollFn = self[ "set"..key:upper().."Scroll" ]
+    local edge, size = cache[ key .. "ScrollPosition" ], cache[ key .. "ScrollSize" ]
+    local cScale, dScale = cache[ "content" .. ( key == "x" and "Width" or "Height" ) ], cache[ "display" .. ( key == "x" and "Width" or "Height" ) ]
+
+    local rel = key == "x" and X or Y
+    if rel < edge then
+        event.handled = scrollFn( self, math.floor( cScale * ( rel / dScale ) - .5 ) )
+    elseif rel >= edge and rel <= edge + size - 1 then
+        mouse.selected, mouse.origin = key == "x" and "h" or "v", rel - edge + 1
+    elseif rel > edge + size - 1 then
+        event.handled = scrollFn( self, math.floor( cScale * ( ( rel - size + 1 ) / dScale ) - .5 ) )
+    end
+
+    self:cacheScrollbarPosition()
+    self.changed = true
+end
+
+function ScrollContainer:onMouseScroll( event, handled, within )
+    local cache, app = self.cache, self.application
+    if handled or not within or not ( cache.xScrollActive or cache.yScrollActive ) then return end
+
+    local isXScroll = ( cache.xScrollActive and ( not cache.yScrollActive or ( app:isPressed( keys.leftShift ) or app:isPressed( keys.rightShift ) ) ) )
+
+    event.handled = self["set".. ( isXScroll and "X" or "Y" ) .."Scroll"]( self, self[ ( isXScroll and "x" or "y" ) .. "Scroll" ] + event.button )
+
+    self.changed = true
+    self:cacheScrollbarPosition()
+end
+
+function ScrollContainer:onMouseUp( event, handled, within )
+    if self.mouse.selected then
+        self.mouse.selected = false
+        self.changed = true
+    end
+end
+
+function ScrollContainer:onMouseDrag( event, handled, within )
+    local mouse, cache = self.mouse, self.cache
+    if handled or not mouse.selected then return end
+
+    local isV = mouse.selected == "v"
+    local scaleKey = isV and "Height" or "Width"
+    local scrollKey = ( isV and "y" or "x" ) .. "Scroll"
+
+    local old = self[ scrollKey ]
+    self[ scrollKey ] = math.floor( cache["content" .. scaleKey ] * ( ( event[ isV and "Y" or "X" ] - mouse.origin ) / cache["display" .. scaleKey ] ) - .5 )
+
+    if self[ scrollKey ] ~= old then
+        self:cacheScrollbarPosition()
+        self.changed = true
+    end
+end
+
+function ScrollContainer:addNode( ... )
+    self.super:addNode( ... )
+
+    self:cacheContent()
+end
+
+--[[ Core Functions ]]--
+function ScrollContainer:handle( eventObj )
+    if not self.super.super:handle( eventObj ) then return end -- Double super because Container (self.super.handle) ships the event to nodes. We must do that here, and thus we bypass that mechanic.
+
+    if eventObj.main == "MOUSE" then
+        eventObj = eventObj:clone( self )
+
+        eventObj.Y = eventObj.Y + self.yScroll
+        eventObj.X = eventObj.X + self.xScroll
+    end
+
+    self:shipEvent( eventObj )
+
+    return true
+end
+
+function ScrollContainer:isNodeInBounds( node, width, height )
+    local left, top = node.X - self.xScroll, node.Y - self.yScroll
+
+    return not ( ( left + node.width ) < 1 or left > ( width or self.width ) or top > ( height or self.height ) or ( top + node.height ) < 1 )
+end
+
+function ScrollContainer:draw( force )
+    if self.changed or force then
+        local raw = self.raw
+        local canvas = raw.canvas
+
+        local xScroll, yScroll = self.xScroll, self.yScroll
+        local width, height = self.width, self.height
+        local nodes, node = raw.nodes
+
+        canvas:clear()
+        for i = 1, #nodes do
+            node = nodes[ i ]
+
+            if self:isNodeInBounds( node, width, height ) then
+                node:draw( force )
+
+                node.canvas:drawTo( canvas, node.X - xScroll, node.Y - yScroll )
+            end
+        end
+
+        self:drawScrollbars()
+
+        raw.changed = false
+    end
+end
+
+function ScrollContainer:drawScrollbars()
+    local cache, canvas = self.cache, self.canvas
+    local xEnabled, yEnabled = cache.xScrollActive, cache.yScrollActive
+
+    if xEnabled then
+        canvas:drawBox( 1, self.height, cache.displayWidth, 1, self.trayColour )
+        canvas:drawBox( cache.xScrollPosition, self.height, cache.xScrollSize, 1, self.mouse.selected == "h" and self.activeScrollbarColour or self.scrollbarColour )
+    end
+
+    if yEnabled then
+        canvas:drawBox( self.width, 1, 1, cache.displayHeight, self.trayColour )
+        canvas:drawBox( self.width, cache.yScrollPosition, 1, cache.yScrollSize, self.mouse.selected == "v" and self.activeScrollbarColour or self.scrollbarColour )
+    end
+
+    --TODO: Support for both scrollbars active simultaneously
+    if yEnabled and xEnabled then
+        canvas:drawPoint( self.width, self.height, " ", 1, self.trayColour )
+    end
+end
+
+function ScrollContainer:setYScroll( yScroll )
+    local oY, cache = self.yScroll, self.cache
+    self.yScroll = math.max( 0, math.min( cache.contentHeight - cache.displayHeight, yScroll ) )
+
+    if ( not self.propagateMouse ) or oY ~= yScroll then
+        return true
+    end
+end
+
+function ScrollContainer:setXScroll( xScroll )
+    local oX, cache = self.xScroll, self.cache
+    self.xScroll = math.max( 0, math.min( cache.contentWidth - cache.displayWidth, xScroll ) )
+
+    if ( not self.propagateMouse ) or oX ~= xScroll then
+        return true
+    end
+end
+
+--[[ Caching Functions ]]--
+function ScrollContainer:cacheContent()
+    self:cacheContentSize()
+    self:cacheActiveScrollbars()
+end
+
+function ScrollContainer:cacheContentSize()
+    local w, h = 0, 0
+
+    local nodes, node = self.nodes
+    for i = 1, #nodes do
+        node = nodes[ i ]
+
+        w = math.max( node.X + node.width, w )
+        h = math.max( node.Y + node.height, h )
+    end
+
+    self.cache.contentWidth, self.cache.contentHeight = w, h
+end
+
+function ScrollContainer:cacheDisplaySize()
+    local cache = self.cache
+    cache.displayWidth, cache.displayHeight = self.width - ( cache.yScrollActive and 1 or 0 ), self.height - ( cache.xScrollActive and 1 or 0 )
+
+    self:cacheScrollbarSize()
+end
+
+function ScrollContainer:cacheActiveScrollbars()
+    local cache = self.cache
+    local cWidth, cHeight, sWidth, sHeight = cache.contentWidth, cache.contentHeight, self.width, self.height
+
+    local horizontal, vertical
+    if cWidth > sWidth or cHeight > sHeight then
+        cache.xScrollActive, cache.yScrollActive = cWidth > sWidth - 1, cHeight > sHeight - 1
+    else
+        cache.xScrollActive, cache.yScrollActive = false, false
+    end
+
+    self:cacheDisplaySize()
+end
+
+function ScrollContainer:cacheScrollbarSize()
+    local cache = self.cache
+    cache.xScrollSize, cache.yScrollSize = math.floor( cache.displayWidth * ( cache.displayWidth / cache.contentWidth ) + .5 ), math.floor( cache.displayHeight * ( cache.displayHeight / cache.contentHeight ) + .5 )
+
+    self:cacheScrollbarPosition()
+end
+
+function ScrollContainer:cacheScrollbarPosition()
+    local cache = self.cache
+    cache.xScrollPosition, cache.yScrollPosition = math.ceil( self.xScroll / cache.contentWidth * cache.displayWidth + .5 ), math.ceil( self.yScroll / cache.contentHeight * cache.displayHeight + .5 )
+end
+
+configureConstructor {
+    argumentTypes = {
+        scrollbarColour = "colour",
+        activeScrollbarColour = "colour"
+    }
+}

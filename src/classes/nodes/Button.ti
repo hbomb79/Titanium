@@ -29,7 +29,7 @@ function Button:onMouseClick( event, handled, within )
         self.active = within
 
         if within then
-            event:handle()
+            event.handled = true
         end
     end
 end

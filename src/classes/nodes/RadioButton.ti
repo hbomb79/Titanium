@@ -25,7 +25,7 @@ function RadioButton:onMouseUp( event, handled, within )
     if not handled and within and self.active then
         self:select( event, handled, within )
 
-        event:handle()
+        event.handled = true
     end
 
     self.active = false
@@ -33,7 +33,7 @@ end
 
 function RadioButton:onLabelClicked( label, event, handled, within )
     self:select( event, handled, within, label )
-    event:handle()
+    event.handled = true
 end
 
 function RadioButton:setGroup( group )

@@ -31,7 +31,7 @@ function Checkbox:onMouseClick( event, handled, within )
         self.active = within
 
         if within then
-            event:handle()
+            event.handled = true
         end
     end
 end
@@ -45,7 +45,7 @@ function Checkbox:onMouseUp( event, handled, within )
     if not handled and within and self.active then
         self:toggle( event, handled, within )
 
-        event:handle()
+        event.handled = true
     end
 
     self.active = false
@@ -58,7 +58,7 @@ end
 ]]
 function Checkbox:onLabelClicked( label, event, handled, within )
     self:toggle( event, handled, within, label )
-    event:handle()
+    event.handled = true
 end
 
 --[[

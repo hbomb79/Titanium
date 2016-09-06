@@ -18,8 +18,8 @@ end
     @instance
     @desc Sets the 'handled' paramater to true. This indicates the event has been used and should not be used.
 ]]
-function Event:handle()
-    self.raw.handled = true
+function Event:setHandled( handled )
+    self.raw.handled = handled
 end
 
 --[[

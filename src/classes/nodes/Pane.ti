@@ -39,7 +39,7 @@ end
 function Pane:onMouse( event, handled, within )
     if not within or handled then return end
 
-    event:handle()
+    event.handled = true
 end
 
 configureConstructor({

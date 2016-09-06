@@ -154,7 +154,7 @@ end
 
 function Input:onLabelClicked( label, event, handled, within )
     self.focused = true
-    event:handle()
+    event.handled = true
 end
 
 --[[

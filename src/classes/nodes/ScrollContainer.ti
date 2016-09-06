@@ -67,9 +67,10 @@ function ScrollContainer:onMouseDrag( event, handled, within )
     if handled or not mouse.selected then return end
 
     local isV = mouse.selected == "v"
+    local key = isV and "Y" or "X"
     local scaleKey = isV and "Height" or "Width"
 
-    event.handled = self[ "set" .. ( isV and "Y" or "X" ) .. "Scroll" ]( self, math.floor( cache["content" .. scaleKey ] * ( ( event[ isV and "Y" or "X" ] - mouse.origin ) / cache["display" .. scaleKey ] ) - .5 ) )
+    event.handled = self[ "set" .. key .. "Scroll" ]( self, math.floor( cache["content" .. scaleKey ] * ( ( ( event[ key ] - self[ key ] + 1 ) - mouse.origin ) / cache["display" .. scaleKey ] ) - .5 ) )
 end
 
 function ScrollContainer:addNode( ... )

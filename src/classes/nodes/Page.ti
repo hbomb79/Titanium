@@ -1,0 +1,14 @@
+class Page {
+    nodes = {};
+}
+
+function Page:__init__( name, ... )
+    self.name = type( name ) == "string" and name or error("Invalid name '"..tostring( name ).."'", 2)
+
+    local args, nodes = { ... }, self.nodes
+    for i = 1, #args do
+        if Titanium.typeOf( args[ i ], "Node", true ) then
+            nodes[ #nodes + 1 ] = args[ i ]
+        end
+    end
+end

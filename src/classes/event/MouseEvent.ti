@@ -3,6 +3,8 @@ local string_sub, string_upper = string.sub, string.upper
 class MouseEvent extends Event {
     inBounds = false;
     main = "MOUSE";
+
+    isWithin = true;
 }
 
 --[[

@@ -97,12 +97,12 @@ end
     *Note: The event instance passed can be of variable type, ideally is extends 'Event' so that required methods are implemented on the eventObj.
 ]]
 function Node:handle( eventObj )
-    local main, sub, within = eventObj.main, eventObj.sub
+    local main, sub, within = eventObj.main, eventObj.sub, false
     local handled = eventObj.handled
 
     if main == "MOUSE" then
         if self.allowMouse then
-            within = eventObj:withinParent( self )
+            within = eventObj.isWithin and eventObj:withinParent( self ) or false
         else return end
     elseif ( main == "KEY" and not self.allowKey ) or ( main == "CHAR" and not self.allowChar ) then
         return

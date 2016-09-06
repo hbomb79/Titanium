@@ -113,7 +113,7 @@ function ScrollContainer:draw( force )
 
         local xScroll, yScroll = self.xScroll, self.yScroll
         local width, height = self.width, self.height
-        local nodes, node = raw.nodes
+        local nodes, node = self.nodes
 
         canvas:clear()
         for i = 1, #nodes do

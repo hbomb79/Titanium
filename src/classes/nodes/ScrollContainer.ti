@@ -80,16 +80,20 @@ end
 
 --[[ Core Functions ]]--
 function ScrollContainer:handle( eventObj )
-    if not self.super.super:handle( eventObj ) then return end -- Double super because Container (self.super.handle) ships the event to nodes. We must do that here, and thus we bypass that mechanic.
+    local cache = self.cache
+    local cloneEv
 
     if eventObj.main == "MOUSE" then
-        eventObj = eventObj:clone( self )
+        eventObj.isWithin = eventObj:withinParent( self )
+        -- if ( not cache.yScrollActive or ( eventObj.X - self.X + 1 ) ~= self.width ) or ( not cache.xScrollActive or ( eventObj.Y - self.Y + 1 ) ~= self.height ) then
+            cloneEv = eventObj:clone( self )
+            cloneEv.Y = cloneEv.Y + self.yScroll
+            cloneEv.X = cloneEv.X + self.xScroll
+        -- end
+    else cloneEv = eventObj end
 
-        eventObj.Y = eventObj.Y + self.yScroll
-        eventObj.X = eventObj.X + self.xScroll
-    end
-
-    self:shipEvent( eventObj )
+    if cloneEv then self:shipEvent( cloneEv ) end
+    if not self.super.super:handle( eventObj ) then return end
 
     return true
 end

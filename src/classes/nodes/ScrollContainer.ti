@@ -144,7 +144,6 @@ function ScrollContainer:drawScrollbars()
         canvas:drawBox( self.width, cache.yScrollPosition, 1, cache.yScrollSize, self.mouse.selected == "v" and self.activeScrollbarColour or self.scrollbarColour )
     end
 
-    --TODO: Support for both scrollbars active simultaneously
     if yEnabled and xEnabled then
         canvas:drawPoint( self.width, self.height, " ", 1, self.trayColour )
     end

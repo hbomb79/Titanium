@@ -56,6 +56,7 @@ function MouseEvent:clone( parent )
     local clone = MouseEvent( self.name, self.button, self.X - parent.X + 1, self.Y - parent.Y + 1, self.sub )
 
     clone.handled = self.handled
+    clone.isWithin = self.isWithin
     clone.setHandled = function( clone, handled )
         clone.handled = handled
         self.handled = handled --TODO: Make sure 'self' refers to the object which 'clone' was invoked on, not the clone.

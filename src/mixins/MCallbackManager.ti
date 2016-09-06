@@ -22,6 +22,8 @@ function MCallbackManager:on( callbackName, fn, id )
     if not callbacks[ callbackName ] then callbacks[ callbackName ] = {} end
 
     table.insert( callbacks[ callbackName ], { fn, id } )
+
+    return self
 end
 
 --[[
@@ -41,6 +43,8 @@ function MCallbackManager:off( callbackName, id )
             end
         end
     else self.callbacks[ callbackName ] = nil end
+
+    return self
 end
 
 --[[

@@ -52,8 +52,6 @@ function ScrollContainer:onMouseScroll( event, handled, within )
     local isXScroll = ( cache.xScrollActive and ( not cache.yScrollActive or ( app:isPressed( keys.leftShift ) or app:isPressed( keys.rightShift ) ) ) )
 
     event.handled = self["set".. ( isXScroll and "X" or "Y" ) .."Scroll"]( self, self[ ( isXScroll and "x" or "y" ) .. "Scroll" ] + event.button )
-
-    self.changed = true
     self:cacheScrollbarPosition()
 end
 
@@ -70,15 +68,8 @@ function ScrollContainer:onMouseDrag( event, handled, within )
 
     local isV = mouse.selected == "v"
     local scaleKey = isV and "Height" or "Width"
-    local scrollKey = ( isV and "y" or "x" ) .. "Scroll"
 
-    local old = self[ scrollKey ]
-    self[ scrollKey ] = math.floor( cache["content" .. scaleKey ] * ( ( event[ isV and "Y" or "X" ] - mouse.origin ) / cache["display" .. scaleKey ] ) - .5 )
-
-    if self[ scrollKey ] ~= old then
-        self:cacheScrollbarPosition()
-        self.changed = true
-    end
+    event.handled = self[ "set" .. ( isV and "Y" or "X" ) .. "Scroll" ]( self, math.floor( cache["content" .. scaleKey ] * ( ( event[ isV and "Y" or "X" ] - mouse.origin ) / cache["display" .. scaleKey ] ) - .5 ) )
 end
 
 function ScrollContainer:addNode( ... )
@@ -159,7 +150,8 @@ function ScrollContainer:setYScroll( yScroll )
     local oY, cache = self.yScroll, self.cache
     self.yScroll = math.max( 0, math.min( cache.contentHeight - cache.displayHeight, yScroll ) )
 
-    if ( not self.propagateMouse ) or oY ~= yScroll then
+    self:cacheScrollbarPosition()
+    if ( not self.propagateMouse ) or oY ~= self.yScroll then
         return true
     end
 end
@@ -168,7 +160,8 @@ function ScrollContainer:setXScroll( xScroll )
     local oX, cache = self.xScroll, self.cache
     self.xScroll = math.max( 0, math.min( cache.contentWidth - cache.displayWidth, xScroll ) )
 
-    if ( not self.propagateMouse ) or oX ~= xScroll then
+    self:cacheScrollbarPosition()
+    if ( not self.propagateMouse ) or oX ~= self.xScroll then
         return true
     end
 end
@@ -224,6 +217,8 @@ end
 function ScrollContainer:cacheScrollbarPosition()
     local cache = self.cache
     cache.xScrollPosition, cache.yScrollPosition = math.ceil( self.xScroll / cache.contentWidth * cache.displayWidth + .5 ), math.ceil( self.yScroll / cache.contentHeight * cache.displayHeight + .5 )
+
+    self.changed = true
 end
 
 configureConstructor {

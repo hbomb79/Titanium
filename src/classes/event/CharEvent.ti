@@ -6,4 +6,6 @@ class CharEvent {
 function CharEvent:__init__( name, char )
     self.name = name
     self.char = char
+
+    self.data = { name, char }
 end

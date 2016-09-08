@@ -15,7 +15,9 @@ end
 
 local tableConcat = table.concat
 
-class TermCanvas extends Canvas
+class TermCanvas extends Canvas {
+    static = { hex = hex }
+}
 
 function TermCanvas:__init__( owner )
     self:super( owner )

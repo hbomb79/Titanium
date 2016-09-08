@@ -25,6 +25,14 @@ function Thread:stop()
     --TODO
 end
 
+function Thread:filterHandle( eventObj )
+    if self.titaniumEvents then
+        self:handle( eventObj )
+    else
+        self:handle( unpack( eventObj.data ) )
+    end
+end
+
 function Thread:handle( ... )
     if not self.running then return false end
 

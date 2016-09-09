@@ -22,8 +22,6 @@ function Terminal:__init__( ... )
 
     self.canvas = RedirectCanvas( self )
     self.redirect = self.canvas:getTerminalRedirect()
-
-    self:resume( GenericEvent "titanium_terminal_start" )
 end
 
 function Terminal:wrapChunk()
@@ -31,7 +29,10 @@ function Terminal:wrapChunk()
         return error "Cannot wrap chunk. No chunk function set."
     end
 
+    self.canvas:resetTerm()
+
     self.thread = Thread( self.chunk )
+    self:resume( GenericEvent "titanium_terminal_start" )
 end
 
 function Terminal:resume( event )

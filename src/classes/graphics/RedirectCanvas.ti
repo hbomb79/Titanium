@@ -63,7 +63,7 @@ function RedirectCanvas:getTerminalRedirect()
     end
 
     function redirect.clear()
-        self:clear()
+        self:clear( self.tBackgroundColour, true )
     end
 
     function redirect.clearLine()
@@ -133,4 +133,24 @@ function RedirectCanvas:getTerminalRedirect()
 	redirect.getTextColor = redirect.getTextColour
 
     return redirect
+end
+
+--[[
+    @instance
+    @desc Modified Canvas.clear. Only sets pixels that do not exist (doesn't really clear the canvas, just ensures it is the correct size).
+          This is to prevent the program running via the term redirect isn't cleared away. Call this function with 'force' and all pixels will be
+          replaced (the terminal redirect uses this method).
+
+          Alternatively, self.getTerminalRedirect.clear() will also clear the canvas entirely
+    @param [number - col], [boolean - force]
+]]
+function RedirectCanvas:clear( col, force )
+    local col = col or self.tBackgroundColour
+    local pixel, buffer = { " ", col, col }, self.buffer
+
+    for index = 1, self.width * self.height do
+        if not buffer[ index ] or force then
+            buffer[ index ] = pixel
+        end
+    end
 end

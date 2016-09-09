@@ -1,4 +1,4 @@
-class KeyEvent {
+class KeyEvent extends Event {
     main = "KEY";
 
     sub = false;

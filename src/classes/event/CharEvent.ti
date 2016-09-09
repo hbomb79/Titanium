@@ -1,4 +1,4 @@
-class CharEvent {
+class CharEvent extends Event {
     main = "CHAR";
     char = false;
 }

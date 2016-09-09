@@ -104,7 +104,7 @@ function RedirectCanvas:getTerminalRedirect()
 
     function redirect.setBackgroundColour( bg )
         if testColour( bg ) then
-            self.tColour = tc
+            self.tBackgroundColour = bg
         end
     end
 

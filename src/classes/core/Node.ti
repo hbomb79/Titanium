@@ -18,8 +18,7 @@ abstract class Node extends Component mixin MThemeable mixin MCallbackManager {
         },
         anyMatrix = {
             MOUSE = "onMouse",
-            KEY = "onKey",
-            CHAR = "onChar"
+            KEY = "onKey"
         }
     };
 

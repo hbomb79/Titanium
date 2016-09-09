@@ -59,3 +59,7 @@ function MCallbackManager:executeCallbacks( callbackName, ... )
         for i = 1, #callbacks do callbacks[ i ][ 1 ]( self, ... ) end
     end
 end
+
+function MCallbackManager:canCallback( name )
+    return #self.callbacks[ name ] > 0
+end

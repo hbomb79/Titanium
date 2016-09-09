@@ -4,7 +4,7 @@ local function isThreadRunning( obj )
     return obj.thread.running
 end
 
-class Terminal extends Node mixin MFocusable {
+class Terminal extends Node mixin MFocusable mixin MCallbackManager {
     static = {
         focusedEvents = {
             MOUSE = true,
@@ -14,6 +14,7 @@ class Terminal extends Node mixin MFocusable {
     };
 
     canvas = true;
+    displayThreadStatus = true;
 }
 
 function Terminal:__init__( ... )
@@ -44,17 +45,41 @@ function Terminal:resume( event )
 
     local thread, old = self.thread, term.redirect( self.redirect )
     thread:filterHandle( event )
+    term.redirect( old )
 
     if not thread.running then
         if type( thread.exception ) == "string" then
-            printError( "Thread Crashed: " .. tostring( thread.exception ) )
+            if self.displayThreadStatus then
+                self:emulate(function() printError( "Thread Crashed: " .. tostring( thread.exception ) ) end)
+            end
+
+            self:executeCallbacks("exception", thread)
         else
-            print "Finished"
+            if self.displayThreadStatus then
+                self:emulate(function() print "Finished" end)
+            end
+
+            self:executeCallbacks("graceful_finish", thread)
         end
+
+        self:executeCallbacks("finish", thread)
     end
 
-    term.redirect( old )
     self.changed = true
+end
+
+function Terminal:emulate( fn )
+    if type( fn ) ~= "function" then
+        return error("Failed to emulate function. '"..tostring( fn ).." is not valid'")
+    end
+
+    local old = term.redirect( self.redirect )
+    local ok, err = pcall( fn )
+    term.redirect( old )
+
+    if not ok then
+        return error("Failed to emulate function. Error: "..tostring( err ), 3)
+    end
 end
 
 function Terminal:setChunk( chunk )

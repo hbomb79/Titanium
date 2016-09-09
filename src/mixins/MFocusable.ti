@@ -18,18 +18,18 @@ function MFocusable:setFocused( focused )
     local raw = self.raw
     if raw.focused == focused then return end
 
-    if focused then self:focus() else self:unfocus() end
     self.changed = true
+    self.focused = focused
 end
 
 function MFocusable:focus()
-    self.focused = true
     if self.application then self.application:focusNode( self ) end
+    self.focused = true
 end
 
 function MFocusable:unfocus()
-    self.focused = false
     if self.application then self.application:unfocusNode( self ) end
+    self.focused = false
 end
 
 configureConstructor {

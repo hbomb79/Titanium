@@ -22,7 +22,7 @@ function Thread:start()
 end
 
 function Thread:stop()
-    --TODO
+    self.running = false
 end
 
 function Thread:filterHandle( eventObj )

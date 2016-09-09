@@ -1,0 +1,87 @@
+local function isThreadRunning( obj )
+    if not obj.thread then return false end
+
+    return obj.thread.running
+end
+
+class Terminal extends Node mixin MFocusable {
+    static = {
+        focusedEvents = {
+            MOUSE = true,
+            KEY = true,
+            CHAR = true
+        }
+    };
+
+    canvas = true;
+}
+
+function Terminal:__init__( ... )
+    self:resolve( ... )
+    self:super()
+
+    self.canvas = RedirectCanvas( self )
+    self.redirect = self.canvas:getTerminalRedirect()
+
+    self:resume( GenericEvent "titanium_terminal_start" )
+end
+
+function Terminal:wrapChunk()
+    if type( self.chunk ) ~= "function" then
+        return error "Cannot wrap chunk. No chunk function set."
+    end
+
+    self.thread = Thread( self.chunk )
+end
+
+function Terminal:resume( event )
+    if not isThreadRunning( self ) then return end
+
+    if not Titanium.typeOf( event, "Event", true ) then
+        return error "Invalid event object passed to resume terminal thread"
+    end
+
+    local thread, old = self.thread, term.redirect( self.redirect )
+    thread:filterHandle( event )
+
+    if not thread.running then
+        if type( thread.exception ) == "string" then
+            printError( "Thread Crashed: " .. tostring( thread.exception ) )
+        else
+            print "Finished"
+        end
+    end
+
+    term.redirect( old )
+    self.changed = true
+end
+
+function Terminal:setChunk( chunk )
+    self.chunk = chunk
+    self:wrapChunk()
+end
+
+function Terminal:getCaretInfo()
+    local c = self.canvas
+    return isThreadRunning( self ) and c.tCursor, c.tX + self.X - 1, c.tY + self.Y - 1, c.tColour
+end
+
+function Terminal:handle( eventObj )
+    if eventObj.handled or not isThreadRunning( self ) then return end
+
+    if eventObj.main == "MOUSE" then
+        if eventObj:withinParent( self ) then self:focus() else self:unfocus() end
+        eventObj = eventObj:clone( self )
+    end
+
+    if Terminal.focusedEvents[ eventObj.main ] and not self.focused then return end
+    self:resume( eventObj )
+end
+
+function Terminal:draw( force ) end
+
+configureConstructor({
+    orderedArguments = { "X", "Y", "width", "height", "chunk" },
+    argumentTypes = { chunk = "function" },
+    useProxy = { "chunk" }
+}, true)

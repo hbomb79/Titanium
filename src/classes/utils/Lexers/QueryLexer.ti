@@ -15,12 +15,16 @@ function QueryLexer:tokenize()
         self:consume( 1 )
 
         self.inCondition = true
-    elseif stream:find "^#[^%s%.#%[]*" then
+    elseif stream:find "^%," then
+        self:pushToken { type = "QUERY_END", value = self:consumePattern "^%," }
+    elseif stream:find "^>" then
+        self:pushToken { type = "QUERY_DIRECT_PREFIX", value = self:consumePattern "^>" }
+    elseif stream:find "^#[^%s%.#%[%,]*" then
         self:pushToken { type = "QUERY_ID", value = self:consumePattern "^#([^%s%.#%[]*)" }
-    elseif stream:find "^%.[^%s#%[]*" then
+    elseif stream:find "^%.[^%s#%[%,]*" then
         self:pushToken { type = "QUERY_CLASS", value = self:consumePattern "^%.([^%s%.#%[]*)" }
-    elseif stream:find "^[^%s#%.%[]*" then
-        self:pushToken { type = "QUERY_TYPE", value = self:consumePattern "^[^%s#%.%[]*" }
+    elseif stream:find "^[^,%s#%.%[]*" then
+        self:pushToken { type = "QUERY_TYPE", value = self:consumePattern "^[^,%s#%.%[]*" }
     else
         self:throw("Unexpected block '"..stream:match("(.-)%s").."'")
     end

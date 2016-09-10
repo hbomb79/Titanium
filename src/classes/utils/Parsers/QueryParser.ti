@@ -12,46 +12,59 @@ function QueryParser:__init__( queryString )
 end
 
 function QueryParser:parse()
-    local allQueries, currentQuery = {}, {}
+    local allQueries, currentQuery, currentStep = {}, {}, {}
+
+    local nextStepDirect
+    local function advanceSection()
+        if next( currentStep ) then
+            table.insert( currentQuery, currentStep )
+            currentStep = { direct = nextStepDirect }
+
+            nextStepDirect = nil
+        end
+    end
 
     local token = self:stepForward()
     while token do
         if token.type == "QUERY_TYPE" then
-            if currentQuery.type then
-                self:throw("Duplicate query 'type'. Tried to set type '"..token.value.."' when already set to '"..currentQuery.type.."'")
-            end
+            if currentStep.type then self:throw( "Attempted to set query type to '"..token.value.."' when already set as '"..currentStep.type.."'" ) end
 
-            currentQuery.type = token.value
-        elseif token.type == "QUERY_ID" then
-            if currentQuery.id then
-                self:throw("Duplicate query 'id'. Tried to set type '"..token.value.."' when already set to '"..currentQuery.type.."'")
-            end
-
-            currentQuery.id = token.value
+            currentStep.type = token.value
         elseif token.type == "QUERY_CLASS" then
-            if not currentQuery.classes then
-                currentQuery.classes = {}
-            end
+            if not currentStep.classes then currentStep.classes = {} end
 
-            table.insert( currentQuery.classes, token.value )
+            table.insert( currentStep.classes, token.value )
+        elseif token.type == "QUERY_ID" then
+            if currentStep.id then self:throw( "Attempted to set query id to '"..token.value.."' when already set as '"..currentStep.id.."'" ) end
+
+            currentStep.id = token.value
         elseif token.type == "QUERY_SEPERATOR" then
+            if self.tokens[ self.position + 1 ].type ~= "QUERY_DIRECT_PREFIX" then
+                advanceSection()
+            end
+        elseif token.type == "QUERY_END" then
+            advanceSection()
+
             if next( currentQuery ) then
-                allQueries[ #allQueries + 1 ] = currentQuery
+                table.insert( allQueries, currentQuery )
                 currentQuery = {}
             else
-                self:throw "Tried to seperate query, no query (empty) found on left of seperator."
+                self:throw( "Unexpected '"..token.value.."' found, no left hand query" )
             end
         elseif token.type == "QUERY_COND_OPEN" then
-            currentQuery.condition = self:parseCondition()
+            currentStep.condition = self:parseCondition()
+        elseif token.type == "QUERY_DIRECT_PREFIX" then
+            nextStepDirect = true
         else
-            self:throw("Unexpected '"..token.type.."'")
+            self:throw( "Unexpected '"..token.value.."' found while parsing query" )
         end
 
         token = self:stepForward()
     end
 
+    advanceSection()
     if next( currentQuery ) then
-        allQueries[ #allQueries + 1 ] = currentQuery
+        table.insert( allQueries, currentQuery )
     end
 
     self.query = allQueries
@@ -76,7 +89,7 @@ function QueryParser:parseCondition()
         elseif token.type == "QUERY_COND_CLOSE" and ( not condition.property or ( condition.property and condition.value ) ) then
             break
         else
-            self:throw( "Unexpected '"..token.type.."' inside of condition block" )
+            self:throw( "Unexpected '"..token.value.."' inside of condition block" )
         end
 
         token = self:stepForward()

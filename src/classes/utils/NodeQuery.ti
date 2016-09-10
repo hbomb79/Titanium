@@ -17,10 +17,9 @@ end
 --[[
     @static
     @desc Returns a table containing the nodes matching the conditions set in 'query'
-    @param <string - query>
     @return <table - results>
 ]]
-function NodeQuery:query( queryString )
+function NodeQuery:query()
     local query = self.parsedQuery
     if type( query ) ~= "table" then return error( "Cannot perform query. Invalid query object passed" ) end
 

@@ -418,16 +418,16 @@ local function spawn( target, ... )
         end
     end
 
-    local instanceObj, instanceMt = { raw = raw, __type = target, __instance = true }, {}
+    local instanceObj, instanceMt = { raw = raw, __type = target, __instance = true }, { __metatable = {} }
     local getting, useGetters, setting, useSetters = {}, true, {}, true
     function instanceMt:__index( k )
         local k = alias[ k ] or k
 
         local getFn = getters[ k ]
         if useGetters and not getting[ k ] and wrappers[ getFn ] then
-            setting[ k ] = true
+            getting[ k ] = true
             local v = self[ getFn ]( self )
-            setting[ k ] = nil
+            getting[ k ] = nil
 
             return v
         elseif wrappers[ k ] then
@@ -661,7 +661,7 @@ function class( name )
     }
 
     -- Class metatable
-    local classMt = {}
+    local classMt = { __metatable = {} }
     function classMt:__tostring()
         return (classReg.compiled and "[Compiled] " or "") .. "Class '"..name.."'"
     end

@@ -101,7 +101,6 @@ function MNodeContainer:query( query )
 end
 
 function MNodeContainer:getCollatedNodes()
-    print "Getting"
     if not self.collatedNodes or #self.collatedNodes == 0 then
         self:collate()
     end
@@ -116,7 +115,6 @@ end
     @param [table - collated]
 ]]
 function MNodeContainer:collate( collated )
-    print "Collating"
     local collated = collated or {}
 
     local nodes, node = self.nodes

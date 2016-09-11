@@ -23,6 +23,7 @@ function MNodeContainer:addNode( node )
     end
 
     self.changed = true
+    self.collatedNodes = false
 
     table.insert( self.nodes, node )
     node:updateProperties()
@@ -60,6 +61,7 @@ function MNodeContainer:removeNode( target )
             end
 
             self.changed = true
+            self.collatedNodes = false
 
             table.remove( nodes, i )
             return true, node
@@ -96,4 +98,39 @@ end
 ]]
 function MNodeContainer:query( query )
     return NodeQuery( self, query )
+end
+
+function MNodeContainer:getCollatedNodes()
+    print "Getting"
+    if not self.collatedNodes or #self.collatedNodes == 0 then
+        self:collate()
+    end
+
+    return self.collatedNodes
+end
+
+--[[
+    @instance
+    @desc Caches all nodes under this container (and child containers) in 'collatedNodes'.
+          This list maybe out of date if 'collate' isn't called before usage. Caching is not automatic.
+    @param [table - collated]
+]]
+function MNodeContainer:collate( collated )
+    print "Collating"
+    local collated = collated or {}
+
+    local nodes, node = self.nodes
+    for i = 1, #nodes do
+        node = nodes[ i ]
+        collated[ #collated + 1 ] = node
+
+        local collatedNode = node.collatedNodes
+        if collatedNode then
+            for i = 1, #collatedNode do
+                collated[ #collated + 1 ] = collatedNode[ i ]
+            end
+        end
+    end
+
+    self.collatedNodes = collated
 end

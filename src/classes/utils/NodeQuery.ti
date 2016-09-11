@@ -1,3 +1,71 @@
+local function format( original, symbol, final )
+    local wrapper = type( original ) == "string" and '"' or ""
+    local finalWrapper = type( final ) == "string" and '"' or ""
+
+    return ("return %s%s%s %s %s%s%s"):format( wrapper, tostring( original ), wrapper, symbol, finalWrapper, tostring( final ), finalWrapper )
+end
+
+local function testCondition( node, condition )
+    local fn, err = loadstring( format( node[ condition.property ], condition.symbol, condition.value ) )
+    if fn then return fn() end
+
+    return fn()
+end
+
+local function queryScope( scope, section, results )
+    local last = {}
+
+    local node
+    for i = 1, #scope do
+        node = scope[ i ]
+
+        if ( not section.id or node.id == section.id ) and
+        ( not section.type or node.__type == section.type ) and
+        ( not section.classes or node:hasClass( section.classes ) ) then
+            local condition, failed = section.condition
+            if condition then
+                local conditionPart
+                for c = 1, #condition do
+                    if not testCondition( node, condition[ c ] ) then
+                        failed = true
+                        break
+                    end
+                end
+            end
+
+            if not failed then
+                last[ #last + 1 ] = node
+            end
+        end
+    end
+
+    return last
+end
+
+local function createScope( results, direct )
+    local scope = {}
+    for i = 1, #results do
+        local innerScope = direct and results[ i ].nodes or results[ i ].collatedNodes
+
+        for r = 1, #innerScope do
+            scope[ #scope + 1 ] = innerScope[ r ]
+        end
+    end
+
+    return scope
+end
+
+local function performQuery( query, base )
+    local lastResults, section = base
+
+    for i = 1, #query do
+        section = query[ i ]
+        lastResults = queryScope( createScope( lastResults, section.direct ), section )
+    end
+
+    return lastResults
+end
+
 class NodeQuery {
     result = false;
 
@@ -20,43 +88,15 @@ end
     @return <table - results>
 ]]
 function NodeQuery:query()
-    local query = self.parsedQuery
+    local query, results = self.parsedQuery, {}
     if type( query ) ~= "table" then return error( "Cannot perform query. Invalid query object passed" ) end
 
-    local function format( original, symbol, final )
-        local wrapper = type( original ) == "string" and '"' or ""
-        local finalWrapper = type( final ) == "string" and '"' or ""
+    local parent = { self.parent }
+    for i = 1, #query do
+        local res = performQuery( query[ i ], parent )
 
-        return ("return %s%s%s %s %s%s%s"):format( wrapper, tostring( original ), wrapper, symbol, finalWrapper, tostring( final ), finalWrapper )
-    end
-
-    local nodes = self.parent.nodes or error "Cannot perform query. Parent 'nodes' invalid"
-    local results = {}
-    for n = 1, #nodes do
-        local node = nodes[ n ]
-
-        for q = 1, #query do
-            local queryPart = query[ q ]
-
-            if ( not queryPart.type or node.__type == queryPart.type ) and ( not queryPart.id or ( type( node.id ) == "string" and node.id == queryPart.id ) ) and ( not queryPart.classes or node:hasClass( queryPart.classes ) ) then
-                local qCond, fail = queryPart.condition
-                if qCond then
-                    local cond
-                    for c = 1, #qCond do
-                        cond = qCond[ c ]
-
-                        local fn, err = loadstring( format( node[ cond.property ], cond.symbol, cond.value ) )
-                        if fn then
-                            if not fn() then fail = true; break end
-                        end
-                    end
-                end
-
-                if not fail then
-                    results[ #results + 1 ] = node
-                    break
-                end
-            end
+        for r = 1, #res do
+            results[ #results + 1 ] = res[ r ]
         end
     end
 

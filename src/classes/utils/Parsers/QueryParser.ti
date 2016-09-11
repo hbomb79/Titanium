@@ -53,7 +53,7 @@ function QueryParser:parse()
             end
         elseif token.type == "QUERY_COND_OPEN" then
             currentStep.condition = self:parseCondition()
-        elseif token.type == "QUERY_DIRECT_PREFIX" then
+        elseif token.type == "QUERY_DIRECT_PREFIX" and not nextStepDirect then
             nextStepDirect = true
         else
             self:throw( "Unexpected '"..token.value.."' found while parsing query" )

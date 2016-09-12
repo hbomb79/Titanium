@@ -73,11 +73,7 @@ function MThemeable:hook()
             else self[ property ] = newValue end
         end
 
-        if self.__resolved[ property ] then
-            self.mainValues[ property ] = self[ property ]
-        else
-            self.defaultValues[ property ] = self[ property ]
-        end
+        self[ self.__resolved[ property ] and "mainValues" or "defaultValues" ][ property ] = self[ property ]
     end
     self.hooked = true
 end

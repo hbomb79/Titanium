@@ -136,11 +136,20 @@ function MThemeable:updateProperty( property )
     MThemeable.static.isUpdating = false
 end
 
+function MThemeable:queueUpdate()
+    self.needsRuleUpdate = true
+end
+
 --[[
     @instance
     @desc Updates each registered property
 ]]
 function MThemeable:updateProperties()
+    if self.needsRuleUpdate and self.application then
+        self.application:cacheApplicableRulesForType( self.__type )
+        self.needsRuleUpdate = false
+    end
+
     for property in pairs( self.properties ) do self:updateProperty( property ) end
 end
 
@@ -151,6 +160,7 @@ end
 ]]
 function MThemeable:addClass( class )
     self.classes[ class ] = true
+    self:queueUpdate()
     self:updateProperties()
 end
 
@@ -161,6 +171,7 @@ end
 ]]
 function MThemeable:removeClass( class )
     self.classes[ class ] = nil
+    self:queueUpdate()
     self:updateProperties()
 end
 
@@ -171,6 +182,7 @@ end
 ]]
 function MThemeable:setClass( class, has )
     self.classes[ class ] = has and true or nil
+    self:queueUpdate()
     self:updateProperties()
 end
 
@@ -199,6 +211,7 @@ function MThemeable:hasClass( t )
 end
 
 function MThemeable:onThemeUpdate()
+    self:queueUpdate()
     self:updateProperties()
 
     local nodes = self.nodes

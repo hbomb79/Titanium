@@ -3,6 +3,22 @@
 
     Themes are added to objects using the MThemeManager mixin (or a custom implementation). These themes then dictate the appearance of objects that utilize 'MThemeable'.
 ]]
+local function getTagDetails( rule )
+    return ( rule.arguments.id and ( "#" .. rule.arguments.id ) or "" ) .. (function( classString ) local classes = ""; for className in classString:gmatch("%S+") do classes = classes .. "."..className end; return classes end)( rule.arguments["class"] or "" )
+end
+
+local function splitXMLTheme( queue, tree )
+    for i = 1, #tree do
+        local children = tree[ i ].children
+        if children then
+            for c = 1, #children do
+                queue[ #queue + 1 ] = { tree[ i ].type .. getTagDetails( tree[ i ] ), children[ c ], tree[ i ] }
+            end
+        end
+    end
+
+    return queue
+end
 
 class Theme {
     name = false;
@@ -28,48 +44,46 @@ end
     @return <table - rules>
 ]]
 function Theme.static.parse( source )
-    local tree, totalRules = XMLParser( source ).tree, {}
+    local queue, rawRules, q = splitXMLTheme( {}, XMLParser( source ).tree ), {}, 1
 
-    if tree then
-        local ruleParent
-        for i = 1, #tree do
-            ruleParent = tree[ i ]
+    local function processQueueEntry( entry )
+        local queryPrefix, rule = entry[ 1 ], entry[ 2 ]
+        local children = rule.children
 
-            if type( totalRules[ ruleParent.type ] ) ~= "table" then
-                totalRules[ ruleParent.type ] = {}
-            end
-
-            if not Titanium.getClass( ruleParent.type ) then
-                return error( "Failed to parse XML into theme data. Class '"..ruleParent.type.."' doesn't exist" )
-            end
-            local parentReg = Titanium.getClass( ruleParent.type ).getRegistry()
-            local alias, argumentTypes = parentReg.alias, parentReg.constructor and parentReg.constructor.argumentTypes or {}
-
-            local parentClasses = (function( classString ) local classes = {}; for className in classString:gmatch("%S+") do classes[ #classes + 1 ] = className end return #classes > 0 and classes or false end)( ruleParent.arguments["class"] or "" )
-            local rules = ruleParent.children
-            if rules then
-                local rule
-                for r = 1, #rules do
-                    rule = rules[ r ]
-
-                    if rule.children then
-                        return error( "Invalid XML. Found nested theme definition inside of '"..rule.type.."' rule for object '"..ruleParent.type.."'")
-                    elseif not rule.content then
-                        return error( "Invalid XML. Rule '"..rule.type.."' for object '"..ruleParent.type.."' contains no property value (XML_CONTENT)." )
-                    end
-
-                    table.insert( totalRules[ ruleParent.type ], {
-                        property = rule.type,
-                        value = XMLParser.convertArgType( rule.content, argumentTypes[ alias[ rule.type ] or rule.type ] ),
-                        important = rule.arguments.important,
-                        classes = parentClasses
-                    })
+        if children then
+            for c = 1, #children do
+                if not Titanium.getClass( rule.type ) then
+                    return error( "Failed to generate theme data. Child target '"..rule.type.."' doesn't exist as a Titanium class" )
                 end
+
+                queue[ #queue + 1 ] = { queryPrefix .. " " .. ( rule.arguments.direct and "> " or "" ) .. rule.type .. getTagDetails( rule ), children[ c ], rule }
             end
+        elseif rule.content then
+            local owner = entry[ 3 ]
+            local ownerType = owner.type
+
+            local parentReg = Titanium.getClass( ownerType ).getRegistry()
+            local argumentTypes = parentReg.constructor and parentReg.constructor.argumentTypes or {}
+
+
+            if not rawRules[ ownerType ] then rawRules[ ownerType ] = {} end
+            table.insert( rawRules[ ownerType ], {
+                query = queryPrefix,
+                property = rule.type,
+                value = XMLParser.convertArgType( rule.content, argumentTypes[ parentReg.alias[ rule.type ] or rule.type ] ),
+                important = rule.arguments.important
+            })
+        else
+            return error( "Failed to generate theme data. Invalid theme rule found. No value (XML_CONTENT) has been set for tag '"..rule.type.."'" )
         end
     end
 
-    return totalRules
+    while q <= #queue do
+        processQueueEntry( queue[ q ] )
+        q = q + 1
+    end
+
+    return rawRules
 end
 
 --[[

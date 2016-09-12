@@ -37,56 +37,85 @@ function MThemeManager:removeTheme( target )
     end
 end
 
+--[[
+    @instance
+    @desc Adds a theme instance named 'name' and imports the file contents from 'location' to this object
+    @param <string - name>, <string - location>
+]]
 function MThemeManager:importTheme( name, location )
     self:addTheme( Theme.fromFile( name, location ) )
 end
 
+--[[
+    @instance
+    @desc Updates the theme information bound to this object. All nodes under this parent are reset and the rules are reapplied to each.
+          'onThemeUpdate' is called on each child node allowing for each node to update themselves after their new theme information has been applied.
+    @param [table - target]
+]]
 function MThemeManager:update( target )
+    self:cacheAllApplicableRules()
+
     local target = target or self.nodes
     for i = 1, #target do target[ i ]:onThemeUpdate() end
 end
 
 --[[
     @instance
-    @desc Returns the value set either directly or via themes managed by this object (self)
-    @param <Class Instance - object>, <string - target>
-    @return <var* - value>
+    @desc Resets the applicableRules table on all nodes of type 'type' that are under this node (collated/query)
+    @param <string - type>
 ]]
-function MThemeManager:fetchValue( object, target )
-    local themes, value, requireImportant = self.themes
-    if object.mainValues[ target ] then
-        value = object.mainValues[ target ]
-        requireImportant = true
+function MThemeManager:resetApplicableRules( type )
+    local nodes = type == "*" and self.collatedNodes or self:query( type ).result
+    for i = 1, #nodes do
+        nodes[ i ].applicableRules = {}
     end
+end
 
-    local objectClasses = next( object.classes ) and object.classes or false
-    local rules, theme, rule, ruleClasses
+--[[
+    @instance
+    @desc Iterates over the rules given and applies them as 'applicable rules' to each eligible node (collated/query).
+          These 'applicable rules' are then used by the node to determine theme properties.
+    @param <table - rules>
+]]
+function MThemeManager:cacheApplicableRules( rules )
+    local rule
+
+    for i = 1, #rules do
+        rule = rules[ i ]
+
+        self:query( rule.query ):each(function( item )
+            local applicable = item.applicableRules
+            applicable[ #applicable + 1 ] = rule
+        end)
+    end
+end
+
+--[[
+    @instance
+    @desc Iterates over each theme bound to this object and caches the rules for type 'type' by passing them to 'MThemeManager.cacheApplicableRules'
+    @param <string - type>
+]]
+function MThemeManager:cacheApplicableRulesForType( type )
+    local themes = self.themes
+    self:resetApplicableRules( type )
+
     for i = 1, #themes do
-        theme = themes[ i ]
-        rules = theme.rules[ object.__type ]
-        if rules then
-            for r = 1, #rules do
-                rule = rules[ r ]
-                ruleClasses = rule.classes
+        self:cacheApplicableRules( themes[ i ].rules[ type ] )
+    end
+end
 
-                if rule.property == target and ( not requireImportant or ( requireImportant and rule.important ) ) then
-                    if ruleClasses and objectClasses then
-                        local allow = true
-                        for x = 1, #ruleClasses do
-                            if not objectClasses[ ruleClasses[ x ] ] then
-                                allow = false
-                                break
-                            end
-                        end
+--[[
+    @instance
+    @desc Caches all rules from all themes bound to this object by passing them to 'MThemeManager.cacheApplicableRules'
+]]
+function MThemeManager:cacheAllApplicableRules()
+    local themes, rules = self.themes
+    self:resetApplicableRules "*"
 
-                        if allow then value = rule.value end
-                    elseif not ruleClasses then
-                        value = rule.value
-                    end
-                end
-            end
+    for i = 1, #themes do
+        rules = themes[ i ].rules
+        for type in pairs( rules ) do
+            self:cacheApplicableRules( rules[ type ] )
         end
     end
-
-    return value
 end

@@ -11,6 +11,7 @@ abstract class MThemeable {
 
     properties = {};
     classes = {};
+    applicableRules = {};
 
     mainValues = {};
     defaultValues = {};
@@ -64,9 +65,7 @@ function MThemeable:hook()
             if not MThemeable.isUpdating then
                 self.mainValues[ property ] = value
 
-                if self.application then
-                    newValue = self.application:fetchValue( self, property )
-                end
+                newValue = self:fetchPropertyValue( property )
             end
 
             if setterFn then
@@ -99,6 +98,26 @@ function MThemeable:unhook()
     self.setterBackup, self.hooked = {}, false
 end
 
+function MThemeable:fetchPropertyValue( property )
+    local requireImportant, newValue
+    if self.mainValues[ property ] then
+        requireImportant = true
+        newValue = self.mainValues[ property ]
+    end
+
+    local rules, r = self.applicableRules
+    for i = 1, #rules do
+        r = rules[ i ]
+        if r.property == property and ( not requireImportant or ( requireImportant and r.important ) ) then
+            newValue = r.value
+
+            if r.important then requireImportant = true end
+        end
+    end
+
+    return newValue
+end
+
 --[[
     @instance
     @desc Fetches the value from the application by checking themes for valid rules. If a theme value is found it is applied directly (this does trigger the setter)
@@ -109,19 +128,16 @@ function MThemeable:updateProperty( property )
         return error( "Failed to update property '"..tostring( property ).."'. Property not registered" )
     end
 
-    local app = self.application
-    if app then
-        local val = app:fetchValue( self, property )
-        MThemeable.static.isUpdating = true
 
-        if val then
-            self[ property ] = val
-        elseif ( not val and ( self[ property ] ~= self.mainValues[ property ] ) ) then
-            self[ property ] = self.mainValues[ property ] or self.defaultValues[ property ]
-        end
-
-        MThemeable.static.isUpdating = false
+    local new = self:fetchPropertyValue( property )
+    MThemeable.static.isUpdating = true
+    if new then
+        self[ property ] = new
+    elseif ( not val and ( self[ property ] ~= self.mainValues[ property ] ) ) then
+        self[ property ] = self.mainValues[ property ] or self.defaultValues[ property ]
     end
+
+    MThemeable.static.isUpdating = false
 end
 
 --[[

@@ -93,11 +93,11 @@ end
 --[[
     @instance
     @desc Iterates over each theme bound to this object and caches the rules for type 'type' by passing them to 'MThemeManager.cacheApplicableRules'
-    @param <string - type>
+    @param <string - type>, [boolean - manualReset]
 ]]
-function MThemeManager:cacheApplicableRulesForType( type )
+function MThemeManager:cacheApplicableRulesForType( type, manualReset )
     local themes = self.themes
-    self:resetApplicableRules( type )
+    if not manualReset then self:resetApplicableRules( type ) end
 
     for i = 1, #themes do
         self:cacheApplicableRules( themes[ i ].rules[ type ] or {} )
@@ -107,10 +107,11 @@ end
 --[[
     @instance
     @desc Caches all rules from all themes bound to this object by passing them to 'MThemeManager.cacheApplicableRules'
+    @param [boolean - manualReset]
 ]]
-function MThemeManager:cacheAllApplicableRules()
+function MThemeManager:cacheAllApplicableRules( manualReset )
     local themes, rules = self.themes
-    self:resetApplicableRules "*"
+    if not manualReset then self:resetApplicableRules "*" end
 
     for i = 1, #themes do
         rules = themes[ i ].rules

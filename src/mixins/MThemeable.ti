@@ -146,8 +146,8 @@ end
 ]]
 function MThemeable:updateProperties()
     if self.needsRuleUpdate and self.application then
-        self.application:cacheApplicableRulesForType( self.__type )
         self.needsRuleUpdate = false
+        self.application:cacheApplicableRulesForType( self.__type, true )
     end
 
     for property in pairs( self.properties ) do self:updateProperty( property ) end

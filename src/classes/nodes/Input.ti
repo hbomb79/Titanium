@@ -39,7 +39,8 @@ function Input:onMouseClick( event, handled, within )
     if within and not handled then
         self.active = true
     else
-        self.active, self.focused = false, false
+        self.active = false
+        self:unfocus()
     end
 end
 
@@ -50,8 +51,8 @@ end
     @param <MouseEvent - event>, <boolean - handled>, <boolean - within>
 ]]
 function Input:onMouseUp( event, handled, within )
-    if not within or handled then
-        self.focused = false
+    if not within or handled and self.focused then
+        self:unfocus()
     elseif within and not handled and self.active then
         if self.focused then
             local application, pos, width, scroll = self.application, self.position, self.width, self.scroll
@@ -62,7 +63,7 @@ function Input:onMouseUp( event, handled, within )
                     self.selection = clickedPos
                 else self.selection = false end
             else self.position, self.selection = clickedPos, false end
-        else self.focused = true end
+        else self:focus() end
     end
 
     self.active = false
@@ -153,7 +154,7 @@ function Input:onKeyDown( event, handled )
 end
 
 function Input:onLabelClicked( label, event, handled, within )
-    self.focused = true
+    self:focus()
     event.handled = true
 end
 

@@ -15,6 +15,12 @@ class ScrollContainer extends Container {
         origin = false;
     };
 }
+
+function ScrollContainer:__init__( ... )
+    self:register( "scrollbarColour", "activeScrollbarColour", "trayColour" )
+    self:super( ... )
+end
+
 --[[ Event Listeners ]]--
 function ScrollContainer:onMouseClick( event, handled, within )
     if handled or not within then return end

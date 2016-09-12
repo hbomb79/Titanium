@@ -6,7 +6,7 @@ Manager = Application():set {
     -- terminatable = true
 }
 
---[[Manager:importFromTML "example/ui/master.tml"
+Manager:importFromTML "example/ui/master.tml"
 local app = {
     masterTheme = Theme.fromFile( "masterTheme", "example/ui/master.theme" ),
     sidePane = {
@@ -74,29 +74,6 @@ Manager:addThread(Thread(function()
             end
         end
     end
-end, true))]]
-
-te = Manager + Terminal( 2, 2, 49, 17 ):set{ displayThreadStatus = false }
-te:on("finish", function( self )
-    te:emulate(function()
-        if not self.thread.exception then
-            self.canvas:resetTerm()
-        end
-
-        print( "Session ended ("..( self.thread.exception and "coarse" or "graceful" )..")\nctrl-shift-r to start another session" )
-    end)
-end):on("exception", function( self, thread )
-    te:emulate(function() self.canvas:resetTerm(); printError( "Thread exception: " .. thread.exception ) end)
-end)
-
-te.redirect.write "ctrl-shift-r to start session"
-
-local function threadStart()
-    te.chunk = function() select(1, loadfile("/rom/programs/shell"))() end
-end
-
-Manager:registerHotkey("close", "leftCtrl-leftShift-t", Manager.stop)
-Manager:registerHotkey("force_draw", "leftCtrl-leftShift-f", function() Manager.canvas:draw( true ) end)
-Manager:registerHotkey("restart_thread", "leftCtrl-leftShift-r", function() threadStart() end)
+end, true))
 
 Manager:start()

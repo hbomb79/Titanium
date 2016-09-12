@@ -42,10 +42,16 @@
     <focusedColour>128</focusedColour>
 </Input>
 
-<Checkbox class="config_checkbox">
-    <backgroundColour>cyan</backgroundColour>
-    <toggledBackgroundColour>lightGrey</toggledBackgroundColour>
-    <activeBackgroundColour>lightBlue</activeBackgroundColour>
+<ScrollContainer>
+    <Checkbox>
+        <backgroundColour>cyan</backgroundColour>
+        <toggledBackgroundColour>lightGrey</toggledBackgroundColour>
+        <activeBackgroundColour>lightBlue</activeBackgroundColour>
 
-    <toggledColour>white</toggledColour>
-</Checkbox>
+        <toggledColour>white</toggledColour>
+    </Checkbox>
+
+    <Label>
+        <colour>256</colour>
+    </Label>
+</ScrollContainer>

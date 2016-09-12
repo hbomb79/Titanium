@@ -100,7 +100,7 @@ function MThemeManager:cacheApplicableRulesForType( type )
     self:resetApplicableRules( type )
 
     for i = 1, #themes do
-        self:cacheApplicableRules( themes[ i ].rules[ type ] )
+        self:cacheApplicableRules( themes[ i ].rules[ type ] or {} )
     end
 end
 

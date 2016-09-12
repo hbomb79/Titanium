@@ -164,6 +164,13 @@ function NodeQuery:animate( ... )
     self:executeOnNodes( "animate", ... )
 end
 
+function NodeQuery:each( fn )
+    local nodes = self.result
+    for i = 1, #nodes do
+        fn( nodes[ i ] )
+    end
+end
+
 --[[
     @instance
     @desc Iterates over each node in the result set, calling 'fnName' with arguments '...' on each

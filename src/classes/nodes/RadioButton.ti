@@ -95,7 +95,7 @@ end
 
 configureConstructor({
     orderedArguments = { "X", "Y", "group" },
-    requiredArguments = true,
+    requiredArguments = { "group" },
     argumentTypes = { group = "string" },
     useProxy = { "group" }
 }, true, true )

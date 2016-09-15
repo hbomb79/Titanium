@@ -4,7 +4,7 @@ local function isThreadRunning( obj )
     return obj.thread.running
 end
 
-class Terminal extends Node mixin MFocusable mixin MCallbackManager {
+class Terminal extends Node mixin MFocusable {
     static = {
         focusedEvents = {
             MOUSE = true,

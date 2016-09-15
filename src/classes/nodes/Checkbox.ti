@@ -83,7 +83,6 @@ end
 
 configureConstructor( {
     orderedArguments = { "X", "Y" },
-    requiredArguments = { "X", "Y" },
     argumentTypes = {
         checkedMark = "string",
         uncheckedMark = "string"

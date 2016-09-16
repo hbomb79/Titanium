@@ -29,6 +29,7 @@ function Page:addNode( node )
     node.parent = self.parent
 end
 
+function Page:onThemeUpdate() end
 configureConstructor {
     orderedArguments = { "name" },
     argumentTypes = {

@@ -133,6 +133,7 @@ function PageContainer:collate( collated )
 
     local pages, page = self.pages
     for p = 1, #pages do
+        collated[ #collated + 1 ] = pages[ p ]
         local nodes, node = pages[ p ].nodes
         for i = 1, #nodes do
             node = nodes[ i ]

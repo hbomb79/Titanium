@@ -78,14 +78,12 @@ end
     @return [Node Instance - node]
 ]]
 function MNodeContainer:getNode( id, recursive )
-    local nodes, node = self.nodes
+    local nodes, node = recursive and self.collatedNodes or self.nodes
+
     for i = 1, #nodes do
         node = nodes[ i ]
         if node.id == id then
             return node
-        elseif recursive and node.nodes then
-            local r = node:getNode( id, true )
-            if r then return r end
         end
     end
 end

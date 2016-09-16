@@ -93,23 +93,6 @@ function Container:shipEvent( event )
     end
 end
 
---[[
-    @instance
-    @desc Iterates over child nodes to ensure that nodes added to this container prior to Application set are updated (with the new Application)
-    @param <Application - app>
-]]
-function Container:setApplication( app )
-    if Titanium.typeOf( app, "Application", true ) then
-        self.application = app
-
-        local nodes = self.nodes
-        for i = 1, #nodes do
-            nodes[ i ].application = app
-        end
-    else
-        return error("Failed to set Application. Invalid value passed '"..tostring( app ).."'")
-    end
-end
 
 configureConstructor({
     orderedArguments = { "X", "Y", "width", "height", "nodes", "backgroundColour" },

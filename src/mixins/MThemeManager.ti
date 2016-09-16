@@ -55,7 +55,7 @@ end
 function MThemeManager:update( target )
     self:cacheAllApplicableRules()
 
-    local target = target or self.nodes
+    local target = target or self.collatedNodes
     for i = 1, #target do target[ i ]:onThemeUpdate() end
 end
 

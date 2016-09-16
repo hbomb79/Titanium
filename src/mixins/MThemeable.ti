@@ -215,13 +215,4 @@ end
 function MThemeable:onThemeUpdate()
     self:queueUpdate()
     self:updateProperties()
-
-    local nodes = self.nodes
-    if type( nodes ) == "table" then
-        for i = 1, #nodes do
-            if nodes[ i ]:can "onThemeUpdate" then
-                nodes[ i ]:onThemeUpdate()
-            end
-        end
-    end
 end

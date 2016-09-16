@@ -1,6 +1,4 @@
-class Page {
-    nodes = {};
-}
+class Page extends MNodeContainer
 
 function Page:__init__( name, ... )
     self.name = type( name ) == "string" and name or error("Invalid name '"..tostring( name ).."'", 2)
@@ -12,3 +10,28 @@ function Page:__init__( name, ... )
         end
     end
 end
+
+function Page:setParent( parent )
+    if Titanium.typeOf( parent, "PageContainer", true ) then
+        self.parent = parent
+        local nodes = self.nodes
+
+        for i = 1, #nodes do
+            nodes[ i ].parent = parent
+        end
+    else
+        return error("Failed to set parent of page to '"..tostring( parent ).."'. Parent MUST be a PageContainer, this is the only place 'Page' instances should reside")
+    end
+end
+
+function Page:addNode( node )
+    self.super:addNode( node )
+    node.parent = self.parent
+end
+
+configureConstructor {
+    orderedArguments = { "name" },
+    argumentTypes = {
+        name = "string"
+    }
+}

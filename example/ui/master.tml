@@ -1,57 +1,66 @@
-<Label X=2 Y=2 text="Titanium" class="header"/>
-<Label X=2 Y=3 text="Test Application" class="sub"/>
+<PageContainer X=1 Y=1 width=51 height=19 xScrollAllowed=false>
+    <Page name="main">
+        <Label X=2 Y=2 text="Titanium" class="header"/>
+        <Label X=2 Y=3 text="Test Application" class="sub"/>
 
-<Label X=41 Y=15 text="Allow Exit"/>
-<Label X=41 Y=16 text="Yes" class="sub" labelFor="yes_rating"/>
-<RadioButton value="yes" X=45 Y=16 group="rating" id="yes_rating"/>
+        <Label X=41 Y=15 text="Allow Exit"/>
+        <Label X=41 Y=16 text="Yes" class="sub" labelFor="yes_rating"/>
+        <RadioButton value="yes" X=45 Y=16 group="rating" id="yes_rating"/>
 
-<Label X=47 Y=16 text="No" class="sub" labelFor="no_rating"/>
-<RadioButton value="no" X=50 Y=16 group="rating" id="no_rating" toggled/>
+        <Label X=47 Y=16 text="No" class="sub" labelFor="no_rating"/>
+        <RadioButton value="no" X=50 Y=16 group="rating" id="no_rating" toggled/>
 
-<Label text="Name" X=2 Y=6 labelFor="name_input"/>
-<Input X=2 Y=7 width=18 id="name_input" placeholder="Your Name" focused="true"/>
-<Label X=2 Y=8 text="Enter your name" id="name_display" class="sub"/>
-<Label X=2 Y=10 text="No selected text" id="selected_name_display" class="sub"/>
+        <Label text="Name" X=2 Y=6 labelFor="name_input"/>
+        <Input X=2 Y=7 width=18 id="name_input" placeholder="Your Name" focused="true"/>
+        <Label X=2 Y=8 text="Enter your name" id="name_display" class="sub"/>
+        <Label X=2 Y=10 text="No selected text" id="selected_name_display" class="sub"/>
 
-<Button text="Exit" X=41 Y=18 width=10 id="exit_button"/>
-<Button text="Toggle Theme" X=2 Y=18 height=1 width=14 id="toggle"/>
+        <Button text="Exit" X=41 Y=18 width=10 id="exit_button"/>
+        <Button text="Toggle Theme" X=2 Y=18 height=1 width=14 id="toggle"/>
 
-<Button text="Toggle Pane" X=2 Y=15 height=1 width=13 id="pane_toggle"/>
+        <Button text="Toggle Pane" X=2 Y=15 height=1 width=13 id="pane_toggle"/>
 
-<Label text="ctrl" id="left" X=5 Y=16 class="sub hotkey_part"/>
-<Label text="-" X=9 Y=16 class="sub hotkey_part" id="hyphen_seperator"/>
-<Label text="p" id="right" X=10 Y=16 class="sub hotkey_part"/>
+        <Label text="ctrl" id="left" X=5 Y=16 class="sub hotkey_part"/>
+        <Label text="-" X=9 Y=16 class="sub hotkey_part" id="hyphen_seperator"/>
+        <Label text="p" id="right" X=10 Y=16 class="sub hotkey_part"/>
 
-<Button text="Config" width=8 height=1 X=42 Y=2 id="config_toggle"/>
+        <Button text="Shell" width=7 height=1 X=43 Y=2 id="shell_toggle"/>
 
-<Container id="pane" width=21 height=19 X=52 backgroundColour="grey">
-    <Label text="Settings" colour=1 X=2 Y=2/>
+        <Container id="pane" width=21 height=19 X=52 backgroundColour="grey">
+            <Label text="Settings" colour=1 X=2 Y=2/>
 
-    <ScrollContainer X=2 Y=4 width=20 height=10>
-        <Label text="Config 1" labelFor="config_1" X=2 Y=1/>
-        <Checkbox X=11 Y=1 id="config_1"/>
+            <ScrollContainer X=2 Y=4 width=20 height=10>
+                <Label text="Config 1" labelFor="config_1" X=2 Y=1/>
+                <Checkbox X=11 Y=1 id="config_1"/>
 
-        <Label text="Config 2" labelFor="config_2" X=2 Y=3/>
-        <Checkbox X=11 Y=3 id="config_2"/>
+                <Label text="Config 2" labelFor="config_2" X=2 Y=3/>
+                <Checkbox X=11 Y=3 id="config_2"/>
 
-        <Label text="Config 3" labelFor="config_3" X=2 Y=5/>
-        <Checkbox X=11 Y=5 id="config_3"/>
+                <Label text="Config 3" labelFor="config_3" X=2 Y=5/>
+                <Checkbox X=11 Y=5 id="config_3"/>
 
-        <Label text="Config 4" labelFor="config_4" X=2 Y=7/>
-        <Checkbox X=11 Y=7 id="config_4"/>
+                <Label text="Config 4" labelFor="config_4" X=2 Y=7/>
+                <Checkbox X=11 Y=7 id="config_4"/>
 
-        <Label text="Config 5" labelFor="config_5" X=2 Y=9/>
-        <Checkbox X=11 Y=9 id="config_5"/>
+                <Label text="Config 5" labelFor="config_5" X=2 Y=9/>
+                <Checkbox X=11 Y=9 id="config_5"/>
 
-        <Label text="Config 6" labelFor="config_6" X=2 Y=11/>
-        <Checkbox X=11 Y=11 id="config_6"/>
+                <Label text="Config 6" labelFor="config_6" X=2 Y=11/>
+                <Checkbox X=11 Y=11 id="config_6"/>
 
-        <Label text="Config 7" labelFor="config_7" X=2 Y=13/>
-        <Checkbox X=11 Y=13 id="config_7"/>
+                <Label text="Config 7" labelFor="config_7" X=2 Y=13/>
+                <Checkbox X=11 Y=13 id="config_7"/>
 
-        <Label text="Config 8" labelFor="config_8" X=2 Y=15/>
-        <Checkbox X=11 Y=15 id="config_8"/>
-    </ScrollContainer>
+                <Label text="Config 8" labelFor="config_8" X=2 Y=15/>
+                <Checkbox X=11 Y=15 id="config_8"/>
+            </ScrollContainer>
 
-    <Button text="Save Settings" width=17 height=3 X=3 Y=16 id="config_save"/>
-</Container>
+            <Button text="Save Settings" width=17 height=3 X=3 Y=16 id="config_save"/>
+        </Container>
+    </Page>
+
+    <Page name="console">
+        <Terminal X=2 Y=2 width=49 height=15 id="shell"/>
+        <Button id="shell_toggle" text="Return" X=22 Y=18 width=8/>
+    </Page>
+</PageContainer>

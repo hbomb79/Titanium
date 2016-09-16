@@ -9,6 +9,7 @@ Manager = Application():set {
 Manager:importFromTML "example/ui/master.tml"
 local app = {
     masterTheme = Theme.fromFile( "masterTheme", "example/ui/master.theme" ),
+    pages = Manager:query "PageContainer".result[1],
     sidePane = {
         pane = Manager:query "Container#pane",
         hotkeys = Manager:query "Label.hotkey_part",
@@ -18,23 +19,24 @@ local app = {
     },
 }
 
+app.pages:selectPage "main"
 Manager:addTheme( app.masterTheme )
-Manager:getNode "exit_button":on("trigger", function( self )
+Manager:query "#exit_button":on( "trigger", function( self )
     if RadioButton.getValue "rating" == "yes" then
         Manager:stop()
     end
 end)
 
-Manager:getNode "name_input":on("trigger", function( self, value, selectedValue )
-    local nameDisplay = Manager:getNode "name_display"
+nameDisplay = Manager:query "#name_display"
+Manager:query "#name_input":on("trigger", function( self, value, selectedValue )
     nameDisplay:setClass( "hasValue", value ~= "" )
 
-    nameDisplay.text = ( not value or value == "" ) and "No entered text" or ( #value > 40 and value:sub( 1, 40 ).."..." or value )
-    Manager:getNode "selected_name_display".text = selectedValue and "Selected: "..selectedValue or "No selected text"
+    nameDisplay.result[1].text = ( not value or value == "" ) and "No entered text" or ( #value > 40 and value:sub( 1, 40 ).."..." or value )
+    Manager:query "#selected_name_display".result[1].text = selectedValue and "Selected: "..selectedValue or "No selected text"
 end)
 
 local themed = true
-Manager:getNode "toggle":on("trigger", function( self )
+Manager:query "#toggle":on("trigger", function( self )
     themed = not themed
     if not themed then Manager:removeTheme "masterTheme"
     else Manager:addTheme( app.masterTheme ) end
@@ -56,9 +58,12 @@ Manager:getNode( "config_save", true ):on("trigger", function( self )
     end
 end)
 
-Manager:registerHotkey("close", "leftCtrl-leftShift-t", Manager.stop)
-Manager:getNode "pane_toggle":on("trigger", paneToggle)
+Manager:query "#shell_toggle":on("trigger", function()
+    app.pages:selectPage( app.pages.selectedPage.name == "main" and "console" or "main" )
+end)
 
+Manager:registerHotkey("close", "leftCtrl-leftShift-t", Manager.stop)
+Manager:query "#pane_toggle":on("trigger", paneToggle)
 Manager:registerHotkey("paneToggle", "leftCtrl-p", function()
     paneToggle( true )
 end)
@@ -76,4 +81,5 @@ Manager:addThread(Thread(function()
     end
 end, true))
 
+Manager:query "Terminal#shell":set { chunk = function() select( 1, loadfile "/rom/programs/shell" )() end }
 Manager:start()

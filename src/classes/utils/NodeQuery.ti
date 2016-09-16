@@ -67,6 +67,7 @@ local function performQuery( query, base )
 end
 
 class NodeQuery {
+    static = { supportedMethods = { "addClass", "removeClass", "setClass", "set", "animate", "on", "off" } };
     result = false;
 
     parent = false;
@@ -80,6 +81,11 @@ function NodeQuery:__init__( parent, queryString )
 
     self.parsedQuery = QueryParser( queryString ).query
     self.result = self:query()
+
+    local sup = NodeQuery.supportedMethods
+    for i = 1, #sup do
+        self[ sup[ i ] ] = function( self, ... ) self:executeOnNodes( sup[ i ], ... ) end
+    end
 end
 
 --[[
@@ -105,33 +111,6 @@ end
 
 --[[
     @instance
-    @desc Addes class 'class' on each node inside the result set
-    @param <string - class>
-]]
-function NodeQuery:addClass( class )
-    self:executeOnNodes( "addClass", class )
-end
-
---[[
-    @instance
-    @desc Removes class 'class' from each node in the result set
-    @param <string - class>
-]]
-function NodeQuery:removeClass( class )
-    self:executeOnNodes( "removeClass", class )
-end
-
---[[
-    @instance
-    @desc Calles 'setClass' on each node in the result set
-    @param <string - class>, [var - cond]
-]]
-function NodeQuery:setClass( class, cond )
-    self:executeOnNodes( "setClass", class, cond )
-end
-
---[[
-    @instance
     @desc Returns true if the class 'class' exists on all nodes in the result set, false otherwise
     @param <table|string - class>
     @return <boolean - hasClass>
@@ -145,23 +124,6 @@ function NodeQuery:hasClass( class )
     end
 
     return true
-end
-
---[[
-    @instance
-    @desc Calls 'set' on each node in the result set and passes the tbl given, allows batch setting of properties
-    @param <table - tbl>
-]]
-function NodeQuery:set( tbl )
-    self:executeOnNodes( "set", tbl )
-end
-
---[[
-    @instance
-    @desc Calls 'animate' on each node in the result set
-]]
-function NodeQuery:animate( ... )
-    self:executeOnNodes( "animate", ... )
 end
 
 function NodeQuery:each( fn )

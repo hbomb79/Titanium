@@ -12,6 +12,12 @@ function PageContainer:addPage( page )
     if not Titanium.typeOf( page, "Page", true ) then return error("Invalid page '"..tostring( page ).."'") end
 
     self:removePage( page.name )
+
+    if self.application then
+        page.application = self.application
+    end
+    page.parent = self
+
     table.insert( self.pages, page )
 end
 
@@ -30,6 +36,8 @@ function PageContainer:removePage( page )
                 self.selectedPage = false
             end
 
+            page.parent = nil
+            page.application = nil
             return table.remove( pages, i )
         end
     end
@@ -64,6 +72,14 @@ function PageContainer:setSelectedPage( page )
     self.xScroll = 0
 end
 
+function PageContainer:addNode( node )
+    if not Titanium.typeOf( node, "Page", true ) then
+        return error("PageContainer only supports 'Page' as direct child nodes, '"..tostring( node ).."' is not valid. To add content, add your nodes to a direct child page - not directly to the PageContainer")
+    end
+
+    self:addPage( node )
+end
+
 --[[
     @instance
     @desc Allows the ScrollContainer.draw to fetch the nodes for the selected page, rather than using the 'nodes' table
@@ -75,6 +91,63 @@ function PageContainer:getNodes()
     end
 
     return {}
+end
+
+function PageContainer:setApplication( app )
+    if Titanium.typeOf( app, "Application", true ) then
+        self.application = app
+
+        local pages = self.pages
+        for i = 1, #pages do
+            pages[ i ].application = app
+        end
+    else
+        return error("Failed to set Application. Invalid value passed '"..tostring( app ).."'")
+    end
+end
+
+--[[
+    @instance
+    @desc Sets the changed state of this node to 'changed'. If 'changed' then the parents of this node will also have changed set to true.
+    @param <boolean - changed>
+]]
+function PageContainer:setChanged( changed )
+    self.changed = changed
+
+    if changed then
+        local parent = self.parent
+        if parent and not parent.changed then
+            parent.changed = true
+        end
+    end
+end
+
+--[[
+    @instance
+    @desc Caches all nodes under this container (and child containers) in 'collatedNodes'.
+          This list maybe out of date if 'collate' isn't called before usage. Caching is not automatic.
+    @param [table - collated]
+]]
+function PageContainer:collate( collated )
+    local collated = collated or {}
+
+    local pages, page = self.pages
+    for p = 1, #pages do
+        local nodes, node = pages[ p ].nodes
+        for i = 1, #nodes do
+            node = nodes[ i ]
+            collated[ #collated + 1 ] = node
+
+            local collatedNode = node.collatedNodes
+            if collatedNode then
+                for i = 1, #collatedNode do
+                    collated[ #collated + 1 ] = collatedNode[ i ]
+                end
+            end
+        end
+    end
+
+    self.collatedNodes = collated
 end
 
 configureConstructor({

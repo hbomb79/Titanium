@@ -192,8 +192,8 @@ function ScrollContainer:cacheContentSize()
     for i = 1, #nodes do
         node = nodes[ i ]
 
-        w = math.max( node.X + node.width, w )
-        h = math.max( node.Y + node.height, h )
+        w = math.max( node.X + node.width - 1, w )
+        h = math.max( node.Y + node.height - 1, h )
     end
 
     self.cache.contentWidth, self.cache.contentHeight = w, h

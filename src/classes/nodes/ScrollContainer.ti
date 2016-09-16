@@ -4,6 +4,8 @@ class ScrollContainer extends Container {
     xScroll = 0;
     yScroll = 0;
 
+    xScrollAllowed = true;
+    yScrollAllowed = true;
     propagateMouse = true;
 
     trayColour = 256;
@@ -92,11 +94,11 @@ function ScrollContainer:handle( eventObj )
 
     if eventObj.main == "MOUSE" then
         eventObj.isWithin = eventObj:withinParent( self )
-        -- if ( not cache.yScrollActive or ( eventObj.X - self.X + 1 ) ~= self.width ) or ( not cache.xScrollActive or ( eventObj.Y - self.Y + 1 ) ~= self.height ) then
+        if ( not cache.yScrollActive or ( eventObj.X - self.X + 1 ) ~= self.width ) and ( not cache.xScrollActive or ( eventObj.Y - self.Y + 1 ) ~= self.height ) then
             cloneEv = eventObj:clone( self )
             cloneEv.Y = cloneEv.Y + self.yScroll
             cloneEv.X = cloneEv.X + self.xScroll
-        -- end
+        end
     else cloneEv = eventObj end
 
     if cloneEv then self:shipEvent( cloneEv ) end
@@ -207,10 +209,11 @@ end
 function ScrollContainer:cacheActiveScrollbars()
     local cache = self.cache
     local cWidth, cHeight, sWidth, sHeight = cache.contentWidth, cache.contentHeight, self.width, self.height
+    local xAllowed, yAllowed = self.xScrollAllowed, self.yScrollAllowed
 
     local horizontal, vertical
-    if cWidth > sWidth or cHeight > sHeight then
-        cache.xScrollActive, cache.yScrollActive = cWidth > sWidth - 1, cHeight > sHeight - 1
+    if ( cWidth > sWidth and xAllowed ) or ( cHeight > sHeight and yAllowed ) then
+        cache.xScrollActive, cache.yScrollActive = cWidth > sWidth - 1 and xAllowed, cHeight > sHeight - 1 and yAllowed
     else
         cache.xScrollActive, cache.yScrollActive = false, false
     end
@@ -235,6 +238,8 @@ end
 configureConstructor {
     argumentTypes = {
         scrollbarColour = "colour",
-        activeScrollbarColour = "colour"
+        activeScrollbarColour = "colour",
+        xScrollAllowed = "boolean",
+        yScrollAllowed = "boolean"
     }
 }

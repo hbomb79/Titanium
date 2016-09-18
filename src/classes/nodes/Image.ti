@@ -1,0 +1,72 @@
+local function getFileExtension( path )
+    return path:match ".+%.(.-)$" or ""
+end
+
+class Image extends Node {
+    static = { imageParsers = {} };
+    imagePath = false;
+}
+
+function Image:__init__( ... )
+    self:super()
+    self:resolve( ... )
+end
+
+--[[
+    @instance
+    @desc Depending on the file extension (self.path), an image parser will be called.
+          To add support for more extensions, simply add the function to the classes static ( Image.static.addParser( extension, function ) )
+]]
+function Image:parseImage()
+    local path = self.path
+    if type( path ) ~= "string" then
+        return error("Failed to parse image, path '"..tostring( path ).."' is invalid")
+    elseif not fs.exists( path ) or fs.isDir( path ) then
+        return error("Failed to parse image, path '"..path.."' is invalid and cannot be opened for parsing")
+    end
+
+    local ext = getFileExtension( path )
+    if not Image.imageParsers[ ext ] then
+        return error("Failed to parse image, no image parser exists for " .. ( ext == "" and "'no ext'" or "'." .. ext .. "'" ) .. " files for '"..path.."'")
+    end
+
+    local f = fs.open( path, "r" )
+    local stream = f.readAll()
+    f.close()
+
+    local width, height, pixels = Image.imageParsers[ ext ]( stream )
+    for y = 1, height do
+        local pos = ( y - 1 ) * width
+        for x = 1, width do
+            local posX = pos + x
+            self.canvas.buffer[ posX ] = pixels[ posX ] or { " " }
+        end
+    end
+
+    self.width, self.height = width, height
+end
+
+function Image:setPath( path )
+    self.path = path
+    self:parseImage()
+end
+
+function Image.static.setImageParser( extension, parserFunction )
+    if type( extension ) ~= "string" or type( parserFunction ) ~= "function" then
+        return error "Failed to set image parser. Invalid arguments, expected string, function"
+    end
+
+    Image.static.imageParsers[ extension ] = parserFunction
+
+    return Image
+end
+
+function Image:draw() end
+configureConstructor {
+    orderedArguments = { "path" },
+    requiredArguments = { "path" },
+    useProxy = { "path" },
+    argumentTypes = {
+        path = "string"
+    }
+}

@@ -49,9 +49,11 @@
         <activeBackgroundColour>lightBlue</activeBackgroundColour>
 
         <toggledColour>white</toggledColour>
+        <X>11</X>
     </Checkbox>
 
     <Label>
         <colour>256</colour>
+        <X>2</X>
     </Label>
 </ScrollContainer>

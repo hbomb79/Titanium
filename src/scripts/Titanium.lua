@@ -42,11 +42,8 @@ Image.setImageParser("", function( stream ) -- Default CC images, no extension
         local y, line = width * ( l - 1 ), lines[ l ]
 
         for i = 1, width do
-            local c = line:sub( i, i )
-            if c ~= "" and c ~= " " then
-                local colour = hex[ c ]
-                pixels[ y + i ] = { " ", colour, colour }
-            end
+            local colour = hex[ line:sub( i, i ) ]
+            pixels[ y + i ] = { " ", colour, colour }
         end
     end
 

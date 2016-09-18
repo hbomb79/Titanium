@@ -44,6 +44,7 @@ function Image:parseImage()
     end
 
     self.width, self.height = width, height
+    self.changed = true
 end
 
 function Image:setPath( path )

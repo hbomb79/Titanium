@@ -77,7 +77,7 @@ function TML:parseTree()
             if classArg then
                 itemInstance.classes = type( itemInstance.classes ) == "table" and itemInstance.classes or {}
                 for className in classArg:gmatch "%S+" do
-                    itemInstance:addClass( className )
+                    itemInstance.classes[ className ] = true
                 end
             end
 

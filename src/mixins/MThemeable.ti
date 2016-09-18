@@ -211,6 +211,5 @@ function MThemeable:hasClass( t )
 end
 
 function MThemeable:onThemeUpdate()
-    self:queueUpdate()
     self:updateProperties()
 end

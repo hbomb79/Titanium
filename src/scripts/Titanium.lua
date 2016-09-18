@@ -18,6 +18,44 @@ Event.static.matrix = {
 }
 
 --[[
+    Image Parsing
+    =============
+
+    Titaniums Image class parses image files based on their extension, two popular formats (nfp and default) are supported by default, however this can be expanded like you see here.
+    These functions are expected to return the dimensions of the image and, a buffer (2D table) of pixels to be drawn directly to the images canvas. Pixels that do not exist in the image
+    need not be acounted for, Titanium will automatically fill those as 'blank' pixels by setting them as 'transparent'.
+
+    See the default functions below for good examples of image parsing.
+]]
+
+Image.setImageParser("", function( stream ) -- Default CC images, no extension
+    -- Break image into lines, find the maxwidth of the image (the length of the longest line)
+    local hex = TermCanvas.static.hex
+    width, lines, pixels = 1, {}, {}
+    for line in stream:gmatch "([^\n]*)\n?" do
+        width = math.max( width, #line )
+        lines[ #lines + 1 ] = line
+    end
+
+    -- Iterate each line, forming a buffer of pixels with missing information (whitespace) being left nil
+    for l = 1, #lines do
+        local y, line = width * ( l - 1 ), lines[ l ]
+
+        for i = 1, width do
+            local c = line:sub( i, i )
+            if c ~= "" and c ~= " " then
+                local colour = hex[ c ]
+                pixels[ y + i ] = { " ", colour, colour }
+            end
+        end
+    end
+
+    return width, #lines, pixels
+end).setImageParser("nfp", function( stream ) -- NFP images, .nfp extension
+    --TODO: Look into nfp file format and write parser
+end)
+
+--[[
     Tween setup
     ===========
 

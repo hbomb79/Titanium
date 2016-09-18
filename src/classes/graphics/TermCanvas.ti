@@ -11,6 +11,7 @@
 local hex = {}
 for i = 0, 15 do
     hex[2 ^ i] = ("%x"):format( i ) -- %x = lowercase hexadecimal
+    hex[("%x"):format( i )] = 2 ^ i
 end
 
 local tableConcat = table.concat

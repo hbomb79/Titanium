@@ -4,6 +4,9 @@
     Compatible with ComputerCraft
 ]]
 
+local args = { ... }
+local location = args[ 1 ] or ""
+
 local ignore = {
     [".DS_Store"] = true;
     ["loadFirst.cfg"] = true;
@@ -29,9 +32,9 @@ local function getContents( dir, _results )
     return results
 end
 print( "Building Titanium\nSearching source directory" )
-local files, exports = getContents( "src" ), {}
+local files, exports = getContents( fs.combine( location, "src" ) ), {}
 print( "Searching src/scripts directory" )
-local scripts, scriptFiles = getContents( "src/scripts" ), {}
+local scripts, scriptFiles = getContents( fs.combine( location, "src/scripts" ) ), {}
 local preLoadFiles = {}
 
 if fs.exists( "src/loadFirst.cfg" ) then

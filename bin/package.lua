@@ -12,8 +12,9 @@ local SETTINGS = {
         targets = {},
         output = "/"
     },
-    MODULE = {
-        TITANIUM = false
+    TITANIUM = {
+        INSTALL = false,
+        AUTOLOAD = false
     },
     SOURCE = {
         classes = {},
@@ -60,8 +61,12 @@ local FLAGS = {
     end},
 
     {"titanium", "ti", function( path )
-        SETTINGS.MODULE.TITANIUM = path
+        SETTINGS.TITANIUM.INSTALL = path
     end, true},
+
+    {"titanium-autoload", "tia", function()
+        SETTINGS.TITANIUM.AUTOLOAD = true
+    end},
 
     {"init", "i", function( path )
         SETTINGS.INIT_FILE = path
@@ -173,7 +178,7 @@ local function preprocess( text )
     return text
 end
 
-local function getFileContents( path, allowMinify )
+local function getFileContents( path, allowMinify, allowPreprocess )
     if isFile( path ) then
         local file, err = io.open( path )
         if not file or err then
@@ -183,10 +188,11 @@ local function getFileContents( path, allowMinify )
         local cnt = file:read("*a")
         file:close()
 
-        if SETTINGS.MINIFY_SOURCE and allowMinify then
+        cnt = allowPreprocess and preprocess( cnt ) or cnt
+        if allowMinify and SETTINGS.MINIFY_SOURCE then
             if type( _G.Minify ) ~= "function" then dofile( SETTINGS.MINIFY_LOCATION ) end
 
-            local ok, cnt = Minify( preprocess( cnt ) )
+            local ok, cnt = Minify( cnt )
 
             if not ok and cnt then error( "Failed to minify target '"..tostring(path).."': "..tostring( cnt ) ) end
 
@@ -255,7 +261,7 @@ for file in pairs( SETTINGS.EXTRACT.targets ) do
 end
 
 for file in pairs( SETTINGS.SOURCE.classes ) do
-    class_assets[ getName( file ) ] = getFileContents( file, true )
+    class_assets[ getName( file ) ] = getFileContents( file, true, true )
 end
 
 do
@@ -280,11 +286,15 @@ local output = [=[
 
 ]=]
 if next( class_assets ) then
+    if not ( SETTINGS.TITANIUM.INSTALL and SETTINGS.TITANIUM.AUTOLOAD ) then
+        error "Failed to compile project. When class source is present, The Titanium module must be set to automatically install AND load. Use flags -ti and -ta to enable"
+    end
+
     output = output .. "local classSource = " .. serialise( class_assets ).."\n"
 end
 
 if next( vfs_assets ) then
-    output = output .. "local vfsAssets = "..serialise( vfs_assets ) .. [[
+    output = output .. "local vfsAssets = " .. serialise( vfs_assets ) .. [[
 
 local VFS_ENV = setmetatable({
     fs = setmetatable({}, { __index = _G["fs"] })
@@ -387,7 +397,7 @@ end
 ]]
 end
 
-local titanium = SETTINGS.MODULE.TITANIUM
+local titanium = SETTINGS.TITANIUM.INSTALL
 if titanium then
     output = output .. [[
 if not fs.exists( "]] .. titanium .. [[" ) then
@@ -399,6 +409,34 @@ if not fs.exists( "]] .. titanium .. [[" ) then
 
         h.close()
     else error "Failed to download Titanium" end
+end
+]]
+
+    if SETTINGS.TITANIUM.AUTOLOAD then
+        output = output .. 'if not _G.Titanium then dofile "'.. titanium .. '" end\n'
+    end
+elseif SETTINGS.TITANIUM.AUTOLOAD then
+    print "WARNING: The Titanium module is set to auto load, however it's install location is not set. Use flag -ti=<location> to enable module installation"
+end
+
+if next( class_assets ) then
+    output = output .. [[
+for name, source in pairs( classSource ) do
+    local className = name:gsub( "%..*", "" )
+    if not Titanium.getClass( className ) then
+        local output, err = loadstring( source, name )
+        if not output or err then return error( "Failed to load Lua chunk. File '"..name.."' has a syntax error: "..tostring( err ), 0 ) end
+
+        local ok, err = pcall( output )
+        if not ok or err then return error( "Failed to execute Lua chunk. File '"..name.."' crashed: "..tostring( err ), 0 ) end
+
+        local class = Titanium.getClass( className )
+        if class then
+            if not class:isCompiled() then class:compile() end
+        else return error( "File '"..name.."' failed to create class '"..className.."'" ) end
+    else
+        print( "WARNING: Class " .. className .. " failed to load because a class with the same name already exists." )
+    end
 end
 ]]
 end

@@ -68,7 +68,10 @@ local FLAGS = {
     end, true},
 
     {"help", "h", function()
-        print [[
+        local isCC = type( textutils ) == "table" and type( textutils.pagedPrint ) == "function"
+        if isCC then term.setCursorPos( 1, 2 ) term.clear() end
+
+        ( isCC and textutils.pagedPrint or print ) [[
 Titanium Packager Help
 ======================
 

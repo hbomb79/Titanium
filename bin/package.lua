@@ -14,7 +14,8 @@ local SETTINGS = {
     },
     TITANIUM = {
         INSTALL = false,
-        AUTOLOAD = false
+        AUTOLOAD = false,
+        DISABLE_CHECK = false
     },
     SOURCE = {
         classes = {},
@@ -66,6 +67,10 @@ local FLAGS = {
 
     {"titanium-autoload", "tia", function()
         SETTINGS.TITANIUM.AUTOLOAD = true
+    end},
+
+    {"titanium-disable-check", "tid", function()
+        SETTINGS.TITANIUM.DISABLE_CHECK = true
     end},
 
     {"init", "i", function( path )
@@ -286,8 +291,8 @@ local output = [=[
 
 ]=]
 if next( class_assets ) then
-    if not ( SETTINGS.TITANIUM.INSTALL and SETTINGS.TITANIUM.AUTOLOAD ) then
-        error "Failed to compile project. When class source is present, The Titanium module must be set to automatically install AND load. Use flags -ti and -ta to enable"
+    if not ( SETTINGS.TITANIUM.INSTALL and SETTINGS.TITANIUM.AUTOLOAD and SETTINGS.TITANIUM.DISABLE_CHECK ) then
+        error "Failed to compile project. When class source is present, The Titanium module must be set to automatically install AND load. Use flags -ti and -tia to enable, or -tid to disable this check"
     end
 
     output = output .. "local classSource = " .. serialise( class_assets ).."\n"

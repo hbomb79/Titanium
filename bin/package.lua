@@ -291,7 +291,7 @@ local output = [=[
 
 ]=]
 if next( class_assets ) then
-    if not ( SETTINGS.TITANIUM.INSTALL and SETTINGS.TITANIUM.AUTOLOAD and SETTINGS.TITANIUM.DISABLE_CHECK ) then
+    if not SETTINGS.TITANIUM.DISABLE_CHECK and not ( SETTINGS.TITANIUM.INSTALL and SETTINGS.TITANIUM.AUTOLOAD ) then
         error "Failed to compile project. When class source is present, The Titanium module must be set to automatically install AND load. Use flags -ti and -tia to enable, or -tid to disable this check"
     end
 

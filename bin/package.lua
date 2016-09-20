@@ -273,7 +273,7 @@ do
     local r, rI = explore( SETTINGS.SOURCE.location )
     for i = 1, #r do
         rI = r[ i ]
-        if not ( class_assets[ rI ] or extract_assets[ rI ] ) then
+        if not ( class_assets[ getName( rI ) ] or extract_assets[ rI ] ) then
             vfs_assets[ rI ] = getFileContents( rI, rI:find("%.lua$") or rI:find("%.ti$") )
         end
     end

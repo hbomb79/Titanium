@@ -1,4 +1,4 @@
-class Page extends MNodeContainer
+class Page extends MNodeContainer mixin MThemeable
 
 function Page:__init__( name, ... )
     self.name = type( name ) == "string" and name or error("Invalid name '"..tostring( name ).."'", 2)

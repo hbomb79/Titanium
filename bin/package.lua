@@ -28,6 +28,7 @@ local SETTINGS = {
     MINIFY_SOURCE = false,
 
     INIT_FILE = false,
+    VFS_SANDBOX = false,
 
     OUTPUT_LOCATION = "titanium-project.tpkg"
 }
@@ -76,6 +77,10 @@ local FLAGS = {
     {"init", "i", function( path )
         SETTINGS.INIT_FILE = path
     end, true},
+
+    {"vfs-enable", "ve", function()
+        SETTINGS.VFS_SANDBOX = true
+    end},
 
     {"help", "h", function()
         local isCC = type( textutils ) == "table" and type( textutils.pagedPrint ) == "function"
@@ -304,8 +309,7 @@ if next( vfs_assets ) then
 local VFS_ENV = setmetatable({
     fs = setmetatable({}, { __index = _G["fs"] })
 },{__index = _ENV or getfenv()})
-VFS_ENV._G = VFS_ENV
-VFS_ENV._ENV = VFS_ENV
+]] .. ( SETTINGS.VFS_SANDBOX and "VFS_ENV._G = VFS_ENV\nVFS_ENV._ENV = VFS_ENV\n" or "" ) .. [[
 
 function VFS_ENV.load(src, name, mode, env)
 	return load( src, name or '(load)', mode, env or VFS_ENV )

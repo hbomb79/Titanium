@@ -430,7 +430,10 @@ end
 
 if next( class_assets ) then
     output = output .. [[
-for name, source in pairs( classSource ) do
+local loaded = {}
+local function loadClass( name, source )
+    if loaded[ name ] then return end
+
     local className = name:gsub( "%..*", "" )
     if not Titanium.getClass( className ) then
         local output, err = loadstring( source, name )
@@ -442,10 +445,20 @@ for name, source in pairs( classSource ) do
         local class = Titanium.getClass( className )
         if class then
             if not class:isCompiled() then class:compile() end
+            print( name )
+            loaded[ name ] = true
         else return error( "File '"..name.."' failed to create class '"..className.."'" ) end
     else
         print( "WARNING: Class " .. className .. " failed to load because a class with the same name already exists." )
     end
+end
+
+Titanium.setClassLoader(function( c )
+    local name = classSource[ c .. ".lua" ] and c .. ".lua" or c .. ".ti"
+    loadClass( name, classSource[ name ] )
+end)
+for name, source in pairs( classSource ) do
+    loadClass( name, source )
 end
 ]]
 end

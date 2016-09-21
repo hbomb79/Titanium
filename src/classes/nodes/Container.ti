@@ -80,8 +80,8 @@ function Container:handle( eventObj )
     end
 
     self:shipEvent( clone or eventObj )
-    if clone and clone.isWithin and not clone.handled then
-        clone.handled = true
+    if clone and clone.isWithin and clone.handled then
+        eventObj.handled = true
     end
     return true
 end

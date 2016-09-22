@@ -73,6 +73,7 @@ function Button:setText( text )
     if self.text == text then return end
 
     self.text = text
+    self.changed = true
     self:wrapText()
 end
 

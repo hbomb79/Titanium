@@ -436,7 +436,7 @@ local function loadClass( name, source )
 
     local className = name:gsub( "%..*", "" )
     if not Titanium.getClass( className ) then
-        local output, err = loadstring( source, name )
+        local output, err = VFS_ENV.loadstring( source, name )
         if not output or err then return error( "Failed to load Lua chunk. File '"..name.."' has a syntax error: "..tostring( err ), 0 ) end
 
         local ok, err = pcall( output )

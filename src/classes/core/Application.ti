@@ -187,7 +187,7 @@ end
     @param [boolean - force]
 ]]
 function Application:draw( force )
-    if not self.changed then return end
+    if not self.changed and not force then return end
 
     local canvas = self.canvas
     local nodes, node = self.nodes
@@ -207,7 +207,7 @@ function Application:draw( force )
     end
 
     term.setCursorBlink( caretEnabled or false )
-    canvas:draw()
+    canvas:draw( force )
 
     if caretEnabled then
         term.setTextColour( caretColour or self.colour or 32768 )

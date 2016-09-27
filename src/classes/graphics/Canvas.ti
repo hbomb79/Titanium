@@ -20,6 +20,8 @@ abstract class Canvas {
 
     backgroundColour = 32768;
     colour = 1;
+
+    transparent = false;
 }
 
 --[[
@@ -44,11 +46,21 @@ end
     @param [number - colour]
 ]]
 function Canvas:clear( colour )
-    local pixel, buffer = { " ", self.colour, colour or self.backgroundColour }, self.buffer
+    local pixel, buffer = { not self.transparent and " " or false, self.colour, colour or self.backgroundColour }, self.buffer
 
     for index = 1, self.width * self.height do
         buffer[ index ] = pixel
     end
+end
+
+--[[
+    @instance
+    @desc Updates the transparency setting of the canvas and then clears the canvas to apply this setting
+    @param <number - colour>
+]]
+function Canvas:setTransparent( transparent )
+    self.transparent = transparent
+    self:clear()
 end
 
 --[[
@@ -73,7 +85,7 @@ end
 
 --[[
     @instance
-    @desc Draws the canvas to the target 'canvas' using the X and Y offsets
+    @desc Draws the canvas to the target 'canvas' using the X and Y offsets. Pixels that are marked transparent are not drawn.
     @param <Canvas - canvas>, [number - offsetX], [number - offsetY]
 ]]
 function Canvas:drawTo( canvas, offsetX, offsetY )
@@ -92,13 +104,15 @@ function Canvas:drawTo( canvas, offsetX, offsetY )
         if cY >= 1 and cY <= tHeight then
             for x = xStart, xEnd do
                 pixel = buffer[ cache + x ]
-                tc, bg, tPos = pixel[ 2 ], pixel[ 3 ], tCache + x
+                char, tc, bg, tPos = pixel[ 1 ], pixel[ 2 ], pixel[ 3 ], tCache + x
 
-                if not tc or not bg then
-                    cPixel = tBuffer[ tPos ]
-                    tBuffer[ tPos ] = { pixel[ 1 ], tc or cPixel[ 2 ], bg or cPixel[ 3 ] }
-                else
-                    tBuffer[ tPos ] = pixel
+                if char then
+                    if not ( tc and bg ) then
+                        cPixel = tBuffer[ tPos ]
+                        tBuffer[ tPos ] = { char, tc or cPixel[ 2 ], bg or cPixel[ 3 ] }
+                    else
+                        tBuffer[ tPos ] = pixel
+                    end
                 end
             end
         elseif cY > tHeight then

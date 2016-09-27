@@ -231,7 +231,7 @@ function Application:handle( eName, ... )
         if node then node:handle( eventObject ) end
     end
 
-    self:executeCallbacks( eName, ... )
+    self:executeCallbacks( eName, eventObject )
     self:handleThreads( eventObject, eName, ... )
 end
 

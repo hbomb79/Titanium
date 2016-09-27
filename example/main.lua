@@ -82,4 +82,23 @@ Manager:addThread(Thread(function()
 end, true))
 
 Manager:query "Terminal#shell":set { chunk = function() select( 1, loadfile "/rom/programs/shell" )() end }
+Manager:on("mouse_click", function( self, event )
+    if event.button == 2 and not event.handled then
+        event.handled = true
+        context = Manager:addNode( ContextMenu({
+            {"button", "Copy", function( self ) error( "Button: " .. self.text) end},
+            {"button", "Paste", function( self ) error( "Button: " .. self.text) end},
+            {"rule"},
+            {"menu", "More \16", {
+                {"button", "Move", function( self ) error( "Button: " .. self.text) end},
+                {"button", "Delete", function( self ) error( "Button: " .. self.text) end},
+                {"menu", "More \16", {
+                    {"button", "Rename", function( self ) error( "Button: " .. self.text) end},
+                    {"button", "Remove", function( self ) error( "Button: " .. self.text) end},
+                }}
+            }}
+        }, event.X, event.Y ):set{ backgroundColour = colours.yellow, colour = 128 } )
+    end
+end)
+
 Manager:start()

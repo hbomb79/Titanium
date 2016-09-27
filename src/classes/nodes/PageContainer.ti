@@ -94,15 +94,11 @@ function PageContainer:getNodes()
 end
 
 function PageContainer:setApplication( app )
-    if Titanium.typeOf( app, "Application", true ) then
-        self.application = app
+    self.application = app
 
-        local pages = self.pages
-        for i = 1, #pages do
-            pages[ i ].application = app
-        end
-    else
-        return error("Failed to set Application. Invalid value passed '"..tostring( app ).."'")
+    local pages = self.pages
+    for i = 1, #pages do
+        pages[ i ].application = app
     end
 end
 

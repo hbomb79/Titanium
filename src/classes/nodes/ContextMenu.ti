@@ -150,6 +150,28 @@ function ContextMenu:isNodeInBounds( node, ... )
     return self.super:isNodeInBounds( node, ... )
 end
 
+function ContextMenu:onMouseClick( event, handled, within )
+    if not within then self:closeFrame( 1 ) end
+
+    local eX, eY, nodes = event.X - self.X + 1, event.Y - self.Y + 1, self.nodes
+    for i = 1, #nodes do
+        local node = nodes[ i ]
+        local nodeX, nodeY = node.X, node.Y
+
+        if self.openFrames[ node ] and eX >= nodeX and eX <= nodeX + node.width - 1 and eY >= nodeY and eY <= nodeY + node.height - 1 then
+            return true
+        end
+    end
+
+    self:closeFrame( 1 )
+end
+
+function ContextMenu:closeFrame( frameID )
+    --TODO: Dynamic frame closing. Implement child closing too
+    self.openFrames = {}
+    self.changed = true
+end
+
 configureConstructor {
     orderedArguments = { "structure" },
     requiredArguments = { "structure" },

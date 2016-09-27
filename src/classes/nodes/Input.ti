@@ -37,7 +37,7 @@ end
 ]]
 function Input:onMouseClick( event, handled, within )
     if within and not handled then
-        self.active = true
+        self.active, event.handled = true, true
     else
         self.active = false
         self:unfocus()

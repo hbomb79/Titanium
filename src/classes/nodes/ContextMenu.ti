@@ -34,8 +34,9 @@ function ContextMenu:setParent( parent )
 
     if parent then
         local frame = self:addNode( ScrollContainer() )
-        self:populate( frame, self.structure )
+        frame.frameID = 1
 
+        self:populate( frame, self.structure )
         self.openFrames[ frame ] = true
     end
 end
@@ -65,10 +66,22 @@ function ContextMenu:populate( frame, structure )
             else
                 if partType == "menu" then
                     local subframe = self:addNode( ScrollContainer( nil, menu.Y + Y - 1 ) )
-                    menu.subframes = { subframe }
+                    if not menu.subframes then
+                        menu.subframes = { subframe }
+                    else
+                        table.insert( menu.subframes, subframe )
+                    end
 
                     local id = #self.nodes
+                    subframe.frameID = id
                     menu:addNode( Button( part[ 2 ], 1, Y ):on( "trigger", function()
+                        local subframes = menu.subframes
+                        for i = 1, #subframes do
+                            if subframes[ i ] ~= subframe and self.openFrames[ subframes[ i ] ] then
+                                self:closeFrame( subframes[ i ].frameID )
+                            end
+                        end
+
                         if self.openFrames[ subframe ] then
                             self:closeFrame( id )
                         else
@@ -185,16 +198,16 @@ end
     @param <number - frameID>
 ]]
 function ContextMenu:closeFrame( frameID )
-    local framesToClose = { self.nodes[ frameID ] }
-
-    local i = 1
+    local framesToClose, open, i = { self.nodes[ frameID ] }, self.openFrames, 1
     while i <= #framesToClose do
         local subframes = framesToClose[ i ].subframes or {}
         for f = 1, #subframes do
-            framesToClose[ #framesToClose + 1 ] = subframes[ f ]
+            if open[ subframes[ f ] ] then
+                framesToClose[ #framesToClose + 1 ] = subframes[ f ]
+            end
         end
 
-        self.openFrames[ framesToClose[ i ] ] = nil
+        open[ framesToClose[ i ] ] = nil
         i = i + 1
     end
 

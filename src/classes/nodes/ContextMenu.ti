@@ -65,11 +65,18 @@ function ContextMenu:populate( frame, structure )
             else
                 if partType == "menu" then
                     local subframe = self:addNode( ScrollContainer( nil, menu.Y + Y - 1 ) )
-                    table.insert( queue, { subframe, part[ 3 ], menu } )
+                    menu.subframes = { subframe }
 
+                    local id = #self.nodes
                     menu:addNode( Button( part[ 2 ], 1, Y ):on( "trigger", function()
-                        self.openFrames[ subframe ], self.changed = not self.openFrames[ subframe ], true
+                        if self.openFrames[ subframe ] then
+                            self:closeFrame( id )
+                        else
+                            self.openFrames[ subframe ] = true
+                        end
                     end ) )
+
+                    table.insert( queue, { subframe, part[ 3 ], menu } )
                 elseif partType == "rule" then
                     rules[ #rules + 1 ] = Y
                 elseif partType == "button" then
@@ -150,8 +157,14 @@ function ContextMenu:isNodeInBounds( node, ... )
     return self.super:isNodeInBounds( node, ... )
 end
 
+--[[
+    @instance
+    @desc Closes the context menu if a mouse click occurs that is not inside of any menus
+    @param <MouseEvent - event>, <boolean - handled>, <boolean - within>
+    @return [boolean - insideBounds]
+]]
 function ContextMenu:onMouseClick( event, handled, within )
-    if not within then self:closeFrame( 1 ) end
+    if not within or handled then self:closeFrame( 1 ) end
 
     local eX, eY, nodes = event.X - self.X + 1, event.Y - self.Y + 1, self.nodes
     for i = 1, #nodes do
@@ -166,9 +179,25 @@ function ContextMenu:onMouseClick( event, handled, within )
     self:closeFrame( 1 )
 end
 
+--[[
+    @instance
+    @desc Closes the frame using 'frameID', which represents the position of the frame in the 'nodes' table
+    @param <number - frameID>
+]]
 function ContextMenu:closeFrame( frameID )
-    --TODO: Dynamic frame closing. Implement child closing too
-    self.openFrames = {}
+    local framesToClose = { self.nodes[ frameID ] }
+
+    local i = 1
+    while i <= #framesToClose do
+        local subframes = framesToClose[ i ].subframes or {}
+        for f = 1, #subframes do
+            framesToClose[ #framesToClose + 1 ] = subframes[ f ]
+        end
+
+        self.openFrames[ framesToClose[ i ] ] = nil
+        i = i + 1
+    end
+
     self.changed = true
 end
 

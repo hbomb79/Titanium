@@ -116,27 +116,8 @@ end
 
 function ScrollContainer:draw( force )
     if self.changed or force then
-        local raw = self.raw
-        local canvas = raw.canvas
-
-        local xScroll, yScroll = self.xScroll, self.yScroll
-        local width, height = self.width, self.height
-        local nodes, node = self.nodes
-
-        canvas:clear()
-        for i = 1, #nodes do
-            node = nodes[ i ]
-
-            if self:isNodeInBounds( node, width, height ) then
-                node:draw( force )
-
-                node.canvas:drawTo( canvas, node.X - xScroll, node.Y - yScroll )
-            end
-        end
-
+        self.super:draw( force, -self.xScroll, -self.yScroll )
         self:drawScrollbars()
-
-        raw.changed = false
     end
 end
 

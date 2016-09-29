@@ -39,15 +39,15 @@ end
 --[[
     @instance
     @desc Draws contained nodes to container canvas. Nodes are only drawn if they are visible inside the container
-    @param [boolean - force]
+    @param [boolean - force], [number - offsetX], [number - offsetY]
 ]]
-function Container:draw( force )
+function Container:draw( force, offsetX, offsetY )
     if self.changed or force then
-        local raw = self.raw
-        local canvas = raw.canvas
+        local canvas = self.canvas
 
         local width, height = self.width, self.height
-        local nodes, node = raw.nodes
+        local nodes, node = self.nodes
+        local offsetX, offsetY = offsetX or 0, offsetY or 0
 
         canvas:clear()
         for i = 1, #nodes do
@@ -56,11 +56,11 @@ function Container:draw( force )
             if self:isNodeInBounds( node, width, height ) then
                 node:draw( force )
 
-                node.canvas:drawTo( canvas, node.X, node.Y )
+                node.canvas:drawTo( canvas, node.X + offsetX, node.Y + offsetY )
             end
         end
 
-        raw.changed = false
+        self.changed = false
     end
 end
 

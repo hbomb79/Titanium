@@ -159,20 +159,6 @@ end
 
 --[[
     @instance
-    @desc Ensures the container this node extends doesn't draw submenus that are not open.
-    @param <Node - node>, <var - ...>*
-    @return <boolean - isVisible>
-
-    Note: Uses vararg to avoid potential extensibility issues. We only need to know about the node.
-]]
-function ContextMenu:isNodeInBounds( node, ... )
-    if not node.visible then return false end
-
-    return self.super:isNodeInBounds( node, ... )
-end
-
---[[
-    @instance
     @desc Closes the context menu if a mouse click occurs that is not inside of any menus
     @param <MouseEvent - event>, <boolean - handled>, <boolean - within>
     @return [boolean - insideBounds]

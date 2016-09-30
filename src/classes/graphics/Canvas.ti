@@ -114,6 +114,7 @@ function Canvas:drawTo( canvas, offsetX, offsetY )
     local sRaw, tRaw = self.raw, canvas.raw
     local width, height, buffer = sRaw.width, sRaw.height, sRaw.buffer
     local tWidth, tHeight, tBuffer = tRaw.width, tRaw.height, tRaw.buffer
+    local backgroundColour = self.backgroundColour
 
     local xStart, xEnd = range( 1, offsetX, width, tWidth )
 
@@ -126,9 +127,9 @@ function Canvas:drawTo( canvas, offsetX, offsetY )
                 char, tc, bg, tPos = pixel[ 1 ], pixel[ 2 ], pixel[ 3 ], tCache + x
 
                 if char then
-                    if not ( tc and bg ) then
+                    if ( bg == true and backgroundColour ) or not ( tc and bg ) then
                         cPixel = tBuffer[ tPos ]
-                        tBuffer[ tPos ] = { char, tc or cPixel[ 2 ], bg or cPixel[ 3 ] }
+                        tBuffer[ tPos ] = { char, tc or cPixel[ 2 ], ( bg == true and backgroundColour or bg ) or cPixel[ 3 ] }
                     else
                         tBuffer[ tPos ] = pixel
                     end

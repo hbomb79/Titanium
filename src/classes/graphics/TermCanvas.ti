@@ -57,9 +57,11 @@ function TermCanvas:draw( force )
                 pixel = buffer[ position ]
                 last[ position ] = pixel
 
+                local bg = pixel[ 3 ]
+
                 rowText[ x ] = pixel[ 1 ]
                 rowColour[ x ] = hex[ pixel[ 2 ] or 1 ]
-                rowBackground[ x ] = hex[ pixel[ 3 ] or 32768 ]
+                rowBackground[ x ] = hex[ bg == true and backgroundColour or bg ]
 
                 position = position + 1
             end

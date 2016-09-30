@@ -53,6 +53,8 @@ function MNodeContainer:removeNode( target )
         node = nodes[ i ]
 
         if ( searchName and node.id == target ) or ( not searchName and node == target ) then
+            node:queueAreaReset()
+
             node.parent = nil
             node.application = nil
 

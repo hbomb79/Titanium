@@ -6,7 +6,6 @@ class ContextMenu extends Container {
     static = {
         allowedTypes = { "Button", "Label" }
     };
-    openFrames = {};
 }
 
 --[[
@@ -37,7 +36,7 @@ function ContextMenu:setParent( parent )
         frame.frameID = 1
 
         self:populate( frame, self.structure )
-        self.openFrames[ frame ] = true
+        frame.visible = true
     end
 end
 
@@ -72,20 +71,22 @@ function ContextMenu:populate( frame, structure )
                         table.insert( menu.subframes, subframe )
                     end
 
+                    subframe.visible = false
+
                     local id = #self.nodes
                     subframe.frameID = id
                     menu:addNode( Button( part[ 2 ], 1, Y ):on( "trigger", function()
                         local subframes = menu.subframes
                         for i = 1, #subframes do
-                            if subframes[ i ] ~= subframe and self.openFrames[ subframes[ i ] ] then
+                            if subframes[ i ] ~= subframe and subframes[ i ].visible then
                                 self:closeFrame( subframes[ i ].frameID )
                             end
                         end
 
-                        if self.openFrames[ subframe ] then
+                        if subframe.visible then
                             self:closeFrame( id )
                         else
-                            self.openFrames[ subframe ] = true
+                            subframe.visible = true
                         end
                     end ) )
 
@@ -150,7 +151,7 @@ end
 function ContextMenu:shipEvent( event )
     local nodes = self.nodes
     for i = #nodes, 1, -1 do
-        if self.openFrames[ nodes[ i ] ] then
+        if nodes[ i ].visible then
             nodes[ i ]:handle( event )
         end
     end
@@ -165,7 +166,7 @@ end
     Note: Uses vararg to avoid potential extensibility issues. We only need to know about the node.
 ]]
 function ContextMenu:isNodeInBounds( node, ... )
-    if not self.openFrames[ node ] then return false end
+    if not node.visible then return false end
 
     return self.super:isNodeInBounds( node, ... )
 end
@@ -184,7 +185,7 @@ function ContextMenu:onMouseClick( event, handled, within )
         local node = nodes[ i ]
         local nodeX, nodeY = node.X, node.Y
 
-        if self.openFrames[ node ] and eX >= nodeX and eX <= nodeX + node.width - 1 and eY >= nodeY and eY <= nodeY + node.height - 1 then
+        if node.visible and eX >= nodeX and eX <= nodeX + node.width - 1 and eY >= nodeY and eY <= nodeY + node.height - 1 then
             return true
         end
     end
@@ -198,16 +199,16 @@ end
     @param <number - frameID>
 ]]
 function ContextMenu:closeFrame( frameID )
-    local framesToClose, open, i = { self.nodes[ frameID ] }, self.openFrames, 1
+    local framesToClose, i = { self.nodes[ frameID ] }, 1
     while i <= #framesToClose do
         local subframes = framesToClose[ i ].subframes or {}
         for f = 1, #subframes do
-            if open[ subframes[ f ] ] then
+            if subframes[ f ].visible then
                 framesToClose[ #framesToClose + 1 ] = subframes[ f ]
             end
         end
 
-        open[ framesToClose[ i ] ] = nil
+        framesToClose[ i ].visible = false
         i = i + 1
     end
 

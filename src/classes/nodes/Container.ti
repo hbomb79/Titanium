@@ -52,7 +52,7 @@ function Container:draw( force, offsetX, offsetY )
         for i = 1, #nodes do
             node = nodes[ i ]
 
-            if node.needsRedraw then
+            if node.needsRedraw and node.visible then
                 node:draw( force )
 
                 node.canvas:drawTo( canvas, node.X + offsetX, node.Y + offsetY )

@@ -70,6 +70,9 @@ end
 function Node:setVisible( visible )
     self.visible = visible
     self.changed = true
+    if not visible then
+        self:queueAreaReset()
+    end
 end
 
 --[[

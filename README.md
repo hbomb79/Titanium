@@ -1,6 +1,9 @@
 Titanium
 ==
 
+[![Language (Lua)](https://img.shields.io/badge/powered_by-Lua-blue.svg?style=flat-square)](https://lua.org)
+[![License (MIT)](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](http://opensource.org/licenses/MIT)
+
 Titanium is a framework for building fast, reliable and beautiful GUIs in ComputerCraft.
 
 #### Status

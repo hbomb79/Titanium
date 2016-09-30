@@ -192,12 +192,14 @@ function Application:draw( force )
     local canvas = self.canvas
     local nodes, node = self.nodes
 
-    canvas:clear()
     for i = 1, #nodes do
         node = nodes[ i ]
-        node:draw( force )
+        if node.needsRedraw then
+            node:draw( force )
 
-        node.canvas:drawTo( canvas, node.X, node.Y )
+            node.canvas:drawTo( canvas, node.X, node.Y )
+            node.needsRedraw = false
+        end
     end
     self.changed = false
 

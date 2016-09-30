@@ -30,7 +30,7 @@ abstract class Node extends Component mixin MThemeable mixin MCallbackManager {
     enabled = true;
     visible = true;
 
-    changed = true;
+    needsRedraw = true;
     parent = false;
 }
 
@@ -85,6 +85,8 @@ function Node:setChanged( changed )
         if parent and not parent.changed then
             parent.changed = true
         end
+
+        self.needsRedraw = true
     end
 end
 

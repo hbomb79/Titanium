@@ -7,7 +7,18 @@ abstract class Component {
     height = 1;
     X = 1;
     Y = 1;
+
+    changed = true;
 }
+
+function Component:queueAreaReset()
+    local parent = self.parent
+    if parent then
+        parent:redrawArea( self.X, self.Y, self.width, self.height )
+    end
+
+    self.changed = true
+end
 
 function Component:set( tbl )
     if type( tbl ) ~= "table" then
@@ -22,27 +33,27 @@ function Component:set( tbl )
 end
 
 function Component:setX( X )
+    self:queueAreaReset()
     self.X = X
-    self.changed = true
 end
 
 function Component:setY( Y )
+    self:queueAreaReset()
     self.Y = Y
-    self.changed = true
 end
 
 function Component:setWidth( width )
+    self:queueAreaReset()
+
     self.width = width
     self.canvas.width = width
-
-    self.changed = true
 end
 
 function Component:setHeight( height )
+    self:queueAreaReset()
+
     self.height = height
     self.canvas.height = height
-
-    self.changed = true
 end
 
 function Component:setColour( colour )

@@ -214,6 +214,7 @@ function ScrollContainer:cacheScrollbarPosition()
     cache.xScrollPosition, cache.yScrollPosition = math.ceil( self.xScroll / cache.contentWidth * cache.displayWidth + .5 ), math.ceil( self.yScroll / cache.contentHeight * cache.displayHeight + .5 )
 
     self.changed = true
+    self:redrawArea( 1, 1, self.width, self.height, -self.xScroll, -self.yScroll )
 end
 
 configureConstructor {

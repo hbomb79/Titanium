@@ -144,3 +144,27 @@ function MNodeContainer:setApplication( app )
         nodes[ i ].application = app
     end
 end
+
+--[[
+    @instance
+    @desc Clears the area provided and queues a redraw for child nodes intersecting the area.
+          The content of the child node will not be update, it's content will only be drawn to it's parent.
+    @param <number - x>, <number - y>, <number - width>, <number - height>
+]]
+function MNodeContainer:redrawArea( x, y, width, height, xOffset, yOffset )
+    if not self.canvas then return end
+    self.canvas:clearArea( x, y, width, height, true )
+
+    xOffset = xOffset or 0
+    yOffset = yOffset or 0
+
+    local nodes, node, nodeX, nodeY = self.nodes
+    for i = 1, #nodes do
+        node = nodes[ i ]
+        nodeX, nodeY = node.X + xOffset, node.Y + yOffset
+
+        if not ( nodeX + node.width - 1 < x or nodeX > x + width or nodeY + node.height - 1 < y or nodeY > y + height ) then
+            node.needsRedraw = true
+        end
+    end
+end

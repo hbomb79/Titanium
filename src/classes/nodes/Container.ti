@@ -49,14 +49,14 @@ function Container:draw( force, offsetX, offsetY )
         local nodes, node = self.nodes
         local offsetX, offsetY = offsetX or 0, offsetY or 0
 
-        canvas:clear()
         for i = 1, #nodes do
             node = nodes[ i ]
 
-            if self:isNodeInBounds( node, width, height ) then
+            if node.needsRedraw then
                 node:draw( force )
 
                 node.canvas:drawTo( canvas, node.X + offsetX, node.Y + offsetY )
+                node.needsRedraw = false
             end
         end
 

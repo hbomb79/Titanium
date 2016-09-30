@@ -81,10 +81,12 @@ function ScrollContainer:onMouseDrag( event, handled, within )
     event.handled = self[ "set" .. key .. "Scroll" ]( self, math.floor( cache["content" .. scaleKey ] * ( ( ( event[ key ] - self[ key ] + 1 ) - mouse.origin ) / cache["display" .. scaleKey ] ) - .5 ) )
 end
 
-function ScrollContainer:addNode( ... )
-    self.super:addNode( ... )
+function ScrollContainer:addNode( node, ... )
+    self.super:addNode( node, ... )
 
     self:cacheContent()
+
+    return node
 end
 
 --[[ Core Functions ]]--

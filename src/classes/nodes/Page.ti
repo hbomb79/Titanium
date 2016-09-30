@@ -27,6 +27,7 @@ end
 function Page:addNode( node )
     self.super:addNode( node )
     node.parent = self.parent
+    return node
 end
 
 function Page:onThemeUpdate() end

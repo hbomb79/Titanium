@@ -7,6 +7,7 @@ class PageContainer extends ScrollContainer {
     @instance
     @desc Adds the page instance provided to the PageContainers 'pages'
     @param <Page Instance - page>
+    @return [Page Instance - page]
 ]]
 function PageContainer:addPage( page )
     if not Titanium.typeOf( page, "Page", true ) then return error("Invalid page '"..tostring( page ).."'") end
@@ -19,6 +20,8 @@ function PageContainer:addPage( page )
     page.parent = self
 
     table.insert( self.pages, page )
+
+    return page
 end
 
 --[[
@@ -78,6 +81,8 @@ function PageContainer:addNode( node )
     end
 
     self:addPage( node )
+
+    return node
 end
 
 --[[

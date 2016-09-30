@@ -167,4 +167,10 @@ function MNodeContainer:redrawArea( x, y, width, height, xOffset, yOffset )
             node.needsRedraw = true
         end
     end
+
+    -- TODO: xOffset and yOffset don't work here, that whole thing probably need to change
+    local parent = self.parent
+    if parent then
+        parent:redrawArea(self.X + x, self.Y + y, width, height)
+    end
 end

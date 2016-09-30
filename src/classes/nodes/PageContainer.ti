@@ -104,22 +104,6 @@ end
 
 --[[
     @instance
-    @desc Sets the changed state of this node to 'changed'. If 'changed' then the parents of this node will also have changed set to true.
-    @param <boolean - changed>
-]]
-function PageContainer:setChanged( changed )
-    self.changed = changed
-
-    if changed then
-        local parent = self.parent
-        if parent and not parent.changed then
-            parent.changed = true
-        end
-    end
-end
-
---[[
-    @instance
     @desc Caches all nodes under this container (and child containers) in 'collatedNodes'.
           This list maybe out of date if 'collate' isn't called before usage. Caching is not automatic.
     @param [table - collated]

@@ -142,6 +142,10 @@ function ScrollContainer:drawScrollbars()
     end
 end
 
+function ScrollContainer:redrawArea( x, y, width, height )
+    self.super:redrawArea( x, y, width, height, -self.xScroll, -self.yScroll )
+end
+
 function ScrollContainer:setYScroll( yScroll )
     local oY, cache = self.yScroll, self.cache
     self.yScroll = math.max( 0, math.min( cache.contentHeight - cache.displayHeight, yScroll ) )
@@ -216,7 +220,7 @@ function ScrollContainer:cacheScrollbarPosition()
     cache.xScrollPosition, cache.yScrollPosition = math.ceil( self.xScroll / cache.contentWidth * cache.displayWidth + .5 ), math.ceil( self.yScroll / cache.contentHeight * cache.displayHeight + .5 )
 
     self.changed = true
-    self:redrawArea( 1, 1, self.width, self.height, -self.xScroll, -self.yScroll )
+    self:redrawArea( 1, 1, self.width, self.height )
 end
 
 configureConstructor {

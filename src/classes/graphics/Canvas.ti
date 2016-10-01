@@ -139,21 +139,24 @@ function Canvas:drawTo( canvas, offsetX, offsetY )
                 elseif not tc and type(tf) ~= "number" and type(tb) ~= "number" and bc and type(bf) == "number" and type(bb) == "number" then
                     new = bot
                 else
-                    new = {tc or bc, tf, tb}
-                    if tf == "transparent" then
-                        new[2] = bf
-                    elseif tf == nil then
-                        new[2] = sRaw.colour
+                    local nc, nf, nb = tc or bc, tf, tb
+                    if nf == nil then
+                        nf = sRaw.colour
                     end
-                    if tb == "transparent" then
-                        new[3] = bb
-                    elseif tb == nil then
-                        new[3] = sRaw.backgroundColour
+                    if nf == "transparent" then
+                        nf = bf
+                    end
+                    if nb == nil then
+                        nb = sRaw.backgroundColour
+                    end
+                    if nb == "transparent" then
+                        nb = bb
                     end
                     if not tc then
-                        new[1] = bc
-                        new[2] = sRaw.backgroundTextColour
+                        nc = bc
+                        nf = sRaw.backgroundTextColour or bf
                     end
+                    new = {nc, nf, nb}
                 end
                 tBuffer[tPos] = new
             end

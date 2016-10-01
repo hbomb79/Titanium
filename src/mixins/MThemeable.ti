@@ -95,16 +95,13 @@ function MThemeable:unhook()
 end
 
 function MThemeable:fetchPropertyValue( property )
-    local requireImportant, newValue
-    if self.mainValues[ property ] then
-        requireImportant = true
-        newValue = self.mainValues[ property ]
-    end
+    local newValue = self.mainValues[ property ]
+    local requireImportant = newValue ~= nil
 
     local rules, r = self.applicableRules
     for i = 1, #rules do
         r = rules[ i ]
-        if r.property == property and ( not requireImportant or ( requireImportant and r.important ) ) then
+        if r.property == property and ( not requireImportant or r.important ) then
             newValue = r.value
 
             if r.important then requireImportant = true end

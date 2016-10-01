@@ -155,7 +155,7 @@ end
 ]]
 function MNodeContainer:redrawArea( x, y, width, height, xOffset, yOffset )
     if not self.canvas then return end
-    self.canvas:clearArea( x, y, width, height, self.backgroundColour )
+    self.canvas:clearArea( x, y, width, height )
 
     xOffset = xOffset or 0
     yOffset = yOffset or 0

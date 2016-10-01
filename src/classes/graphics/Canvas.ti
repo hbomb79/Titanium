@@ -42,7 +42,7 @@ function Canvas:__init__( owner )
     self.raw.backgroundTextColour = owner.raw.backgroundTextColour
     self.raw.backgroundColour = owner.raw.backgroundColour
 
-    self:clear( self.backgroundColour )
+    self:clear()
 end
 
 --[[
@@ -51,7 +51,7 @@ end
     @param [number - colour]
 ]]
 function Canvas:clear( colour )
-    local pixel, buffer = { self.backgroundChar, self.colour, colour }, self.buffer
+    local pixel, buffer = { self.backgroundChar, self.colour, colour or self.backgroundColour }, self.buffer
 
     for index = 1, self.width * self.height do
         buffer[ index ] = pixel
@@ -65,7 +65,7 @@ end
 ]]
 function Canvas:clearArea( aX, aY, aWidth, aHeight, colour )
     local aY, aX, cWidth = aY - 1, aX - 1, self.width
-    local pixel, buffer = { self.backgroundChar, self.colour, colour }, self.buffer
+    local pixel, buffer = { self.backgroundChar, self.colour, colour or self.backgroundColour }, self.buffer
 
     local xBoundary, yBoundary = cWidth - aX, self.height
     local effectiveWidth = xBoundary < aWidth and xBoundary or aWidth
@@ -84,7 +84,7 @@ end
 ]]
 function Canvas:setTransparent( transparent )
     self.transparent = transparent
-    self:clear( self.backgroundColour )
+    self:clear()
 end
 
 --[[
@@ -94,7 +94,7 @@ end
 ]]
 function Canvas:setColour( colour )
     self.colour = colour
-    self:clear( self.backgroundColour )
+    self:clear()
 end
 
 --[[
@@ -104,7 +104,7 @@ end
 ]]
 function Canvas:setBackgroundColour( backgroundColour )
     self.backgroundColour = backgroundColour
-    self:clear( self.backgroundColour )
+    self:clear()
 end
 
 --[[

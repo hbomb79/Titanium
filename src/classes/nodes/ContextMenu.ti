@@ -6,8 +6,6 @@ class ContextMenu extends Container {
     static = {
         allowedTypes = { "Button", "Label" }
     };
-
-    backgroundChar = "nil"
 }
 
 --[[
@@ -20,6 +18,8 @@ class ContextMenu extends Container {
 function ContextMenu:__init__( ... )
     self:resolve( ... )
     self:super()
+
+    self.canvas.transparent = true
 end
 
 --[[

@@ -9,6 +9,8 @@ abstract class Component {
     Y = 1;
 
     changed = true;
+
+    backgroundChar = " ";
 }
 
 function Component:queueAreaReset()
@@ -70,9 +72,27 @@ function Component:setBackgroundColour( backgroundColour )
     self.changed = true
 end
 
+function Component:setBackgroundChar( backgroundChar )
+    if backgroundChar == "nil" then
+        backgroundChar = nil
+    end
+
+    self.backgroundChar = backgroundChar
+    self.canvas.backgroundChar = backgroundChar
+
+    self.changed = true
+end
+
+function Component:setBackgroundTextColour( backgroundTextColour )
+    self.backgroundTextColour = backgroundTextColour
+    self.canvas.backgroundTextColour = backgroundTextColour
+
+    self.changed = true
+end
+
 configureConstructor {
     orderedArguments = { "X", "Y", "width", "height" },
-    argumentTypes = { X = "number", Y = "number", width = "number", height = "number", colour = "colour", backgroundColour = "colour" }
+    argumentTypes = { X = "number", Y = "number", width = "number", height = "number", colour = "colour", backgroundColour = "colour", backgroundTextColour = "colour" }
 } alias {
     color = "colour",
     backgroundColor = "backgroundColour"

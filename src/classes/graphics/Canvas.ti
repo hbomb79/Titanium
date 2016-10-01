@@ -34,8 +34,13 @@ function Canvas:__init__( owner )
     self.raw.width = owner.raw.width
     self.raw.height = owner.raw.height
 
-    self.raw.backgroundColour = owner.raw.backgroundColour
     self.raw.colour = owner.raw.colour
+    self.raw.backgroundChar = owner.raw.backgroundChar
+    if self.raw.backgroundChar == "nil" then
+        self.raw.backgroundChar = nil
+    end
+    self.raw.backgroundTextColour = owner.raw.backgroundTextColour
+    self.raw.backgroundColour = owner.raw.backgroundColour
 
     self:clear()
 end
@@ -46,7 +51,7 @@ end
     @param [number - colour]
 ]]
 function Canvas:clear( colour )
-    local pixel, buffer = { not self.transparent and " " or false, self.colour, colour or self.backgroundColour }, self.buffer
+    local pixel, buffer = { self.backgroundChar, self.colour, colour or self.backgroundColour }, self.buffer
 
     for index = 1, self.width * self.height do
         buffer[ index ] = pixel
@@ -60,7 +65,7 @@ end
 ]]
 function Canvas:clearArea( aX, aY, aWidth, aHeight, colour )
     local aY, aX, cWidth = aY - 1, aX - 1, self.width
-    local pixel, buffer = { not self.transparent and " " or false, self.colour, colour or self.backgroundColour }, self.buffer
+    local pixel, buffer = { self.backgroundChar, self.colour, colour or self.backgroundColour }, self.buffer
 
     local xBoundary, yBoundary = cWidth - aX, self.height
     local effectiveWidth = xBoundary < aWidth and xBoundary or aWidth
@@ -118,22 +123,42 @@ function Canvas:drawTo( canvas, offsetX, offsetY )
 
     local xStart, xEnd = range( 1, offsetX, width, tWidth )
 
-    local cache, tCache, char, tc, bg, pixel, cPixel, tPos = 0, offsetX + ( offsetY * tWidth )
+    local cache, tCache, top, tc, tf, tb, bot, bc, bf, bb, tPos = 0, offsetX + ( offsetY * tWidth )
     for y = 1, height do
         local cY = y + offsetY
         if cY >= 1 and cY <= tHeight then
             for x = xStart, xEnd do
-                pixel = buffer[ cache + x ]
-                char, tc, bg, tPos = pixel[ 1 ], pixel[ 2 ], pixel[ 3 ], tCache + x
+                top = buffer[ cache + x ]
+                tc, tf, tb, tPos = top[ 1 ], top[ 2 ], top[ 3 ], tCache + x
+                bot = tBuffer[ tPos ]
+                bc, bf, bb = bot[ 1 ], bot[ 2 ], bot[ 3 ]
 
-                if char then
-                    if ( bg == true and backgroundColour ) or not ( tc and bg ) then
-                        cPixel = tBuffer[ tPos ]
-                        tBuffer[ tPos ] = { char, tc or cPixel[ 2 ], ( bg == true and backgroundColour or bg ) or cPixel[ 3 ] }
-                    else
-                        tBuffer[ tPos ] = pixel
+                local new
+                if tc and type(tf) == "number" and type(tb) == "number" then
+                    new = top
+                elseif not tc and type(tf) ~= "number" and type(tb) ~= "number" and bc and type(bf) == "number" and type(bb) == "number" then
+                    new = bot
+                else
+                    local nc, nf, nb = tc or bc, tf, tb
+                    if nf == nil then
+                        nf = sRaw.colour
                     end
+                    if nf == "transparent" then
+                        nf = bf
+                    end
+                    if nb == nil then
+                        nb = sRaw.backgroundColour
+                    end
+                    if nb == "transparent" then
+                        nb = bb
+                    end
+                    if not tc then
+                        nc = bc
+                        nf = sRaw.backgroundTextColour or bf
+                    end
+                    new = {nc, nf, nb}
                 end
+                tBuffer[tPos] = new
             end
         elseif cY > tHeight then
             break

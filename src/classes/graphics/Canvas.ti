@@ -20,8 +20,6 @@ abstract class Canvas {
 
     backgroundColour = 32768;
     colour = 1;
-
-    transparent = false;
 }
 
 --[[
@@ -75,16 +73,6 @@ function Canvas:clearArea( aX, aY, aWidth, aHeight, colour )
             buffer[ pos + x ] = pixel
         end
     end
-end
-
---[[
-    @instance
-    @desc Updates the transparency setting of the canvas and then clears the canvas to apply this setting
-    @param <number - colour>
-]]
-function Canvas:setTransparent( transparent )
-    self.transparent = transparent
-    self:clear()
 end
 
 --[[

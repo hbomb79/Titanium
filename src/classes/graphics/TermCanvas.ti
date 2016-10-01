@@ -17,7 +17,9 @@ end
 local tableConcat = table.concat
 
 class TermCanvas extends Canvas {
-    static = { hex = hex }
+    static = { hex = hex };
+
+    backgroundChar = ' ';
 }
 
 function TermCanvas:__init__( owner )
@@ -31,7 +33,7 @@ function TermCanvas:draw( force )
     local owner = self.owner
     local buffer, last = self.buffer, self.last
     local X, Y, width, height = owner.X, owner.Y - 1, self.width, self.height
-    local colour, backgroundColour = self.colour, self.backgroundColour
+    local colour, backgroundChar, backgroundTextColour, backgroundColour = self.colour, self.backgroundChar, self.backgroundTextColour, self.backgroundColour
 
     local position, px, lpx = 1
     for y = 1, height do
@@ -59,9 +61,9 @@ function TermCanvas:draw( force )
 
                 local bg = pixel[ 3 ]
 
-                rowText[ x ] = pixel[ 1 ]
-                rowColour[ x ] = hex[ pixel[ 2 ] or 1 ]
-                rowBackground[ x ] = hex[ bg == true and backgroundColour or bg ]
+                rowText[ x ] = pixel[ 1 ] or backgroundChar or ' '
+                rowColour[ x ] = hex[ pixel[ 2 ] or backgroundTextColour or 1 ]
+                rowBackground[ x ] = hex[ (bg == true and backgroundColour or bg) or backgroundColour or 32768 ]
 
                 position = position + 1
             end

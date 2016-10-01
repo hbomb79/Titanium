@@ -134,13 +134,24 @@ function Canvas:drawTo( canvas, offsetX, offsetY )
                 bc, bf, bb = bot[ 1 ], bot[ 2 ], bot[ 3 ]
 
                 local new
-                if tc and tf and tb then
+                if tc and type(tf) == "number" and type(tb) == "number" then
                     new = top
-                elseif not (tc or tf or tb) and bc and bf and bb then
+                elseif not tc and type(tf) ~= "number" and type(tb) ~= "number" and bc and type(bf) == "number" and type(bb) == "number" then
                     new = bot
                 else
-                    new = { tc or bc or sRaw.backgroundChar, tf or bf, tb or bb }
+                    new = {tc or bc, tf, tb}
+                    if tf == "transparent" then
+                        new[2] = bf
+                    elseif tf == nil then
+                        new[2] = sRaw.colour
+                    end
+                    if tb == "transparent" then
+                        new[3] = bb
+                    elseif tb == nil then
+                        new[3] = sRaw.backgroundColour
+                    end
                     if not tc then
+                        new[1] = bc
                         new[2] = sRaw.backgroundTextColour
                     end
                 end

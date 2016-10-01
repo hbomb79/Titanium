@@ -509,7 +509,14 @@ local function spawn( target, ... )
 
         local function handleArgument( position, name, value )
             local desiredType = configTypes[ name ]
-            desiredType = (desiredType and desiredType == "colour" or desiredType == "color") and "number" or desiredType --TODO: Check if number is valid (maybe?)
+            if desiredType == "colour" or desiredType == "color" then
+                --TODO: Check if number is valid (maybe?)
+                if value == "transparent" then
+                    desiredType = "string"
+                else
+                    desiredType = "number"
+                end
+            end
 
             if desiredType and type( value ) ~= desiredType then
                 return throw("Failed to resolve '"..tostring( target ).."' constructor arguments. Invalid type for argument '"..name.."'. Type "..configTypes[ name ].." expected, "..type( value ).." was received.")

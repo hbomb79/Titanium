@@ -124,6 +124,9 @@ function XMLParser.static.convertArgType( argumentValue, desiredType )
             return error( "Failed to cast argument to boolean. Value: "..tostring( argumentValue ).." is not a valid boolean (true or false)" )
         end
     elseif desiredType == "colour" or desiredType == "color" then
+        if argumentValue == "transparent" or argumentValue == "trans" then
+            return "transparent"
+        end
         return tonumber( argumentValue ) or colours[ argumentValue ] or colors[ argumentValue ] or error( "Failed to cast argument to colour (number). Value: "..tostring( argumentValue ).." is not a valid colour" )
     else
         return error( "Failed to cast argument. Unknown target type '"..tostring( desiredType ).."'" )

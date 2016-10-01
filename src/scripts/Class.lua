@@ -511,11 +511,7 @@ local function spawn( target, ... )
             local desiredType = configTypes[ name ]
             if desiredType == "colour" or desiredType == "color" then
                 --TODO: Check if number is valid (maybe?)
-                if value == "transparent" then
-                    desiredType = "string"
-                else
-                    desiredType = "number"
-                end
+                desiredType = "number"
             end
 
             if desiredType and type( value ) ~= desiredType then

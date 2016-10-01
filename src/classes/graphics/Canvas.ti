@@ -109,6 +109,16 @@ end
 
 --[[
     @instance
+    @desc Updates the background character to be used when clearing the canvas. Clears the canvas to apply the change
+    @param <string/false/nil - char>
+]]
+function Canvas:setBackgroundChar( char )
+    self.backgroundChar = char
+    self:clear()
+end
+
+--[[
+    @instance
     @desc Draws the canvas to the target 'canvas' using the X and Y offsets. Pixels that are marked transparent are not drawn.
     @param <Canvas - canvas>, [number - offsetX], [number - offsetY]
 ]]
@@ -119,8 +129,8 @@ function Canvas:drawTo( canvas, offsetX, offsetY )
     local sRaw, tRaw = self.raw, canvas.raw
     local width, height, buffer = sRaw.width, sRaw.height, sRaw.buffer
     local tWidth, tHeight, tBuffer = tRaw.width, tRaw.height, tRaw.buffer
-    local backgroundColour = self.backgroundColour
 
+    local colour, backgroundColour, backgroundTextColour = sRaw.colour, sRaw.backgroundColour, sRaw.backgroundTextColour
     local xStart, xEnd = range( 1, offsetX, width, tWidth )
 
     local cache, tCache, top, tc, tf, tb, bot, bc, bf, bb, tPos = 0, offsetX + ( offsetY * tWidth )
@@ -133,32 +143,20 @@ function Canvas:drawTo( canvas, offsetX, offsetY )
                 bot = tBuffer[ tPos ]
                 bc, bf, bb = bot[ 1 ], bot[ 2 ], bot[ 3 ]
 
-                local new
-                if tc and type(tf) == "number" and type(tb) == "number" then
-                    new = top
-                elseif not tc and type(tf) ~= "number" and type(tb) ~= "number" and bc and type(bf) == "number" and type(bb) == "number" then
-                    new = bot
+                if tc and ( tf and tf ~= 0 ) and ( tb and tb ~= 0 ) then
+                    tBuffer[ tPos ] = top
+                elseif not tc or ( tf == 0 and tb == 0 and bc and bf ~= 0 and bb ~= 0 ) then
+                    tBuffer[ tPos ] = bot
                 else
-                    local nc, nf, nb = tc or bc, tf, tb
-                    if nf == nil then
-                        nf = sRaw.colour
-                    end
-                    if nf == "transparent" then
-                        nf = bf
-                    end
-                    if nb == nil then
-                        nb = sRaw.backgroundColour
-                    end
-                    if nb == "transparent" then
-                        nb = bb
-                    end
+                    local nc, nf, nb = tc or bc, tf or colour, tb or backgroundColour
+
                     if not tc then
+                        --TODO: Verify if this statement is still needed
                         nc = bc
-                        nf = sRaw.backgroundTextColour or bf
+                        nf = backgroundTextColour or bf
                     end
-                    new = {nc, nf, nb}
+                    tBuffer[ tPos ] = { nc, nf == 0 and bf or nf, nb == 0 and bb or nb }
                 end
-                tBuffer[tPos] = new
             end
         elseif cY > tHeight then
             break

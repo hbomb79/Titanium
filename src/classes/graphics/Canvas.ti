@@ -133,16 +133,15 @@ function Canvas:drawTo( canvas, offsetX, offsetY )
 
                 if tc and ( tf and tf ~= 0 ) and ( tb and tb ~= 0 ) then
                     tBuffer[ tPos ] = top
-                elseif not tc or ( tf == 0 and tb == 0 and bc and bf ~= 0 and bb ~= 0 ) then
+                elseif not tc and tf == 0 and tb == 0 and bc and bf ~= 0 and bb ~= 0 then
                     tBuffer[ tPos ] = bot
                 else
                     local nc, nf, nb = tc or bc, tf or colour, tb or backgroundColour
 
                     if not tc then
-                        --TODO: Verify if this statement is still needed
-                        nc = bc
                         nf = backgroundTextColour or bf
                     end
+
                     tBuffer[ tPos ] = { nc, nf == 0 and bf or nf, nb == 0 and bb or nb }
                 end
             end

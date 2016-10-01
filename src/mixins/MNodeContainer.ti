@@ -172,6 +172,6 @@ function MNodeContainer:redrawArea( x, y, width, height, xOffset, yOffset )
 
     local parent = self.parent
     if parent then
-        parent:redrawArea( self.X + x, self.Y + y, width, height )
+        parent:redrawArea( self.X + x - 1, self.Y + y - 1, width, height )
     end
 end

@@ -191,6 +191,9 @@ Manager:query "Terminal#shell":set { chunk = function() select( 1, loadfile "/ro
 Manager:on("mouse_click", function( self, event )
     if event.button == 2 and not event.handled then -- Only proceed if the button used was the right click, and the event wasn't used by any nodes
         event.handled = true
+        if context then
+            Manager:removeNode( context )
+        end
         context = Manager:addNode( ContextMenu({
             {"button", "Copy", function( self ) error( "Button: " .. self.text) end},
             {"button", "Paste", function( self ) error( "Button: " .. self.text) end},

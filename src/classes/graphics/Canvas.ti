@@ -36,7 +36,7 @@ function Canvas:__init__( owner )
 
     self.raw.colour = owner.raw.colour
     self.raw.backgroundChar = owner.raw.backgroundChar
-    if self.raw.backgroundChar == 'nil' then
+    if self.raw.backgroundChar == "nil" then
         self.raw.backgroundChar = nil
     end
     self.raw.backgroundTextColour = owner.raw.backgroundTextColour

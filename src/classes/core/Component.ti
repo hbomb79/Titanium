@@ -10,7 +10,7 @@ abstract class Component {
 
     changed = true;
 
-    backgroundChar = ' ';
+    backgroundChar = " ";
 }
 
 function Component:queueAreaReset()
@@ -73,7 +73,7 @@ function Component:setBackgroundColour( backgroundColour )
 end
 
 function Component:setBackgroundChar( backgroundChar )
-    if backgroundChar == 'nil' then
+    if backgroundChar == "nil" then
         backgroundChar = nil
     end
 

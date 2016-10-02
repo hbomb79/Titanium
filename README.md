@@ -1,9 +1,10 @@
 Titanium
 ==
 
-[![Language (Lua)](https://img.shields.io/badge/powered_by-Lua-blue.svg?style=flat-square)](https://lua.org)
-[![License (MIT)](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](http://opensource.org/licenses/MIT)
-[![Platform (CC)](https://img.shields.io/badge/platform-ComputerCraft-blue.svg?style=flat-square)](http://computercraft.info)
+[![build status](https://gitlab.com/hbomb79/Titanium/badges/develop/build.svg)](https://gitlab.com/hbomb79/Titanium/commits/develop)
+[![Language (Lua)](https://img.shields.io/badge/powered_by-Lua-blue.svg?style=flat)](https://lua.org)
+[![License (MIT)](https://img.shields.io/badge/license-MIT-blue.svg?style=flat)](http://opensource.org/licenses/MIT)
+[![Platform (CC)](https://img.shields.io/badge/platform-ComputerCraft-blue.svg?style=flat)](http://computercraft.info)
 
 Titanium is a framework for building fast, reliable and beautiful GUIs in ComputerCraft.
 

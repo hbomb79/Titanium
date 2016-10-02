@@ -72,6 +72,13 @@ function Component:setBackgroundColour( backgroundColour )
     self.changed = true
 end
 
+function Component:setTransparent( transparent )
+    self.transparent = transparent
+    self.canvas.transparent = transparent
+
+    self.changed = true
+end
+
 function Component:setBackgroundChar( backgroundChar )
     if backgroundChar == "nil" then
         backgroundChar = nil
@@ -92,7 +99,7 @@ end
 
 configureConstructor {
     orderedArguments = { "X", "Y", "width", "height" },
-    argumentTypes = { X = "number", Y = "number", width = "number", height = "number", colour = "colour", backgroundColour = "colour", backgroundTextColour = "colour" }
+    argumentTypes = { X = "number", Y = "number", width = "number", height = "number", colour = "colour", backgroundColour = "colour", backgroundTextColour = "colour", transparent = "boolean" }
 } alias {
     color = "colour",
     backgroundColor = "backgroundColour"

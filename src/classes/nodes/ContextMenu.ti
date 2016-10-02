@@ -19,7 +19,7 @@ function ContextMenu:__init__( ... )
     self:resolve( ... )
     self:super()
 
-    self.canvas.transparent = true
+    self.transparent = true
 end
 
 --[[

@@ -20,6 +20,8 @@ abstract class Canvas {
 
     backgroundColour = 32768;
     colour = 1;
+
+    transparent = false;
 }
 
 --[[
@@ -49,7 +51,7 @@ end
     @param [number - colour]
 ]]
 function Canvas:clear( colour )
-    local pixel, buffer = { self.backgroundChar, self.colour, colour or self.backgroundColour }, self.buffer
+    local pixel, buffer = { not self.transparent and self.backgroundChar, self.colour, self.transparent and 0 or colour or self.backgroundColour }, self.buffer
 
     for index = 1, self.width * self.height do
         buffer[ index ] = pixel
@@ -63,7 +65,7 @@ end
 ]]
 function Canvas:clearArea( aX, aY, aWidth, aHeight, colour )
     local aY, aX, cWidth = aY - 1, aX - 1, self.width
-    local pixel, buffer = { self.backgroundChar, self.colour, colour or self.backgroundColour }, self.buffer
+    local pixel, buffer = { not self.transparent and self.backgroundChar, self.colour, self.transparent and 0 or colour or self.backgroundColour }, self.buffer
 
     local xBoundary, yBoundary = cWidth - aX, self.height
     local effectiveWidth = xBoundary < aWidth and xBoundary or aWidth
@@ -73,6 +75,16 @@ function Canvas:clearArea( aX, aY, aWidth, aHeight, colour )
             buffer[ pos + x ] = pixel
         end
     end
+end
+
+--[[
+    @instance
+    @desc Updates the transparency setting of the canvas and then clears the canvas to apply this setting
+    @param <number - colour>
+]]
+function Canvas:setTransparent( transparent )
+    self.transparent = transparent
+    self:clear()
 end
 
 --[[
@@ -133,16 +145,15 @@ function Canvas:drawTo( canvas, offsetX, offsetY )
 
                 if tc and ( tf and tf ~= 0 ) and ( tb and tb ~= 0 ) then
                     tBuffer[ tPos ] = top
-                elseif not tc or ( tf == 0 and tb == 0 and bc and bf ~= 0 and bb ~= 0 ) then
+                elseif not tc and tf == 0 and tb == 0 and bc and bf ~= 0 and bb ~= 0 then
                     tBuffer[ tPos ] = bot
                 else
                     local nc, nf, nb = tc or bc, tf or colour, tb or backgroundColour
 
                     if not tc then
-                        --TODO: Verify if this statement is still needed
-                        nc = bc
                         nf = backgroundTextColour or bf
                     end
+
                     tBuffer[ tPos ] = { nc, nf == 0 and bf or nf, nb == 0 and bb or nb }
                 end
             end

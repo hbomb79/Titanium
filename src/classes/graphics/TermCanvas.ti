@@ -59,8 +59,8 @@ function TermCanvas:draw( force )
 
                 local c, fg, bg = pixel[1], pixel[2], pixel[3]
 
-                rowColour[ x ] = hex[ type(fg) == "number" and fg or colour or 1 ]
-                rowBackground[ x ] = hex[ type(bg) == "number" and bg or backgroundColour or 32768 ]
+                rowColour[ x ] = hex[ type(fg) == "number" and fg ~= 0 and fg or colour or 1 ]
+                rowBackground[ x ] = hex[ type(bg) == "number" and bg ~= 0 and bg or backgroundColour or 32768 ]
                 if c then
                     rowText[ x ] = c or backgroundChar or " "
                 else

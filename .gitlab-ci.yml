@@ -1,0 +1,17 @@
+before_script:
+  - apt-get update && apt-get -y install lua5.1 luarocks
+  - luarocks install luafilesystem
+
+build:
+  stage: build
+  script:
+    - lua5.1 ./bin/construct.lua --source src --output titanium.lua
+    - lua5.1 ./bin/construct.lua --source src --output titanium.min.lua --minify
+  artifacts:
+    paths:
+      - titanium.lua
+      - titanium.min.lua
+
+# Cache files outside git index
+cache:
+  untracked: true

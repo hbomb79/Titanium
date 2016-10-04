@@ -11,7 +11,7 @@ before_script:
 .job_template: &test_definition
   before_script:
     - apt-get update && apt-get -y install lua5.1 luarocks cmake
-    - luarocks install bit32
+    - luarocks install luabitop
     - luarocks install luafilesystem
     - luarocks install penlight
     - luarocks install luv

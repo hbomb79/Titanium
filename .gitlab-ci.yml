@@ -3,8 +3,8 @@ stages:
   - test
 
 before_script:
-    - rm titanium.lua
-    - rm titanium.min.lua
+    - rm -f titanium.lua
+    - rm -f titanium.min.lua
     - apt-get update && apt-get -y install lua5.1 luarocks
     - luarocks install luafilesystem
 

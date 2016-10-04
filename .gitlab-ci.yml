@@ -16,9 +16,9 @@ before_script:
     - luarocks install luv
     - luarocks install luaposix
     - git clone https://github.com/CoderPuppy/cc-emu emu --branch for-ci
-    - chdir emu
+    - cd emu
     - git clone https://github.com/CoderPuppy/ComputercraftLua cc --branch ci
-    - chdir /
+    - cd /
 
 build:
   stage: build

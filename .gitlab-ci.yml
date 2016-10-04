@@ -14,7 +14,6 @@ before_script:
     - luarocks install luafilesystem
     - luarocks install penlight
     - luarocks install luv
-    - luarocks install nn
     - luarocks install luaposix
     - git clone https://github.com/CoderPuppy/cc-emu emu --branch for-ci
     - chdir emu

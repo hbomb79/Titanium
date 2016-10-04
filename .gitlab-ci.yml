@@ -1,16 +1,63 @@
+stages:
+  - build
+  - test
+
 before_script:
-  - apt-get update && apt-get -y install lua5.1 luarocks
-  - luarocks install luafilesystem
+    - apt-get update && apt-get -y install lua5.1 luarocks
+    - luarocks install luafilesystem
+
+.job_template: &test_definition
+  before_script:
+    - apt-get update && apt-get -y install lua5.1 luarocks
+    - luarocks install luafilesystem
+    - luarocks install penlight
+    - luarocks install luv
+    - luarocks install nn
+    - luarocks install luaposix
+    - git clone https://github.com/CoderPuppy/cc-emu emu --branch for-ci
+    - chdir emu
+    - git clone https://github.com/CoderPuppy/ComputercraftLua cc --branch ci
+    - chdir /
 
 build:
   stage: build
   script:
+    - echo "Running development build. Not building minified"
     - lua5.1 ./bin/construct.lua --source src --output titanium.lua
-    - lua5.1 ./bin/construct.lua --source src --output titanium.min.lua --minify
   artifacts:
     paths:
       - titanium.lua
       - titanium.min.lua
+  except:
+    - master
+
+build-release:
+    stage: build
+    script:
+      - echo "Running release build. Building minified"
+      - lua5.1 ./bin/construct.lua --source src --output titanium.lua
+      - lua5.1 ./bin/construct.lua --source src --output titanium.min.lua --minify
+    only:
+      - master
+
+test:
+    <<: *test_definition
+    stage: test
+    script:
+      - echo "Testing development build"
+      - lua5.1 /emu/cli.lua /bin/ci run_test.lua /build/titanium.lua tml
+    except:
+      - master
+
+test-release:
+    <<: *test_definition
+    stage: test
+    script:
+      - echo "Testing release builds"
+      - lua5.1 /emu/cli.lua /bin/ci run_test.lua /build/titanium.lua tml
+      - lua5.1 /emu/cli.lua /bin/ci run_test.lua /build/titanium.min.lua tml
+    only:
+      - master
 
 # Cache files outside git index
 cache:

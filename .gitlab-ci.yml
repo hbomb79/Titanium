@@ -16,9 +16,7 @@ before_script:
     - luarocks install luv
     - luarocks install luaposix
     - git clone https://github.com/CoderPuppy/cc-emu emu --branch for-ci
-    - cd emu
-    - git clone https://github.com/CoderPuppy/ComputercraftLua cc --branch ci
-    - cd /
+    - git clone https://github.com/CoderPuppy/ComputercraftLua emu/cc --branch ci
 
 build:
   stage: build
@@ -49,8 +47,6 @@ test:
   stage: test
   script:
     - echo "Testing development build"
-    - pwd
-    - ls
     - lua5.1 emu/cli.lua bin/ci run_test.lua build/titanium.lua tml
   except:
     - master

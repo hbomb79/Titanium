@@ -3,12 +3,14 @@ stages:
   - test
 
 before_script:
+    - rm titanium.lua
+    - rm titanium.min.lua
     - apt-get update && apt-get -y install lua5.1 luarocks
     - luarocks install luafilesystem
 
 .job_template: &test_definition
   before_script:
-    - apt-get update && apt-get -y install lua5.1 luarocks
+    - apt-get update && apt-get -y install lua5.1 luarocks cmake
     - luarocks install luafilesystem
     - luarocks install penlight
     - luarocks install luv
@@ -27,37 +29,40 @@ build:
   artifacts:
     paths:
       - titanium.lua
-      - titanium.min.lua
   except:
     - master
 
 build-release:
-    stage: build
-    script:
-      - echo "Running release build. Building minified"
-      - lua5.1 ./bin/construct.lua --source src --output titanium.lua
-      - lua5.1 ./bin/construct.lua --source src --output titanium.min.lua --minify
-    only:
-      - master
+  stage: build
+  script:
+    - echo "Running release build. Building minified"
+    - lua5.1 ./bin/construct.lua --source src --output titanium.lua
+    - lua5.1 ./bin/construct.lua --source src --output titanium.min.lua --minify
+  artifacts:
+    paths:
+      - titanium.lua
+      - titanium.min.lua
+  only:
+    - master
 
 test:
-    <<: *test_definition
-    stage: test
-    script:
-      - echo "Testing development build"
-      - lua5.1 /emu/cli.lua /bin/ci run_test.lua /build/titanium.lua tml
-    except:
-      - master
+  <<: *test_definition
+  stage: test
+  script:
+    - echo "Testing development build"
+    - lua5.1 /emu/cli.lua /bin/ci run_test.lua /build/titanium.lua tml
+  except:
+    - master
 
 test-release:
-    <<: *test_definition
-    stage: test
-    script:
-      - echo "Testing release builds"
-      - lua5.1 /emu/cli.lua /bin/ci run_test.lua /build/titanium.lua tml
-      - lua5.1 /emu/cli.lua /bin/ci run_test.lua /build/titanium.min.lua tml
-    only:
-      - master
+  <<: *test_definition
+  stage: test
+  script:
+    - echo "Testing release builds"
+    - lua5.1 /emu/cli.lua /bin/ci run_test.lua /build/titanium.lua tml
+    - lua5.1 /emu/cli.lua /bin/ci run_test.lua /build/titanium.min.lua tml
+  only:
+    - master
 
 # Cache files outside git index
 cache:

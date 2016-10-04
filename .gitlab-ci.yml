@@ -5,7 +5,7 @@ stages:
 before_script:
     - rm -f titanium.lua
     - rm -f titanium.min.lua
-    - apt-get update && apt-get -y install lua5.1 luarocks
+    - apt-get update && apt-get -y install lua5.2 luarocks
     - luarocks install luafilesystem
 
 .job_template: &test_definition
@@ -22,7 +22,7 @@ build:
   stage: build
   script:
     - echo "Running development build. Not building minified"
-    - lua5.1 ./bin/construct.lua --source src --output titanium.lua
+    - lua5.2 ./bin/construct.lua --source src --output titanium.lua
   artifacts:
     paths:
       - titanium.lua
@@ -33,8 +33,8 @@ build-release:
   stage: build
   script:
     - echo "Running release build. Building minified"
-    - lua5.1 ./bin/construct.lua --source src --output titanium.lua
-    - lua5.1 ./bin/construct.lua --source src --output titanium.min.lua --minify
+    - lua5.2 ./bin/construct.lua --source src --output titanium.lua
+    - lua5.2 ./bin/construct.lua --source src --output titanium.min.lua --minify
   artifacts:
     paths:
       - titanium.lua
@@ -47,7 +47,7 @@ test:
   stage: test
   script:
     - echo "Testing development build"
-    - lua5.1 emu/cli.lua bin/ci run_test.lua build/titanium.lua tml
+    - lua5.2 emu/cli.lua bin/ci run_test.lua build/titanium.lua tml
   except:
     - master
 
@@ -56,8 +56,8 @@ test-release:
   stage: test
   script:
     - echo "Testing release builds"
-    - lua5.1 /emu/cli.lua /bin/ci run_test.lua /build/titanium.lua tml
-    - lua5.1 /emu/cli.lua /bin/ci run_test.lua /build/titanium.min.lua tml
+    - lua5.2 /emu/cli.lua /bin/ci run_test.lua /build/titanium.lua tml
+    - lua5.2 /emu/cli.lua /bin/ci run_test.lua /build/titanium.min.lua tml
   only:
     - master
 

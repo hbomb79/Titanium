@@ -49,7 +49,9 @@ test:
   stage: test
   script:
     - echo "Testing development build"
-    - lua5.1 /emu/cli.lua /bin/ci run_test.lua /build/titanium.lua tml
+    - pwd
+    - ls
+    - lua5.1 emu/cli.lua bin/ci run_test.lua build/titanium.lua tml
   except:
     - master
 

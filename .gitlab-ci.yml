@@ -14,7 +14,7 @@ before_script:
     - luarocks install luabitop
     - luarocks install luafilesystem
     - luarocks install penlight
-    - luarocks install luv
+    - luarocks install luv |& egrep -v '^tar'
     - luarocks install luaposix
     - git clone https://github.com/CoderPuppy/cc-emu emu --branch for-ci
     - git clone https://github.com/CoderPuppy/ComputercraftLua emu/cc --branch ci

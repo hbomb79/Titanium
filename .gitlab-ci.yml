@@ -51,6 +51,8 @@ test:
     - luajit emu/cli.lua bin/ci run_test.lua titanium.lua tml
   except:
     - master
+  dependencies:
+    - build
 
 test-release:
   <<: *test_definition
@@ -61,6 +63,8 @@ test-release:
     - luajit /emu/cli.lua /bin/ci run_test.lua titanium.min.lua tml
   only:
     - master
+  dependencies:
+    - build-release
 
 # Cache files outside git index
 cache:

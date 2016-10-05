@@ -48,7 +48,7 @@ test:
   stage: test
   script:
     - echo "Testing development build"
-    - luajit emu/cli.lua bin/ci run_test.lua build/titanium.lua tml
+    - luajit emu/cli.lua bin/ci run_test.lua titanium.lua tml
   except:
     - master
 
@@ -57,8 +57,8 @@ test-release:
   stage: test
   script:
     - echo "Testing release builds"
-    - luajit /emu/cli.lua /bin/ci run_test.lua /build/titanium.lua tml
-    - luajit /emu/cli.lua /bin/ci run_test.lua /build/titanium.min.lua tml
+    - luajit /emu/cli.lua /bin/ci run_test.lua titanium.lua tml
+    - luajit /emu/cli.lua /bin/ci run_test.lua titanium.min.lua tml
   only:
     - master
 

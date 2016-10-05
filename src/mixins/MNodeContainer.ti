@@ -23,7 +23,7 @@ function MNodeContainer:addNode( node )
     end
 
     self.changed = true
-    self.collatedNodes = false
+    self:clearCollatedNodes()
 
     table.insert( self.nodes, node )
     node:updateProperties()
@@ -63,7 +63,7 @@ function MNodeContainer:removeNode( target )
             end
 
             self.changed = true
-            self.collatedNodes = false
+            self:clearCollatedNodes()
 
             table.remove( nodes, i )
             return true, node
@@ -98,6 +98,19 @@ end
 ]]
 function MNodeContainer:query( query )
     return NodeQuery( self, query )
+end
+
+--[[
+    @instance
+    @desc Clears the collatedNodes of all parents forcing them to update their collatedNodes cache on next retrieval
+]]
+function MNodeContainer:clearCollatedNodes()
+    self.collatedNodes = false
+
+    local parent = self.parent
+    if parent then
+        parent:clearCollatedNodes()
+    end
 end
 
 function MNodeContainer:getCollatedNodes()

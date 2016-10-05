@@ -159,13 +159,29 @@ end
 
 --[[
     @instance
+    @desc Invokes super (container) handle function. If event is a mouse event and it missed an open subframe the frames will be closed (if it was a CLICK) and the event will be unhandled
+          allowing further propagation and usage throughout the application.
+    @param <Event - eventObj>
+    @return <boolean - propagate>
+]]
+function ContextMenu:handle( eventObj )
+    if not self.super:handle( eventObj ) then return end
+
+    if eventObj.main == "MOUSE" and not self:isMouseColliding( eventObj ) then
+        if eventObj.sub == "CLICK" then self:closeFrame( 1 ) end
+        eventObj.handled = false
+    end
+
+    return true
+end
+
+--[[
+    @instance
     @desc Closes the context menu if a mouse click occurs that is not inside of any menus
     @param <MouseEvent - event>, <boolean - handled>, <boolean - within>
     @return [boolean - insideBounds]
 ]]
-function ContextMenu:onMouseClick( event, handled, within )
-    if not within or handled then self:closeFrame( 1 ) end
-
+function ContextMenu:isMouseColliding( event )
     local eX, eY, nodes = event.X - self.X + 1, event.Y - self.Y + 1, self.nodes
     for i = 1, #nodes do
         local node = nodes[ i ]
@@ -176,7 +192,7 @@ function ContextMenu:onMouseClick( event, handled, within )
         end
     end
 
-    self:closeFrame( 1 )
+    return false
 end
 
 --[[

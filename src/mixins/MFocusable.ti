@@ -14,6 +14,14 @@ function MFocusable:MFocusable()
     end
 end
 
+function MFocusable:setEnabled( enabled )
+    self.super:setEnabled( enabled )
+
+    if not enabled and self.focused then
+        self:unfocus()
+    end
+end
+
 function MFocusable:setFocused( focused )
     local raw = self.raw
     if raw.focused == focused then return end
@@ -23,6 +31,8 @@ function MFocusable:setFocused( focused )
 end
 
 function MFocusable:focus()
+    if not self.enabled then return end
+
     if self.application then self.application:focusNode( self ) end
     self.focused = true
 end

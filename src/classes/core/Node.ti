@@ -22,12 +22,17 @@ abstract class Node extends Component mixin MThemeable mixin MCallbackManager {
         }
     };
 
+    disabledColour = 128;
+    disabledBackgroundColour = 256;
+
     allowMouse = false;
     allowKey = false;
     allowChar = false;
     useAnyCallbacks = false;
 
     enabled = true;
+    parentEnabled = true;
+
     visible = true;
 
     needsRedraw = true;
@@ -39,7 +44,7 @@ abstract class Node extends Component mixin MThemeable mixin MCallbackManager {
     @desc Creates a NodeCanvas (bound to self) and stores it inside of `self.canvas`. This canvas is drawn to the parents canvas at draw time.
 ]]
 function Node:__init__()
-    self:register( "X", "Y", "colour", "backgroundColour", "enabled", "visible" )
+    self:register( "X", "Y", "colour", "backgroundColour", "enabled", "visible", "disabledColour", "disabledBackgroundColour" )
 
     if not self.canvas then self.raw.canvas = NodeCanvas( self ) end
 end
@@ -152,5 +157,5 @@ function Node:animate( ... )
 end
 
 configureConstructor {
-    argumentTypes = { enabled = "boolean", visible = "boolean" }
+    argumentTypes = { enabled = "boolean", visible = "boolean", disabledColour = "colour", disabledBackgroundColour = "colour" }
 }

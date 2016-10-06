@@ -23,7 +23,7 @@ function MNodeContainer:addNode( node )
     end
 
     self.changed = true
-    self.collatedNodes = false
+    self:clearCollatedNodes()
 
     table.insert( self.nodes, node )
     node:updateProperties()
@@ -63,7 +63,7 @@ function MNodeContainer:removeNode( target )
             end
 
             self.changed = true
-            self.collatedNodes = false
+            self:clearCollatedNodes()
 
             table.remove( nodes, i )
             return true, node
@@ -100,6 +100,19 @@ function MNodeContainer:query( query )
     return NodeQuery( self, query )
 end
 
+--[[
+    @instance
+    @desc Clears the collatedNodes of all parents forcing them to update their collatedNodes cache on next retrieval
+]]
+function MNodeContainer:clearCollatedNodes()
+    self.collatedNodes = false
+
+    local parent = self.parent
+    if parent then
+        parent:clearCollatedNodes()
+    end
+end
+
 function MNodeContainer:getCollatedNodes()
     if not self.collatedNodes or #self.collatedNodes == 0 then
         self:collate()
@@ -132,6 +145,31 @@ function MNodeContainer:collate( collated )
 
     self.collatedNodes = collated
 end
+
+--[[
+    @instance
+    @desc Sets the enabled property of the node to 'enabled'. Sets node's 'changed' to true.
+    @param <boolean - enabled>
+]]
+function MNodeContainer:setEnabled( enabled )
+    self.super:setEnabled( enabled )
+    if self.parentEnabled then
+        local nodes = self.nodes
+        for i = 1, #nodes do
+            nodes[ i ].parentEnabled = enabled
+        end
+    end
+end
+
+function MNodeContainer:setParentEnabled( enabled )
+    self.super:setParentEnabled( enabled )
+
+    local nodes = self.nodes
+    for i = 1, #nodes do
+        nodes[ i ].parentEnabled = enabled
+    end
+end
+
 
 --[[
     @instance

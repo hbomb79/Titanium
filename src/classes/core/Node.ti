@@ -22,12 +22,17 @@ abstract class Node extends Component mixin MThemeable mixin MCallbackManager {
         }
     };
 
+    disabledColour = 128;
+    disabledBackgroundColour = 256;
+
     allowMouse = false;
     allowKey = false;
     allowChar = false;
     useAnyCallbacks = false;
 
     enabled = true;
+    parentEnabled = true;
+
     visible = true;
 
     needsRedraw = true;
@@ -39,7 +44,7 @@ abstract class Node extends Component mixin MThemeable mixin MCallbackManager {
     @desc Creates a NodeCanvas (bound to self) and stores it inside of `self.canvas`. This canvas is drawn to the parents canvas at draw time.
 ]]
 function Node:__init__()
-    self:register( "X", "Y", "colour", "backgroundColour", "enabled", "visible" )
+    self:register( "X", "Y", "colour", "backgroundColour", "enabled", "visible", "disabledColour", "disabledBackgroundColour" )
 
     if not self.canvas then self.raw.canvas = NodeCanvas( self ) end
 end
@@ -52,6 +57,11 @@ function Node:__postInit__()
     self:hook()
 end
 
+function Node:setParentEnabled( enabled )
+    self.parentEnabled = enabled
+    self.changed = true
+end
+
 --[[
     @instance
     @desc Sets the enabled property of the node to 'enabled'. Sets node's 'changed' to true.
@@ -60,6 +70,29 @@ end
 function Node:setEnabled( enabled )
     self.enabled = enabled
     self.changed = true
+end
+
+--[[
+    TODO
+]]
+function Node:getEnabled()
+    if not self.parentEnabled then
+        return false
+    end
+
+    return self.enabled
+end
+
+--[[
+    TODO
+]]
+function Node:setParent( parent )
+    self.parent = parent
+    self.changed = true
+
+    if parent then
+        self.parentEnabled = Titanium.typeOf( parent, "Application" ) or parent.enabled
+    end
 end
 
 --[[
@@ -99,9 +132,11 @@ end
     @param <Event Instance* - eventObj>
     @return <boolean - propagate>
 
-    *Note: The event instance passed can be of variable type, ideally is extends 'Event' so that required methods are implemented on the eventObj.
+    *Note: The event instance passed can be of variable type, ideally it extends 'Event' so that required methods are implemented on the eventObj.
 ]]
 function Node:handle( eventObj )
+    if not self.enabled then return false end
+
     local main, sub, within = eventObj.main, eventObj.sub, false
     local handled = eventObj.handled
 
@@ -152,5 +187,5 @@ function Node:animate( ... )
 end
 
 configureConstructor {
-    argumentTypes = { enabled = "boolean", visible = "boolean" }
+    argumentTypes = { enabled = "boolean", visible = "boolean", disabledColour = "colour", disabledBackgroundColour = "colour" }
 }

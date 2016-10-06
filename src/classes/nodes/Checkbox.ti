@@ -69,14 +69,16 @@ end
 function Checkbox:draw( force )
     local raw = self.raw
     if raw.changed or force then
-        local toggled, active = raw.toggled, raw.active
-        raw.canvas:drawPoint(
-            1, 1,
-            toggled and raw.checkedMark or raw.uncheckedMark,
-            toggled and raw.toggledColour or active and raw.activeColour or raw.colour,
-            toggled and raw.toggledBackgroundColour or active and raw.activeBackgroundColour or raw.backgroundColour
-        )
+        local toggled, tc, bg = self.toggled
+        if not self.enabled then
+            tc, bg = raw.disabledColour, raw.disabledBackgroundColour
+        elseif toggled then
+            tc, bg = raw.toggledColour, raw.toggledBackgroundColour
+        elseif self.active then
+            tc, bg = raw.activeColour, raw.activeBackgroundColour
+        end
 
+        raw.canvas:drawPoint( 1, 1, toggled and raw.checkedMark or raw.uncheckedMark, tc, bg )
         raw.changed = false
     end
 end

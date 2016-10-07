@@ -1,3 +1,17 @@
+local function resetNode( self, node )
+    node:queueAreaReset()
+
+    node.parent = nil
+    node.application = nil
+
+    if self.focusedNode == node then
+        node.focused = false
+    end
+
+    self.changed = true
+    self:clearCollatedNodes()
+end
+
 abstract class MNodeContainer {
     nodes = {}
 }
@@ -53,17 +67,7 @@ function MNodeContainer:removeNode( target )
         node = nodes[ i ]
 
         if ( searchName and node.id == target ) or ( not searchName and node == target ) then
-            node:queueAreaReset()
-
-            node.parent = nil
-            node.application = nil
-
-            if self.focusedNode == node then
-                node.focused = false
-            end
-
-            self.changed = true
-            self:clearCollatedNodes()
+            resetNode( self, node )
 
             table.remove( nodes, i )
             return true, node
@@ -71,6 +75,14 @@ function MNodeContainer:removeNode( target )
     end
 
     return false
+end
+
+function MNodeContainer:clearNodes()
+    local nodes = self.nodes
+    for i = #nodes, 1, -1 do
+        resetNode( self, nodes[ i ] )
+        table.remove( nodes, i )
+    end
 end
 
 --[[

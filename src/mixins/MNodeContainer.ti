@@ -104,6 +104,26 @@ end
 
 --[[
     @instance
+    @desc Returns true if the mouse event passed is in bounds of a visible child node
+    @param <MouseEvent - event>
+    @return [boolean - insideBounds]
+]]
+function MNodeContainer:isMouseColliding( event )
+    local eX, eY, nodes = event.X - self.X + 1, event.Y - self.Y + 1, self.nodes
+    for i = 1, #nodes do
+        local node = nodes[ i ]
+        local nodeX, nodeY = node.X, node.Y
+
+        if node.visible and eX >= nodeX and eX <= nodeX + node.width - 1 and eY >= nodeY and eY <= nodeY + node.height - 1 then
+            return true
+        end
+    end
+
+    return false
+end
+
+--[[
+    @instance
     @desc Returns a 'NodeQuery' instance containing the nodes that matched the query and methods to manipulate
     @param <string - query>
     @return <NodeQuery Instance - Query Result>

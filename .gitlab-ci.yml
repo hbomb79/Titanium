@@ -24,6 +24,7 @@ build:
     - luajit ./bin/construct.lua --source src --output titanium.lua
   environment: production
   artifacts:
+    name: "devel_"${CI_BUILD_NAME}_${CI_BUILD_REF_NAME}""
     paths:
       - titanium.lua
   except:
@@ -37,6 +38,7 @@ build-release:
     - luajit ./bin/construct.lua --source src --output titanium.min.lua --minify
   environment: release
   artifacts:
+    name: "release_${CI_BUILD_REF_NAME}"
     paths:
       - titanium.lua
       - titanium.min.lua

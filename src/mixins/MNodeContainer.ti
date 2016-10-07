@@ -28,7 +28,7 @@ abstract class MNodeContainer {
 ]]
 function MNodeContainer:addNode( node )
     if not Titanium.typeOf( node, "Node", true ) then
-        return error( "Cannot add '"..tostring( node ).." as Node on '"..tostring( self ).."'" )
+        return error( "Cannot add '"..tostring( node ).."' as Node on '"..tostring( self ).."'" )
     end
 
     node.parent = self

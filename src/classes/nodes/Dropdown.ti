@@ -1,0 +1,99 @@
+class Dropdown extends Container {
+    maxHeight = false;
+
+    prompt = "Please select";
+
+    backgroundColour = colours.red;
+    colour = colours.lime;
+
+    selectedOption = false;
+    options = {};
+}
+
+function Dropdown:__init__( ... )
+    self:super( ... )
+
+    self.optionDisplay = self:addNode( Button( self.prompt, 1, 1, self.width ):on("trigger", function() self:toggleOptionDisplay() end) )
+    self.optionContainer = self:addNode( ScrollContainer( 1, 2, self.width ):set{ visible = false, xScrollAllowed = false } )
+
+    self.transparent = true
+end
+
+function Dropdown:toggleOptionDisplay()
+    local cont = self.optionContainer
+    cont.visible = not cont.visible
+end
+
+function Dropdown:updateOptions()
+    local cont = self.optionContainer
+    cont:clearNodes()
+
+    local options = self.options
+    for i = 1, #options do
+        if options[ i ] ~= self.selectedOption then
+            cont:addNode(Button( options[ i ], 1, #cont.nodes + 1, self.width ):on("trigger", function( this )
+                self.selectedOption = options[ i ]
+            end):linkProperties( self, "colour", "activeColour", "disabledColour", "backgroundColour", "activeBackgroundColour", "disabledBackgroundColour" ))
+        end
+    end
+
+    self.optionDisplay.text = self.selectedOption or self.prompt
+
+    local count = #cont.nodes
+    if self.maxHeight then
+        cont.height, self.height = math.min( count, self.maxHeight - 1 ), math.min( count + 1, self.maxHeight )
+    else
+        cont.height, self.height = count, count + 1
+    end
+
+    if #options > 0 then cont.yScroll = math.min( cont.yScroll, count ) end
+end
+
+function Dropdown:addOption( option )
+    self:removeOption( option )
+    table.insert( self.options, option )
+
+    self:updateOptions()
+end
+
+function Dropdown:removeOption( option )
+    local options = self.options
+    for i = #options, 1, -1 do
+        if options[ i ] == option then
+            table.remove( options, i )
+        end
+    end
+
+    self:updateOptions()
+end
+
+function Dropdown:setPrompt( prompt )
+    self.prompt = prompt
+    self.optionDisplay.text = prompt
+end
+
+function Dropdown:setSelectedOption( selected )
+    self.selectedOption = selected
+    self.optionContainer.visible = false
+    self:updateOptions()
+end
+
+function Dropdown:addTMLObject( TMLObj )
+    if TMLObj.type == "Option" then
+        if TMLObj.content then
+            self:addOption( TMLObj.content )
+        else
+            error "Failed to add TML object to Dropdown object. 'Option' tag must include content (not children)"
+        end
+    else
+        error( "Failed to add TML object to Dropdown object. Only 'Option' tags are accepted, '" .. tostring( TMLObj.type ) .. "' is invalid" )
+    end
+end
+
+configureConstructor({
+    orderedArguments = { "X", "Y", "width", "maxHeight", "prompt" },
+    argumentTypes = {
+        maxHeight = "number",
+        prompt = "string"
+    }
+}, true)

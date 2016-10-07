@@ -6,6 +6,8 @@ class Dropdown extends Container {
     backgroundColour = colours.red;
     colour = colours.lime;
 
+    horizontalAlign = "left";
+
     selectedOption = false;
     options = {};
 }
@@ -13,15 +15,33 @@ class Dropdown extends Container {
 function Dropdown:__init__( ... )
     self:super( ... )
 
-    self.optionDisplay = self:addNode( Button( self.prompt, 1, 1, self.width ):on("trigger", function() self:toggleOptionDisplay() end) )
-    self.optionContainer = self:addNode( ScrollContainer( 1, 2, self.width ):set{ visible = false, xScrollAllowed = false } )
+    self.optionDisplay = self:addNode( Button( self.prompt, 1, 1, self.width ):linkProperties( self, "horizontalAlign" ):on("trigger", function() self:toggleOptionDisplay() end):set{ test = true } )
+    self.optionContainer = self:addNode( ScrollContainer( 1, 2, self.width ):set{ xScrollAllowed = false } )
+
+    self:closeOptionDisplay()
+
+    self.test = true
 
     self.transparent = true
+    self.consumeAll = false
+end
+
+function Dropdown:closeOptionDisplay()
+    local cont = self.optionContainer
+    cont.visible, cont.enabled = false, false
+end
+
+function Dropdown:openOptionDisplay()
+    local cont = self.optionContainer
+    cont.visible, cont.enabled = true, true
 end
 
 function Dropdown:toggleOptionDisplay()
-    local cont = self.optionContainer
-    cont.visible = not cont.visible
+    if self.optionContainer.visible then
+        self:closeOptionDisplay()
+    else
+        self:openOptionDisplay()
+    end
 end
 
 function Dropdown:updateOptions()
@@ -33,7 +53,7 @@ function Dropdown:updateOptions()
         if options[ i ] ~= self.selectedOption then
             cont:addNode(Button( options[ i ], 1, #cont.nodes + 1, self.width ):on("trigger", function( this )
                 self.selectedOption = options[ i ]
-            end):linkProperties( self, "colour", "activeColour", "disabledColour", "backgroundColour", "activeBackgroundColour", "disabledBackgroundColour" ))
+            end):linkProperties( self, "colour", "activeColour", "disabledColour", "backgroundColour", "activeBackgroundColour", "disabledBackgroundColour", "horizontalAlign" ))
         end
     end
 
@@ -74,16 +94,28 @@ end
 
 function Dropdown:setSelectedOption( selected )
     self.selectedOption = selected
-    self.optionContainer.visible = false
+    self:closeOptionDisplay()
     self:updateOptions()
+end
+
+function Dropdown:handle( eventObj )
+    log "Dropdown Handling"
+    if not self.super:handle( eventObj ) then log "Dropdown super return" return end
+
+    if eventObj:is "mouse_click" and not self:isMouseColliding( eventObj ) and self.optionContainer.visible then
+        self:closeOptionDisplay()
+        eventObj.handled = true
+    end
+
+    return true
 end
 
 function Dropdown:addTMLObject( TMLObj )
     if TMLObj.type == "Option" then
-        if TMLObj.content then
-            self:addOption( TMLObj.content )
+        if TMLObj.content and TMLObj.arguments.value then
+            self:addOption( TMLObj.content, TMLObj.arguments.value )
         else
-            error "Failed to add TML object to Dropdown object. 'Option' tag must include content (not children)"
+            error "Failed to add TML object to Dropdown object. 'Option' tag must include content (not children) and a 'value' argument"
         end
     else
         error( "Failed to add TML object to Dropdown object. Only 'Option' tags are accepted, '" .. tostring( TMLObj.type ) .. "' is invalid" )

@@ -104,10 +104,10 @@ function ScrollContainer:handle( eventObj )
     else cloneEv = eventObj end
 
     if cloneEv then self:shipEvent( cloneEv ) end
-    if not self.super.super:handle( eventObj ) then return end
+    local r = self.super.super:handle( eventObj )
 
     eventObj.isWithin = isWithin
-    return true
+    return r == nil and true or r
 end
 
 function ScrollContainer:isNodeInBounds( node, width, height )

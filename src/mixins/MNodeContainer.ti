@@ -8,6 +8,10 @@ local function resetNode( self, node )
         node.focused = false
     end
 
+    if node:can "onRemove" then
+        node:onRemove( self )
+    end
+
     self.changed = true
     self:clearCollatedNodes()
 end

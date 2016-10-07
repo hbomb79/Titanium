@@ -2,6 +2,8 @@ class Container extends Node mixin MNodeContainer {
     allowMouse = true;
     allowKey = true;
     allowChar = true;
+
+    consumeAll = true;
 }
 
 --[[
@@ -80,7 +82,7 @@ function Container:handle( eventObj )
     end
 
     self:shipEvent( clone or eventObj )
-    if clone and clone.isWithin then
+    if clone and clone.isWithin and ( self.consumeAll or clone.handled ) then
         eventObj.handled = true
     end
     return true

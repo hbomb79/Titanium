@@ -166,6 +166,16 @@ function ScrollContainer:setXScroll( xScroll )
     end
 end
 
+function ScrollContainer:setHeight( height )
+    self.super:setHeight( height )
+    self:cacheContent()
+end
+
+function ScrollContainer:setWidth( width )
+    self.super:setWidth( width )
+    self:cacheContent()
+end
+
 --[[ Caching Functions ]]--
 function ScrollContainer:cacheContent()
     self:cacheContentSize()

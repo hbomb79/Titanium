@@ -354,3 +354,8 @@ end
 function MThemeable:onThemeUpdate()
     self:updateProperties()
 end
+
+function MThemeable:onRemove( parent )
+    self:destroyDependencies()
+    self:unlinkProperties()
+end

@@ -24,7 +24,7 @@ build:
     - luajit ./bin/construct.lua --source src --output titanium.lua
   environment: production
   artifacts:
-    name: "devel_"${CI_BUILD_NAME}_${CI_BUILD_REF_NAME}""
+    name: "devel_${CI_BUILD_NAME}_${CI_BUILD_REF_NAME}"
     paths:
       - titanium.lua
   except:

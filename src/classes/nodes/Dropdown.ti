@@ -50,14 +50,15 @@ function Dropdown:updateOptions()
 
     local options = self.options
     for i = 1, #options do
-        if options[ i ] ~= self.selectedOption then
-            cont:addNode(Button( options[ i ], 1, #cont.nodes + 1, self.width ):on("trigger", function( this )
+        local option = options[ i ][ 1 ]
+        if option ~= self.selectedOption then
+            cont:addNode(Button( option, 1, #cont.nodes + 1, self.width ):on("trigger", function( this )
                 self.selectedOption = options[ i ]
             end):linkProperties( self, "colour", "activeColour", "disabledColour", "backgroundColour", "activeBackgroundColour", "disabledBackgroundColour", "horizontalAlign" ))
         end
     end
 
-    self.optionDisplay.text = self.selectedOption or self.prompt
+    self.optionDisplay.text = type( self.selectedOption ) == "table" and self.selectedOption[ 1 ] or self.prompt
 
     local count = #cont.nodes
     if self.maxHeight then
@@ -69,9 +70,19 @@ function Dropdown:updateOptions()
     if #options > 0 then cont.yScroll = math.min( cont.yScroll, count ) end
 end
 
-function Dropdown:addOption( option )
+function Dropdown:getSelectedValue()
+    if type( self.selectedOption ) ~= "table" then return end
+
+    return self.selectedOption[ 2 ]
+end
+
+function Dropdown:addOption( option, value )
+    if type( option ) ~= "string" or value == nil then
+        return error "Failed to add option to Dropdown node. Expected two arguments: string, val - where val is not nil"
+    end
+
     self:removeOption( option )
-    table.insert( self.options, option )
+    table.insert( self.options, { option, value } )
 
     self:updateOptions()
 end
@@ -99,8 +110,7 @@ function Dropdown:setSelectedOption( selected )
 end
 
 function Dropdown:handle( eventObj )
-    log "Dropdown Handling"
-    if not self.super:handle( eventObj ) then log "Dropdown super return" return end
+    if not self.super:handle( eventObj ) then return end
 
     if eventObj:is "mouse_click" and not self:isMouseColliding( eventObj ) and self.optionContainer.visible then
         self:closeOptionDisplay()

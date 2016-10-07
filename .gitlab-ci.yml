@@ -24,6 +24,7 @@ build:
   script:
     - echo "Running development build. Not building minified"
     - luajit ./bin/construct.lua --source src --output titanium.lua
+  environment: production
   artifacts:
     paths:
       - titanium.lua
@@ -36,6 +37,7 @@ build-release:
     - echo "Running release build. Building minified"
     - luajit ./bin/construct.lua --source src --output titanium.lua
     - luajit ./bin/construct.lua --source src --output titanium.min.lua --minify
+  environment: release
   artifacts:
     paths:
       - titanium.lua

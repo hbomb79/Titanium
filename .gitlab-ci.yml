@@ -1,3 +1,5 @@
+image: alpine
+
 stages:
   - build
   - test

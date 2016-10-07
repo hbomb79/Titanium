@@ -3,8 +3,6 @@ stages:
   - test
 
 before_script:
-    - rm -f titanium.lua
-    - rm -f titanium.min.lua
     - apt-get update && apt-get -y install luajit luarocks
     - luarocks install luafilesystem
 
@@ -67,7 +65,3 @@ test-release:
     - master
   dependencies:
     - build-release
-
-# Cache files outside git index
-cache:
-  untracked: true

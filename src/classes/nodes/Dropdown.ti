@@ -8,6 +8,9 @@ class Dropdown extends Container {
 
     horizontalAlign = "left";
 
+    openIndicator = " \31";
+    closedIndicator = " \16";
+
     selectedOption = false;
     options = {};
 }
@@ -15,12 +18,10 @@ class Dropdown extends Container {
 function Dropdown:__init__( ... )
     self:super( ... )
 
-    self.optionDisplay = self:addNode( Button( self.prompt, 1, 1, self.width ):linkProperties( self, "horizontalAlign" ):on("trigger", function() self:toggleOptionDisplay() end):set{ test = true } )
+    self.optionDisplay = self:addNode( Button( self.prompt .. self.closedIndicator, 1, 1 ):linkProperties( self, "horizontalAlign" ):on("trigger", function() self:toggleOptionDisplay() end) )
     self.optionContainer = self:addNode( ScrollContainer( 1, 2, self.width ):set{ xScrollAllowed = false } )
 
     self:closeOptionDisplay()
-
-    self.test = true
 
     self.transparent = true
     self.consumeAll = false
@@ -29,11 +30,17 @@ end
 function Dropdown:closeOptionDisplay()
     local cont = self.optionContainer
     cont.visible, cont.enabled = false, false
+
+    self:queueAreaReset()
+    self:updateDisplayButton()
 end
 
 function Dropdown:openOptionDisplay()
     local cont = self.optionContainer
     cont.visible, cont.enabled = true, true
+
+    self:queueAreaReset()
+    self:updateDisplayButton()
 end
 
 function Dropdown:toggleOptionDisplay()
@@ -44,9 +51,16 @@ function Dropdown:toggleOptionDisplay()
     end
 end
 
+function Dropdown:updateDisplayButton()
+    self.optionDisplay.text = ( type( self.selectedOption ) == "table" and self.selectedOption[ 1 ] or self.prompt ) .. ( self.optionContainer.visible and self.openIndicator or self.closedIndicator )
+    self.optionDisplay.width = #self.optionDisplay.text
+end
+
 function Dropdown:updateOptions()
     local cont = self.optionContainer
     cont:clearNodes()
+
+    self:updateDisplayButton()
 
     local options = self.options
     for i = 1, #options do
@@ -57,8 +71,6 @@ function Dropdown:updateOptions()
             end):linkProperties( self, "colour", "activeColour", "disabledColour", "backgroundColour", "activeBackgroundColour", "disabledBackgroundColour", "horizontalAlign" ))
         end
     end
-
-    self.optionDisplay.text = type( self.selectedOption ) == "table" and self.selectedOption[ 1 ] or self.prompt
 
     local count = #cont.nodes
     if self.maxHeight then

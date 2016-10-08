@@ -51,6 +51,13 @@ function Dropdown:toggleOptionDisplay()
     end
 end
 
+function Dropdown:setEnabled( enabled )
+    self.super:setEnabled( enabled )
+    if not enabled then
+        self:closeOptionDisplay()
+    end
+end
+
 function Dropdown:updateDisplayButton()
     self.optionDisplay.text = ( type( self.selectedOption ) == "table" and self.selectedOption[ 1 ] or self.prompt ) .. ( self.optionContainer.visible and self.openIndicator or self.closedIndicator )
     self.optionDisplay.width = #self.optionDisplay.text

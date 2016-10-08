@@ -51,7 +51,7 @@ function Dropdown:updateOptions()
     local options = self.options
     for i = 1, #options do
         local option = options[ i ][ 1 ]
-        if option ~= self.selectedOption then
+        if options[ i ] ~= self.selectedOption then
             cont:addNode(Button( option, 1, #cont.nodes + 1, self.width ):on("trigger", function( this )
                 self.selectedOption = options[ i ]
             end):linkProperties( self, "colour", "activeColour", "disabledColour", "backgroundColour", "activeBackgroundColour", "disabledBackgroundColour", "horizontalAlign" ))

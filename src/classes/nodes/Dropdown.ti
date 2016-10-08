@@ -2,15 +2,18 @@ class Dropdown extends Container {
     maxHeight = false;
 
     prompt = "Please select";
-
-    backgroundColour = colours.red;
-    colour = colours.lime;
-
     horizontalAlign = "left";
 
     openIndicator = " \31";
     closedIndicator = " \16";
 
+    backgroundColour = colours.lightBlue;
+    colour = colours.white;
+
+    activeBackgroundColour = colours.cyan;
+
+    selectedColour = colours.white;
+    selectedBackgroundColour = colours.grey;
     selectedOption = false;
     options = {};
 }
@@ -18,7 +21,7 @@ class Dropdown extends Container {
 function Dropdown:__init__( ... )
     self:super( ... )
 
-    self.optionDisplay = self:addNode( Button( self.prompt .. self.closedIndicator, 1, 1 ):linkProperties( self, "horizontalAlign" ):on("trigger", function() self:toggleOptionDisplay() end) )
+    self.optionDisplay = self:addNode( Button "":linkProperties( self, "horizontalAlign", "disabledColour", "disabledBackgroundColour", "activeColour", "activeBackgroundColour" ):on("trigger", function() self:toggleOptionDisplay() end) )
     self.optionContainer = self:addNode( ScrollContainer( 1, 2, self.width ):set{ xScrollAllowed = false } )
 
     self:closeOptionDisplay()
@@ -61,6 +64,11 @@ end
 function Dropdown:updateDisplayButton()
     self.optionDisplay.text = ( type( self.selectedOption ) == "table" and self.selectedOption[ 1 ] or self.prompt ) .. ( self.optionContainer.visible and self.openIndicator or self.closedIndicator )
     self.optionDisplay.width = #self.optionDisplay.text
+
+    self.optionDisplay:set {
+        colour = self.selectedColour,
+        backgroundColour = self.selectedBackgroundColour
+    }
 end
 
 function Dropdown:updateOptions()

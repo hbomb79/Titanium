@@ -1,0 +1,4 @@
+if not _G.Titanium then
+    dofile "bin/make.lua"
+    dofile "example/main.lua"
+end

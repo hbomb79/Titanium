@@ -1,0 +1,21 @@
+--[[
+    The GenericEvent class is spawned when an event that Titanium doesn't understand is caught in the Application event loop.
+
+    If you wish to spawn another sort of class when a certain event is caught, consider using `Event.static.bindEvent`.
+]]
+
+class GenericEvent extends Event
+
+--[[
+    @constructor
+    @desc Constructs the GenericEvent instance by storing all passed arguments in 'data'. The first index (1) of data is stored inside 'name'
+    @param <string - name>, [var - arg1], ...
+]]
+function GenericEvent:__init__( ... )
+    local args = { ... }
+
+    self.name = args[ 1 ]
+    self.main = self.name:upper()
+
+    self.data = args
+end

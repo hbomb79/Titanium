@@ -1,0 +1,92 @@
+--[[
+    The checkbox is a node that can be toggled on and off
+]]
+
+class Checkbox extends Node mixin MActivatable mixin MTogglable {
+    checkedMark = "x";
+    uncheckedMark = " ";
+
+    allowMouse = true;
+}
+
+--[[
+    @constructor
+    @desc Resolves arguments and calls super constructor
+    @param <number - X>, <number - Y>
+]]
+function Checkbox:__init__( ... )
+    self:resolve( ... )
+    self:super()
+
+    self:register("checkedMark", "uncheckedMark")
+end
+
+--[[
+    @instance
+    @desc Sets the checkbox to 'active' when clicked
+    @param <MouseEvent - event>, <boolean - handled>, <boolean - within>
+]]
+function Checkbox:onMouseClick( event, handled, within )
+    if not handled then
+        self.active = within
+
+        if within then
+            event.handled = true
+        end
+    end
+end
+
+--[[
+    @instance
+    @desc Sets the checkbox to inactive when the mouse button is released. If released on checkbox while active 'onToggle' callback is fired and the checkbox is toggled.
+    @param <MouseEvent - event>, <boolean - handled>, <boolean - within>
+]]
+function Checkbox:onMouseUp( event, handled, within )
+    if not handled and within and self.active then
+        self:toggle( event, handled, within )
+
+        event.handled = true
+    end
+
+    self.active = false
+end
+
+--[[
+    @instance
+    @desc If a label which specifies this node as its 'labelFor' paramater is clicked this function will be called, causing the checkbox to toggle
+    @param <LabelInstance - label>, <MouseEvent - event>, <boolean - handled>, <boolean - within>
+]]
+function Checkbox:onLabelClicked( label, event, handled, within )
+    self:toggle( event, handled, within, label )
+    event.handled = true
+end
+
+--[[
+    @instance
+    @desc Draws the checkbox to the canvas
+    @param [boolean - force]
+]]
+function Checkbox:draw( force )
+    local raw = self.raw
+    if raw.changed or force then
+        local toggled, tc, bg = self.toggled
+        if not self.enabled then
+            tc, bg = raw.disabledColour, raw.disabledBackgroundColour
+        elseif toggled then
+            tc, bg = raw.toggledColour, raw.toggledBackgroundColour
+        elseif self.active then
+            tc, bg = raw.activeColour, raw.activeBackgroundColour
+        end
+
+        raw.canvas:drawPoint( 1, 1, toggled and raw.checkedMark or raw.uncheckedMark, tc, bg )
+        raw.changed = false
+    end
+end
+
+configureConstructor( {
+    orderedArguments = { "X", "Y" },
+    argumentTypes = {
+        checkedMark = "string",
+        uncheckedMark = "string"
+    }
+}, true, true )

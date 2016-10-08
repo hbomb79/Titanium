@@ -1,0 +1,142 @@
+class PageContainer extends ScrollContainer {
+    pages = {};
+    selectedPage = false;
+}
+
+--[[
+    @instance
+    @desc Adds the page instance provided to the PageContainers 'pages'
+    @param <Page Instance - page>
+    @return [Page Instance - page]
+]]
+function PageContainer:addPage( page )
+    if not Titanium.typeOf( page, "Page", true ) then return error("Invalid page '"..tostring( page ).."'") end
+
+    self:removePage( page.name )
+
+    if self.application then
+        page.application = self.application
+    end
+    page.parent = self
+
+    table.insert( self.pages, page )
+
+    return page
+end
+
+--[[
+    @instance
+    @desc Removes the page (or page with name provided) from the PageContainers pages.
+    @param <Page Instance - page OR string - pageName>
+    @return [Page Instance - removedPage]
+]]
+function PageContainer:removePage( page )
+    local searchName = type( page ) == "string" and true or ( Titanium.typeOf( page, "Page", true ) and page or error("Invalid target '"..tostring( page ).."' to remove", 2) )
+    local pages = self.pages
+    for i = 1, #pages do
+        if ( searchName and pages[ i ].name == page ) or ( not searchName and pages[ i ] == page ) then
+            if self.selectedPage == page then
+                self.selectedPage = false
+            end
+
+            page.parent = nil
+            page.application = nil
+            return table.remove( pages, i )
+        end
+    end
+end
+
+--[[
+    @instance
+    @desc Selects the page with name 'name'. This pages is then used when drawing to the PageContainer canvas.
+    @param <string - name>
+    @return <boolean - success>
+]]
+function PageContainer:selectPage( name )
+    local pages = self.pages
+    for i = 1, #pages do
+        if pages[ i ].name == name then
+            self.selectedPage = pages[ i ]
+
+            return true
+        end
+    end
+
+    self.selectedPage = false
+    return false
+end
+
+function PageContainer:setSelectedPage( page )
+    self.selectedPage = page
+    self.changed = true
+
+    self:cacheContent()
+    self.yScroll = 0
+    self.xScroll = 0
+end
+
+function PageContainer:addNode( node )
+    if not Titanium.typeOf( node, "Page", true ) then
+        return error("PageContainer only supports 'Page' as direct child nodes, '"..tostring( node ).."' is not valid. To add content, add your nodes to a direct child page - not directly to the PageContainer")
+    end
+
+    self:addPage( node )
+
+    return node
+end
+
+--[[
+    @instance
+    @desc Allows the ScrollContainer.draw to fetch the nodes for the selected page, rather than using the 'nodes' table
+    @return <table - nodes>
+]]
+function PageContainer:getNodes()
+    if self.selectedPage then
+        return self.selectedPage.nodes
+    end
+
+    return {}
+end
+
+function PageContainer:setApplication( app )
+    self.application = app
+
+    local pages = self.pages
+    for i = 1, #pages do
+        pages[ i ].application = app
+    end
+end
+
+--[[
+    @instance
+    @desc Caches all nodes under this container (and child containers) in 'collatedNodes'.
+          This list maybe out of date if 'collate' isn't called before usage. Caching is not automatic.
+    @param [table - collated]
+]]
+function PageContainer:collate( collated )
+    local collated = collated or {}
+
+    local pages, page = self.pages
+    for p = 1, #pages do
+        collated[ #collated + 1 ] = pages[ p ]
+        local nodes, node = pages[ p ].nodes
+        for i = 1, #nodes do
+            node = nodes[ i ]
+            collated[ #collated + 1 ] = node
+
+            local collatedNode = node.collatedNodes
+            if collatedNode then
+                for i = 1, #collatedNode do
+                    collated[ #collated + 1 ] = collatedNode[ i ]
+                end
+            end
+        end
+    end
+
+    self.collatedNodes = collated
+end
+
+configureConstructor({
+    orderedArguments = { "X", "Y", "width", "height", "pages", "backgroundColour" },
+    argumentTypes = { pages = "table" }
+}, true)

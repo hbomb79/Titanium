@@ -1,0 +1,104 @@
+class Container extends Node mixin MNodeContainer {
+    allowMouse = true;
+    allowKey = true;
+    allowChar = true;
+
+    consumeAll = true;
+}
+
+--[[
+    @instance
+    @desc Constructs the Container node with the value passed. If a nodes table is passed each entry inside of it will be added to the container as a node
+    @param [number - X], [number - Y], [number - width], [number - height], [table - nodes]
+]]
+function Container:__init__( ... )
+    self:resolve( ... )
+
+    local toset = self.nodes
+    self.nodes = {}
+
+    if type( toset ) == "table" then
+        for i = 1, #toset do
+            self:addNode( toset[ i ] )
+        end
+    end
+
+    self:super()
+end
+
+--[[
+    @instance
+    @desc Returns true if the node given is visible inside of the container
+    @param <Node - node>, [number - width], [number - height]
+    @return <boolean - visible>
+]]
+function Container:isNodeInBounds( node, width, height )
+    local left, top = node.X, node.Y
+
+    return not ( ( left + node.width ) < 1 or left > ( width or self.width ) or top > ( height or self.height ) or ( top + node.height ) < 1 )
+end
+
+--[[
+    @instance
+    @desc Draws contained nodes to container canvas. Nodes are only drawn if they are visible inside the container
+    @param [boolean - force], [number - offsetX], [number - offsetY]
+]]
+function Container:draw( force, offsetX, offsetY )
+    if self.changed or force then
+        local canvas = self.canvas
+
+        local width, height = self.width, self.height
+        local nodes, node = self.nodes
+        local offsetX, offsetY = offsetX or 0, offsetY or 0
+
+        for i = 1, #nodes do
+            node = nodes[ i ]
+
+            if node.needsRedraw and node.visible then
+                node:draw( force )
+
+                node.canvas:drawTo( canvas, node.X + offsetX, node.Y + offsetY )
+                node.needsRedraw = false
+            end
+        end
+
+        self.changed = false
+    end
+end
+
+--[[
+    @instance
+    @desc Redirects all events to child nodes. Mouse events are adjusted to become relative to this container. Event handlers on Container are still fired if present
+    @param <Event - event>
+    @return <boolean - propagate>
+]]
+function Container:handle( eventObj )
+    if not self.super:handle( eventObj ) then return end
+
+    local clone
+    if eventObj.main == "MOUSE" then
+        clone = eventObj:clone( self )
+        clone.isWithin = clone.isWithin and eventObj:withinParent( self ) or false
+    end
+
+    self:shipEvent( clone or eventObj )
+    if clone and clone.isWithin and ( self.consumeAll or clone.handled ) then
+        eventObj.handled = true
+    end
+    return true
+end
+
+function Container:shipEvent( event )
+    local nodes = self.nodes
+    for i = #nodes, 1, -1 do
+        nodes[ i ]:handle( event )
+    end
+end
+
+
+configureConstructor({
+    orderedArguments = { "X", "Y", "width", "height", "nodes", "backgroundColour" },
+    argumentTypes = {
+        nodes = "table"
+    }
+}, true)

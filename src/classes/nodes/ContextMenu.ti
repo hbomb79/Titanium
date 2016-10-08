@@ -1,0 +1,206 @@
+--[[
+    The ContextMenu class allows developers to dynamically spawn context menus with content they can customize. This node takes the application bounds into account and ensures
+    the content doesn't spill out of view.
+--]]
+class ContextMenu extends Container {
+    static = {
+        allowedTypes = { "Button", "Label" }
+    };
+}
+
+--[[
+    @constructor
+    @desc Resolves constructor arguments and invokes super. The canvas of this node is also marked transparent, as the canvas of this node is a rectangular shape surrounding all subframes.
+    @param <table - structure>*
+
+    Note: Ordered arguments inherited from other classes not included
+]]
+function ContextMenu:__init__( ... )
+    self:resolve( ... )
+    self:super()
+
+    self.transparent = true
+end
+
+--[[
+    @instance
+    @desc Population of the context menu requires a parent to be present. Therefore, when the parent is set on a node we will populate the
+          context menu, instead of at instantiation
+    @param <Node - parent>
+]]
+function ContextMenu:setParent( parent )
+    self.parent = parent
+
+    if parent then
+        local frame = self:addNode( ScrollContainer() )
+        frame.frameID = 1
+
+        self:populate( frame, self.structure )
+        frame.visible = true
+    end
+end
+
+--[[
+    @instance
+    @desc Populates the context menu with the options specified in the 'structure' table.
+          Accounts for application edge by positioning the menu as to avoid the menu contents spilling out of view.
+    @param <MNodeContainer* - parent>, <table - structure>
+
+    Note: The 'parent' param must be a node that can contain other nodes.
+]]
+function ContextMenu:populate( frame, structure )
+    local queue, q, totalWidth, totalHeight, negativeX = { { frame, structure } }, 1, 0, 0, 1
+
+    while q <= #queue do
+        local menu, structure, width = queue[ q ][ 1 ], queue[ q ][ 2 ], 0
+        local rules, Y = {}, 0
+
+        for i = 1, #structure do
+            Y = Y + 1
+            local part = structure[ i ]
+            local partType = part[ 1 ]:lower()
+
+            if partType == "custom" then
+                --TODO: Custom menu entries
+            else
+                if partType == "menu" then
+                    local subframe = self:addNode( ScrollContainer( nil, menu.Y + Y - 1 ) )
+                    if not menu.subframes then
+                        menu.subframes = { subframe }
+                    else
+                        table.insert( menu.subframes, subframe )
+                    end
+
+                    subframe.visible = false
+
+                    local id = #self.nodes
+                    subframe.frameID = id
+                    menu:addNode( Button( part[ 2 ], 1, Y ):on( "trigger", function()
+                        local subframes = menu.subframes
+                        for i = 1, #subframes do
+                            if subframes[ i ] ~= subframe and subframes[ i ].visible then
+                                self:closeFrame( subframes[ i ].frameID )
+                            end
+                        end
+
+                        if subframe.visible then
+                            self:closeFrame( id )
+                        else
+                            subframe.visible = true
+                        end
+                    end ) )
+
+                    table.insert( queue, { subframe, part[ 3 ], menu } )
+                elseif partType == "rule" then
+                    rules[ #rules + 1 ] = Y
+                elseif partType == "button" then
+                    menu:addNode( Button( part[ 2 ], 1, Y ):on( "trigger", part[ 3 ] ) )
+                elseif partType == "label" then
+                    menu:addNode( Label( part[ 2 ], 1, Y ) )
+                end
+
+                if partType ~= "rule" then
+                    width = math.max( width, #part[ 2 ] )
+                end
+            end
+        end
+
+        if width == 0 then error "Failed to populate context menu. Content given has no detectable width (or zero). Cannot proceed without width greater than 0" end
+
+        for n = 1, #menu.nodes do menu.nodes[ n ].width = width end
+        for r = 1, #rules do menu:addNode( Label( ("-"):rep( width ), 1, rules[ r ] ) ) end
+
+        local parentMenu, widthOffset, relX = queue[ q ][ 3 ], 0, 0
+        if parentMenu then
+            widthOffset, relX = parentMenu.width, parentMenu.X
+        end
+
+        local spill = ( relX + widthOffset + width + self.X - 1 ) - self.parent.width
+        if spill > 0 then
+            menu.X = relX - ( parentMenu and width or spill )
+        else
+            menu.X = relX + widthOffset
+        end
+        negativeX = math.min( negativeX, menu.X )
+
+        menu.width, menu.height = width, Y - math.max( menu.Y + Y - self.parent.height, 0 )
+        menu:cacheContent()
+
+        totalWidth, totalHeight = totalWidth + menu.width, totalHeight + math.max( menu.height - ( parentMenu and parentMenu.Y or 0 ), 1 )
+        q = q + 1
+    end
+
+    if negativeX < 1 then
+        local nodes = self.nodes
+        for i = 1, #nodes do
+            nodes[ i ].X = nodes[ i ].X - negativeX + 1
+        end
+
+        self.X = self.X + negativeX
+    end
+
+    self.width = totalWidth
+    self.height = totalHeight
+end
+
+--[[
+    @instance
+    @desc A modified Container.shipEvent to avoid shipping events to hidden submenus.
+    @param <Event - event>
+]]
+function ContextMenu:shipEvent( event )
+    local nodes = self.nodes
+    for i = #nodes, 1, -1 do
+        if nodes[ i ].visible then
+            nodes[ i ]:handle( event )
+        end
+    end
+end
+
+--[[
+    @instance
+    @desc Invokes super (container) handle function. If event is a mouse event and it missed an open subframe the frames will be closed (if it was a CLICK) and the event will be unhandled
+          allowing further propagation and usage throughout the application.
+    @param <Event - eventObj>
+    @return <boolean - propagate>
+]]
+function ContextMenu:handle( eventObj )
+    if not self.super:handle( eventObj ) then return end
+
+    if eventObj.main == "MOUSE" and not self:isMouseColliding( eventObj ) then
+        if eventObj.sub == "CLICK" then self:closeFrame( 1 ) end
+        eventObj.handled = false
+    end
+
+    return true
+end
+
+--[[
+    @instance
+    @desc Closes the frame using 'frameID', which represents the position of the frame in the 'nodes' table
+    @param <number - frameID>
+]]
+function ContextMenu:closeFrame( frameID )
+    local framesToClose, i = { self.nodes[ frameID ] }, 1
+    while i <= #framesToClose do
+        local subframes = framesToClose[ i ].subframes or {}
+        for f = 1, #subframes do
+            if subframes[ f ].visible then
+                framesToClose[ #framesToClose + 1 ] = subframes[ f ]
+            end
+        end
+
+        framesToClose[ i ].visible = false
+        i = i + 1
+    end
+
+    self.changed = true
+end
+
+configureConstructor {
+    orderedArguments = { "structure" },
+    requiredArguments = { "structure" },
+    argumentTypes = {
+        structure = "table"
+    }
+}

@@ -1,0 +1,101 @@
+class RadioButton extends Checkbox {
+    static = {
+        groups = {}
+    };
+
+    group = false;
+}
+
+function RadioButton:__init__( ... )
+    self:super( ... )
+
+    if self.toggled then
+        RadioButton.deselectInGroup( self.group, self )
+    end
+end
+
+function RadioButton:select( ... )
+    RadioButton.deselectInGroup( self.group )
+
+    self.toggled = true
+    self:executeCallbacks "select"
+end
+
+function RadioButton:onMouseUp( event, handled, within )
+    if not handled and within and self.active then
+        self:select( event, handled, within )
+
+        event.handled = true
+    end
+
+    self.active = false
+end
+
+function RadioButton:onLabelClicked( label, event, handled, within )
+    self:select( event, handled, within, label )
+    event.handled = true
+end
+
+function RadioButton:setGroup( group )
+    if self.group then
+        RadioButton.removeFromGroup( self, self.group )
+    end
+    self.group = group
+
+    RadioButton.addToGroup( self, group )
+end
+
+function RadioButton.static.addToGroup( node, group )
+    local g = RadioButton.groups[ group ]
+    if type( g ) == "table" then
+        RadioButton.removeFromGroup( node, group )
+
+        table.insert( g, node )
+    else
+        RadioButton.groups[ group ] = { node }
+    end
+end
+
+function RadioButton.static.removeFromGroup( node, group )
+    local index = RadioButton.isInGroup( node, group )
+    if index then
+        table.remove( RadioButton.groups[ group ], index )
+
+        if #RadioButton.groups[ group ] == 0 then
+            RadioButton.groups[ group ] = nil
+        end
+    end
+end
+
+function RadioButton.static.isInGroup( node, group )
+    local g = RadioButton.groups[ group ]
+    for i = 1, #g do
+        if g[ i ] == node then return i end
+    end
+
+    return false
+end
+
+function RadioButton.static.deselectInGroup( group, target )
+    local g = RadioButton.groups[ group ]
+
+    for i = 1, #g do if ( not target or ( target and g[ i ] ~= target ) ) then g[ i ].toggled = false end end
+end
+
+function RadioButton.static.getValue( group )
+    local g = RadioButton.groups[ group ]
+    if g then
+        local radio
+        for i = 1, #g do
+            radio = g[ i ]
+            if radio.toggled then return radio.value end
+        end
+    end
+end
+
+configureConstructor({
+    orderedArguments = { "X", "Y", "group" },
+    requiredArguments = { "group" },
+    argumentTypes = { group = "string" },
+    useProxy = { "group" }
+}, true, true )

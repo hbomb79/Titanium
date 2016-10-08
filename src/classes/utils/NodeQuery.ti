@@ -1,0 +1,150 @@
+local function format( original, symbol, final )
+    local wrapper = type( original ) == "string" and '"' or ""
+    local finalWrapper = type( final ) == "string" and '"' or ""
+
+    return ("return %s%s%s %s %s%s%s"):format( wrapper, tostring( original ), wrapper, symbol, finalWrapper, tostring( final ), finalWrapper )
+end
+
+local function testCondition( node, condition )
+    local fn, err = loadstring( format( node[ condition.property ], condition.symbol, condition.value ) )
+    if fn then return fn() end
+
+    return fn()
+end
+
+local function queryScope( scope, section, results )
+    local last = {}
+
+    local node
+    for i = 1, #scope do
+        node = scope[ i ]
+
+        if ( not section.id or node.id == section.id ) and
+        ( not section.type or node.__type == section.type ) and
+        ( not section.classes or node:hasClass( section.classes ) ) then
+            local condition, failed = section.condition
+            if condition then
+                local conditionPart
+                for c = 1, #condition do
+                    if not testCondition( node, condition[ c ] ) then
+                        failed = true
+                        break
+                    end
+                end
+            end
+
+            if not failed then
+                last[ #last + 1 ] = node
+            end
+        end
+    end
+
+    return last
+end
+
+local function createScope( results, direct )
+    local scope = {}
+    for i = 1, #results do
+        local innerScope = direct and results[ i ].nodes or results[ i ].collatedNodes
+
+        for r = 1, #innerScope do
+            scope[ #scope + 1 ] = innerScope[ r ]
+        end
+    end
+
+    return scope
+end
+
+local function performQuery( query, base )
+    local lastResults, section = base
+
+    for i = 1, #query do
+        section = query[ i ]
+        lastResults = queryScope( createScope( lastResults, section.direct ), section )
+    end
+
+    return lastResults
+end
+
+class NodeQuery {
+    static = { supportedMethods = { "addClass", "removeClass", "setClass", "set", "animate", "on", "off" } };
+    result = false;
+
+    parent = false;
+}
+
+function NodeQuery:__init__( parent, queryString )
+    if not ( Titanium.isInstance( parent ) and type( queryString ) == "string" ) then
+        return error "Node query requires Titanium instance and string query"
+    end
+    self.parent = parent
+
+    self.parsedQuery = QueryParser( queryString ).query
+    self.result = self:query()
+
+    local sup = NodeQuery.supportedMethods
+    for i = 1, #sup do
+        self[ sup[ i ] ] = function( self, ... ) self:executeOnNodes( sup[ i ], ... ) end
+    end
+end
+
+--[[
+    @static
+    @desc Returns a table containing the nodes matching the conditions set in 'query'
+    @return <table - results>
+]]
+function NodeQuery:query()
+    local query, results = self.parsedQuery, {}
+    if type( query ) ~= "table" then return error( "Cannot perform query. Invalid query object passed" ) end
+
+    local parent = { self.parent }
+    for i = 1, #query do
+        local res = performQuery( query[ i ], parent )
+
+        for r = 1, #res do
+            results[ #results + 1 ] = res[ r ]
+        end
+    end
+
+    return results
+end
+
+--[[
+    @instance
+    @desc Returns true if the class 'class' exists on all nodes in the result set, false otherwise
+    @param <table|string - class>
+    @return <boolean - hasClass>
+]]
+function NodeQuery:hasClass( class )
+    local nodes = self.result
+    for i = 1, #nodes do
+        if not nodes[ i ]:hasClass( class ) then
+            return false
+        end
+    end
+
+    return true
+end
+
+function NodeQuery:each( fn )
+    local nodes = self.result
+    for i = 1, #nodes do
+        fn( nodes[ i ] )
+    end
+end
+
+--[[
+    @instance
+    @desc Iterates over each node in the result set, calling 'fnName' with arguments '...' on each
+    @param <string - fnName>, [vararg - ...]
+]]
+function NodeQuery:executeOnNodes( fnName, ... )
+    local nodes, node = self.result
+    for i = 1, #nodes do
+        node = nodes[ i ]
+
+        if node:can( fnName ) then
+            node[ fnName ]( node, ... )
+        end
+    end
+end

@@ -1,0 +1,84 @@
+abstract class MAnimationManager {
+    animations = {};
+    animationTimer = false;
+
+    time = false;
+}
+
+--[[
+    @desc When the animation timer ticks, update animations attached to this application and requeue the timer if more animations must occur.
+]]
+function MAnimationManager:updateAnimations()
+    local dt = os.clock() - self.time
+
+    local anims, anim = self.animations
+    for i = #anims, 1, -1 do
+        anim = anims[ i ]
+
+        if anim:update( dt ) then
+            if type( anim.promise ) == "function" then
+                anim:promise( self )
+            end
+
+            self:removeAnimation( anim )
+        end
+    end
+
+    self.timer = false
+    if #anims > 0 then self:restartAnimationTimer() end
+end
+
+--[[
+    @instance
+    @desc Adds an animation to this object, on update this animation will be updated
+    @param <Tween - animation>
+]]
+function MAnimationManager:addAnimation( animation )
+    if not Titanium.typeOf( animation, "Tween", true ) then
+        return error("Failed to add animation to manager. '"..tostring( animation ).."' is invalid, Tween instance expected")
+    end
+
+    self:removeAnimation( animation.name )
+    table.insert( self.animations, animation )
+
+    if not self.timer then
+        self:restartAnimationTimer()
+    end
+
+    return animation
+end
+
+--[[
+    @instance
+    @desc Removes an animation from this object, it will stop receiving updates from this object
+]]
+function MAnimationManager:removeAnimation( animation )
+    local searchName
+    if type( animation ) == "string" then
+        searchName = true
+    elseif not Titanium.typeOf( animation, "Tween", true ) then
+        return error("Failed to remove animation from manager. '"..tostring( animation ).."' is invalid, Tween instance expected")
+    end
+
+    local anims = self.animations
+    for i = 1, #anims do
+        if ( searchName and anims[ i ].name == animation ) or ( not searchName and anims[ i ] == animation ) then
+            return table.remove( anims, i )
+        end
+    end
+end
+
+--[[
+    @instance
+    @desc When an animation is queued the timer is created for 'time' (0.05). This replaces the currently running timer (if any).
+          The objects 'time' is then updated to the current time (os.clock)
+    @param [number - time]
+]]
+function MAnimationManager:restartAnimationTimer( time )
+    if self.timer then
+        os.cancelTimer( self.timer )
+    end
+
+    self.time = os.clock()
+    self.timer = os.startTimer( type( time ) == "number" and time or .05 )
+end

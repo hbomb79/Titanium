@@ -1,0 +1,123 @@
+--[[
+    @local
+    @desc Creates a table of arguments using the classes constructor configuration. This table is then unpacked (and the result returned)
+    @param <Class Base - class>, <table - target>
+    @return [var - args...]
+]]
+local function formArguments( class, target )
+    local reg = class:getRegistry()
+    local constructor, alias, args = reg.constructor, reg.alias, target.arguments
+    local returnArguments, trailingTable = {}, {}
+
+    if not constructor then return nil end
+    local argumentTypes = constructor.argumentTypes
+
+    local ordered, set, target = constructor.orderedArguments, {}
+    for i = 1, #ordered do
+        target = ordered[ i ]
+        returnArguments[ i ] = XMLParser.convertArgType( args[ target ], argumentTypes[ alias[ target ] or target ] )
+        set[ ordered[ i ] ] = true
+    end
+
+    for argName, argValue in pairs( args ) do
+        if not set[ argName ] then
+            trailingTable[ argName ] = XMLParser.convertArgType( argValue, argumentTypes[ alias[ argName ] or argName ] )
+        end
+    end
+
+    if next( trailingTable ) then
+        returnArguments[ #ordered + 1 ] = trailingTable
+    end
+
+    return unpack( returnArguments, 1, next(trailingTable) and #ordered + 1 or #ordered )
+end
+
+--[[
+    The TML class is used to parse an XML tree into Titanium nodes.
+]]
+
+class TML {
+    tree = false;
+    parent = false;
+}
+
+--[[
+    @constructor
+    @desc Constructs the TML instance by storing the parent and tree on 'self' and then parsing the tree.
+    @param <Class Instance - parent>, <table - tree>
+]]
+function TML:__init__( parent, source )
+    self.parent = parent
+    self.tree = XMLParser( source ).tree
+
+    self:parseTree()
+end
+
+--[[
+    @instance
+    @desc Parses 'self.tree' by creating and adding node instances to their parents.
+]]
+function TML:parseTree()
+    local queue = { { self.parent, self.tree } }
+
+    local i, parent, tree = 1
+    while i <= #queue do
+        parent, tree = queue[ i ][ 1 ], queue[ i ][ 2 ]
+
+        local target
+        for t = 1, #tree do
+            target = tree[ t ]
+
+            if parent:can "addTMLObject" then
+                local obj, children = parent:addTMLObject( target )
+                if obj and children then
+                    table.insert( queue, { obj, children } )
+                end
+            else
+                local classArg = target.arguments["class"]
+                if classArg then target.arguments["class"] = nil end
+
+                local itemClass = Titanium.getClass( target.type ) or error( "Failed to spawn XML tree. Failed to find class '"..target.type.."'" )
+                if not Titanium.typeOf( itemClass, "Node" ) and target.type ~= "Page" then --TODO: Remove this page exception when issue #28 is resolved
+                    error("Failed to spawn XML tree. Class '"..target.type.."' is not a valid node")
+                end
+
+                local itemInstance = itemClass( formArguments( itemClass, target ) )
+                if classArg then
+                    itemInstance.classes = type( itemInstance.classes ) == "table" and itemInstance.classes or {}
+                    for className in classArg:gmatch "%S+" do
+                        itemInstance.classes[ className ] = true
+                    end
+                end
+
+                if target.children then
+                    table.insert( queue, { itemInstance, target.children } )
+                end
+
+                if parent:can "addNode" then
+                    parent:addNode( itemInstance )
+                else
+                    return error("Failed to spawn XML tree. "..tostring( parent ).." cannot contain nodes.")
+                end
+            end
+        end
+
+        i = i + 1
+    end
+end
+
+--[[
+    @static
+    @desc Reads the data from 'path' and creates a TML instance with the contents as the source (arg #2)
+    @param <Class Instance - parent>, <string - path>
+    @return <TML Instance - instance>
+]]
+function TML.static.fromFile( parent, path )
+    if not fs.exists( path ) then return error( "Path "..tostring( path ).." cannot be found" ) end
+
+    local h = fs.open( path, "r" )
+    local content = h.readAll()
+    h.close()
+
+    return TML( parent, content )
+end

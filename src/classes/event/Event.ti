@@ -1,0 +1,54 @@
+abstract class Event {
+    static = {
+        matrix = {}
+    }
+}
+
+--[[
+    @instance
+    @desc Returns true if the event name (index '1' of data) matches the parameter 'event' provided
+    @param <string - event>
+    @return <boolean - eq>
+]]
+function Event:is( event )
+    return self.name == event
+end
+
+--[[
+    @instance
+    @desc Sets the 'handled' paramater to true. This indicates the event has been used and should not be used.
+]]
+function Event:setHandled( handled )
+    self.raw.handled = handled
+end
+
+--[[
+    @static
+    @desc Instantiates an event object if an entry for that event type is present inside the event matrix.
+    @param <string - eventName>, [vararg - eventData]
+    @return <Instance*>
+
+    *Note: The type of instance is variable. If an entry is present inside the matrix that class will be
+           instantiated, otherwise a 'GenericEvent' instance will be returned.
+]]
+function Event.static.spawn( name, ... )
+    return ( Event.matrix[ name ] or GenericEvent )( name, ... )
+end
+
+--[[
+    @static
+    @desc Adds an entry to the event matrix. When an event named 'name' is caught, the class 'clasType' will be instantiated
+    @param <string - name>, <string - classType>
+]]
+function Event.static.bindEvent( name, classType )
+    Event.matrix[ name ] = Titanium.getClass( classType ) or error( "Class '"..tostring( classType ).."' cannot be found" )
+end
+
+--[[
+    @static
+    @desc Removes an entry from the event matrix.
+    @param <string - name>
+]]
+function Event.static.unbindEvent( name )
+    Event.matrix[ name ] = nil
+end

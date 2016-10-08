@@ -1,0 +1,102 @@
+--[[
+    A Button is a node that can be clicked to trigger a callback.
+    The button can containtext which can span multiple lines, however if too much text is entered it will be truncated to fit the button dimensions.
+
+    If buttonLock is 1 or 2, the mouse button used to click the button must match the value. Eg: If self.buttonLock == 1, the mouse button must be 1 when clicked to effect the button.
+    If the buttonLock value is 0, any button value will be accepted
+]]
+
+class Button extends Node mixin MTextDisplay mixin MActivatable {
+    allowMouse = true;
+    buttonLock = 1;
+}
+
+--[[
+    @constructor
+    @desc Accepts button arguments and resolves them.
+    @param <string - text>, [number - X], [number - Y], [number - width], [number - height]
+]]
+function Button:__init__( ... )
+    self:resolve( ... )
+    self:super()
+
+    self:register("width", "height", "buttonLock")
+end
+
+--[[
+    @instance
+    @desc Sets the button to 'active' when the button is clicked with the valid mouse button (self.buttonLock)
+    @param <MouseEvent - event>, <boolean - handled>, <boolean - within>
+]]
+function Button:onMouseClick( event, handled, within )
+    if not handled and within and ( self.buttonLock == 0 or event.button == self.buttonLock ) then
+        self.active, event.handled = true, true
+    end
+end
+
+--[[
+    @instance
+    @desc Sets the button to inactive when the mouse button is released. If released on button while active 'onTrigger' callback is fired.
+    @param <MouseEvent - event>, <boolean - handled>, <boolean - within>
+]]
+function Button:onMouseUp( event, handled, within )
+    if within and not handled and self.active then
+        event.handled = true
+        self:executeCallbacks "trigger"
+    end
+
+    self.active = false
+end
+
+--[[
+    @instance
+    @desc Draws the text to the node canvas
+    @param [boolean - force]
+]]
+function Button:draw( force )
+    local raw = self.raw
+    if raw.changed or force then
+        local tc, bg
+        if not self.enabled then
+            bg, tc = raw.disabledBackgroundColour, raw.disabledColour
+        elseif self.active then
+            bg, tc = raw.activeBackgroundColour, raw.activeColour
+        end
+
+        raw.canvas:clear( bg )
+        self:drawText( bg, tc )
+
+        raw.changed = false
+    end
+end
+
+--[[
+    @instance
+    @desc Sets the text of the button and then wraps the new text for display.
+    @param <string - text>
+]]
+function Button:setText( text )
+    if self.text == text then return end
+
+    self.text = text
+    self.changed = true
+    self:wrapText()
+end
+
+--[[
+    @instance
+    @desc Sets the width of the button and then re-wraps the text to fit in the dimensions.
+    @param <number - width>
+]]
+function Button:setWidth( width )
+    self.super:setWidth( width )
+    self:wrapText()
+end
+
+configureConstructor {
+    orderedArguments = { "text" },
+    requiredArguments = { "text" },
+    argumentTypes = {
+        buttonLock = "number"
+    }
+}

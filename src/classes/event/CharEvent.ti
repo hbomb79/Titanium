@@ -1,0 +1,11 @@
+class CharEvent extends Event {
+    main = "CHAR";
+    char = false;
+}
+
+function CharEvent:__init__( name, char )
+    self.name = name
+    self.char = char
+
+    self.data = { name, char }
+end

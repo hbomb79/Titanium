@@ -1,0 +1,191 @@
+--[[
+    A Node is an object which makes up the applications graphical user interface (GUI).
+
+    Objects such as labels, buttons and text inputs are nodes.
+--]]
+
+abstract class Node extends Component mixin MThemeable mixin MCallbackManager {
+    static = {
+        eventMatrix = {
+            mouse_click = "onMouseClick",
+            mouse_drag = "onMouseDrag",
+            mouse_up = "onMouseUp",
+            mouse_scroll = "onMouseScroll",
+
+            key = "onKeyDown",
+            key_up = "onKeyUp",
+            char = "onChar"
+        },
+        anyMatrix = {
+            MOUSE = "onMouse",
+            KEY = "onKey"
+        }
+    };
+
+    disabledColour = 128;
+    disabledBackgroundColour = 256;
+
+    allowMouse = false;
+    allowKey = false;
+    allowChar = false;
+    useAnyCallbacks = false;
+
+    enabled = true;
+    parentEnabled = true;
+
+    visible = true;
+
+    needsRedraw = true;
+    parent = false;
+}
+
+--[[
+    @constructor
+    @desc Creates a NodeCanvas (bound to self) and stores it inside of `self.canvas`. This canvas is drawn to the parents canvas at draw time.
+]]
+function Node:__init__()
+    self:register( "X", "Y", "colour", "backgroundColour", "enabled", "visible", "disabledColour", "disabledBackgroundColour" )
+
+    if not self.canvas then self.raw.canvas = NodeCanvas( self ) end
+end
+
+--[[
+    @constructor
+    @desc Finishes construction by hooking the theme manager into the node.
+]]
+function Node:__postInit__()
+    self:hook()
+end
+
+function Node:setParentEnabled( enabled )
+    self.parentEnabled = enabled
+    self.changed = true
+end
+
+--[[
+    @instance
+    @desc Sets the enabled property of the node to 'enabled'. Sets node's 'changed' to true.
+    @param <boolean - enabled>
+]]
+function Node:setEnabled( enabled )
+    self.enabled = enabled
+    self.changed = true
+end
+
+--[[
+    TODO
+]]
+function Node:getEnabled()
+    if not self.parentEnabled then
+        return false
+    end
+
+    return self.enabled
+end
+
+--[[
+    TODO
+]]
+function Node:setParent( parent )
+    self.parent = parent
+    self.changed = true
+
+    if parent then
+        self.parentEnabled = Titanium.typeOf( parent, "Application" ) or parent.enabled
+    end
+end
+
+--[[
+    @instance
+    @desc Sets the node to visible/invisible depending on 'visible' paramater
+    @param <boolean - visible>
+]]
+function Node:setVisible( visible )
+    self.visible = visible
+    self.changed = true
+    if not visible then
+        self:queueAreaReset()
+    end
+end
+
+--[[
+    @instance
+    @desc Sets the changed state of this node to 'changed'. If 'changed' then the parents of this node will also have changed set to true.
+    @param <boolean - changed>
+]]
+function Node:setChanged( changed )
+    self.changed = changed
+
+    if changed then
+        local parent = self.parent
+        if parent and not parent.changed then
+            parent.changed = true
+        end
+
+        self.needsRedraw = true
+    end
+end
+
+--[[
+    @instance
+    @desc Handles events by triggering methods on the node depending on the event object passed
+    @param <Event Instance* - eventObj>
+    @return <boolean - propagate>
+
+    *Note: The event instance passed can be of variable type, ideally it extends 'Event' so that required methods are implemented on the eventObj.
+]]
+function Node:handle( eventObj )
+    if not self.enabled then return false end
+
+    local main, sub, within = eventObj.main, eventObj.sub, false
+    local handled = eventObj.handled
+
+    if main == "MOUSE" then
+        if self.allowMouse then
+            within = eventObj.isWithin and eventObj:withinParent( self ) or false
+        else return end
+    elseif ( main == "KEY" and not self.allowKey ) or ( main == "CHAR" and not self.allowChar ) then
+        return
+    end
+
+    local fn = Node.eventMatrix[ eventObj.name ] or "onEvent"
+    if self:can( fn ) then
+        self[ fn ]( self, eventObj, handled, within )
+    end
+
+    if self.useAnyCallbacks then
+        local anyFn = Node.anyMatrix[ main ]
+        if self:can( anyFn ) then
+            self[ anyFn ]( self, eventObj, handled, within )
+        end
+    end
+
+    return true
+end
+
+--[[
+    @instance
+    @desc Returns the absolute X, Y position of a node rather than its position relative to it's parent.
+    @return <number - X>, <number - Y>
+]]
+function Node:getAbsolutePosition()
+    local parent, application = self.parent, self.application
+    if parent then
+        if parent == application then
+            return -1 + application.X + self.X, -1 + application.Y + self.Y
+        end
+
+        local pX, pY = self.parent:getAbsolutePosition()
+        return -1 + pX + self.X, -1 + pY + self.Y
+    else return self.X, self.Y end
+end
+
+function Node:animate( ... )
+    if not self.application then return end
+
+    return self.application:addAnimation( Tween( self, ... ) )
+end
+
+configureConstructor {
+    argumentTypes = { enabled = "boolean", visible = "boolean", disabledColour = "colour", disabledBackgroundColour = "colour" }
+}

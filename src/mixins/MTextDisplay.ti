@@ -1,0 +1,105 @@
+--[[
+    This mixin is designed to be used by nodes that wish to display formatted text (e.g: Button, TextContainer).
+    The 'drawText' function should be called from the node during draw time.
+]]
+
+local string_len, string_find, string_sub, string_gsub, string_match = string.len, string.find, string.sub, string.gsub, string.match
+
+abstract class MTextDisplay {
+    lineConfig = {
+        lines = false;
+        alignedLines = false;
+        offsetY = 0;
+    };
+
+    verticalPadding = 0;
+    horizontalPadding = 0;
+
+    verticalAlign = "top";
+    horizontalAlign = "left";
+}
+
+--[[
+    @constructor
+    @desc Registers properties used by this class with the theme handler if the object mixes in 'MThemeable'
+]]
+function MTextDisplay:MTextDisplay()
+    if Titanium.mixesIn( self, "MThemeable" ) then
+        self:register( "text", "verticalAlign", "horizontalAlign", "verticalPadding", "horizontalPadding" )
+    end
+end
+
+--[[
+    @instance
+    @desc Generates a table of text lines by wrapping on newlines or when the line gets too long.
+]]
+function MTextDisplay:wrapText()
+    local text, width, lines = self.text, self.width, {}
+
+    while text and string_len( text ) > 0 do
+        local section, pre, post = string_sub( text, 1, width )
+
+        if string_find( section, "\n" ) then
+            pre, post = string_match( text, "(.-)\n%s*(.*)$" )
+        elseif string_len( text ) <= width then
+            pre = text
+        else
+            local lastSpace = string_find( section, "%s[%S]*$" )
+
+            pre = lastSpace and string_gsub( string_sub( text, 1, lastSpace - 1 ), "%s+$", "" ) or section
+            post = lastSpace and string_sub( text, lastSpace + 1 ) or string_sub( text, width + 1 )
+        end
+
+        lines[ #lines + 1 ], text = pre, post
+    end
+
+    self.lineConfig.lines = lines
+end
+
+--[[
+    @instance
+    @desc Uses 'wrapText' to generate the information required to draw the text to the canvas correctly.
+]]
+function MTextDisplay:drawText( bg, tc )
+    local lines = self.lineConfig.lines
+    if not lines then
+        self:wrapText()
+        lines = self.lineConfig.lines
+    end
+
+    local vPadding, hPadding = self.verticalPadding, self.horizontalPadding
+
+    local yOffset, xOffset = vPadding, hPadding
+    local vAlign, hAlign = self.verticalAlign, self.horizontalAlign
+    local width, height = self.width, self.height
+
+    if vAlign == "centre" then
+        yOffset = math.floor( ( height / 2 ) - ( #lines / 2 ) + .5 ) + vPadding
+    elseif vAlign == "bottom" then
+        yOffset = height - #lines - vPadding
+    end
+
+    local canvas, line = self.canvas
+    for i = 1, #lines do
+        local line, xOffset = lines[ i ], hPadding
+        if hAlign == "centre" then
+            xOffset = math.floor( width / 2 - ( #line / 2 ) + .5 )
+        elseif hAlign == "right" then
+            xOffset = width - #line - hPadding + 1
+        end
+
+        canvas:drawTextLine( xOffset + 1, i + yOffset, line, tc, bg )
+    end
+end
+
+configureConstructor {
+    argumentTypes = {
+        verticalPadding = "number",
+        horizontalPadding = "number",
+
+        verticalAlign = "string",
+        horizontalAlign = "string",
+
+        text = "string"
+    }
+}

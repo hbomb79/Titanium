@@ -1,0 +1,53 @@
+--[[
+    A small mixin to avoid rewriting code used by nodes that can be toggled on or off.
+]]
+
+abstract class MTogglable {
+    toggled = false;
+
+    toggledColour = colours.red;
+    toggledBackgroundColour = colours.white;
+}
+
+--[[
+    @constructor
+    @desc Registers properties used by this class with the theme handler if the object mixes in 'MThemeable'
+]]
+function MTogglable:MTogglable()
+    if Titanium.mixesIn( self, "MThemeable" ) then
+        self:register("toggled", "toggledColour", "toggledBackgroundColour")
+    end
+end
+
+--[[
+    @instance
+    @desc 'toggled' to the opposite of what it currently is (toggles)
+]]
+function MTogglable:toggle( ... )
+    self:setToggled( not self.toggled, ... )
+end
+
+--[[
+    @instance
+    @desc Sets toggled to 'toggled' and changed to 'true' when the 'toggled' param doesn't match the current value of toggled.
+    @param <boolean - toggled>, [vararg - onToggleArguments]
+]]
+function MTogglable:setToggled( toggled, ... )
+    if self.toggled ~= toggled then
+        self.raw.toggled = toggled
+        self.changed = true
+
+        self:executeCallbacks( "toggle", ... )
+    end
+end
+
+configureConstructor {
+    argumentTypes = {
+        toggled = "boolean",
+        toggledColour = "colour",
+        toggledBackgroundColour = "colour"
+    }
+} alias {
+    toggledColor = "toggledColour",
+    toggledBackgroundColor = "toggledBackgroundColour"
+}

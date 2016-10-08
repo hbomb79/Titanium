@@ -1,0 +1,361 @@
+--[[
+    The MThemeable mixin facilitates the use of themes on objects.
+    It allows properties to be registered allowing the object to monitor property changes and apply them correctly.
+
+    The mixin stores all properties set directly on the object in `mainValues`. These values are prioritised over values from themes unless the theme rule is designated as 'important'.
+
+    This mixin also handles property links. `links` contains information about all the links that this object has made, `dependencyLinks` contains information about other
+    objects that have linked properties on this object. When a property is changed here, `dependencyLinks` should be notified. Likewise, this object will be notified of
+    a property change on any objects linked to.
+]]
+
+abstract class MThemeable {
+    isUpdating = false;
+    hooked = false;
+
+    links = {};
+    linkedValues = {};
+    dependencyLinks = {};
+
+    properties = {};
+    classes = {};
+    applicableRules = {};
+
+    mainValues = {};
+    defaultValues = {};
+    setterBackup = {};
+}
+
+--[[
+    @instance
+    @desc Registers the properties provided. These properties are monitored for changes.
+    @param <string - property>, ...
+]]
+function MThemeable:register( ... )
+    if self.hooked then return error "Cannot register new properties while hooked. Unhook the theme handler before registering new properties" end
+
+    local args = { ... }
+    for i = 1, #args do
+        self.properties[ args[ i ] ] = true
+    end
+end
+
+--[[
+    @instance
+    @desc Unregisters properties provided
+    @param <string - property>, ...
+]]
+function MThemeable:unregister( ... )
+    if self.hooked then return error "Cannot unregister properties while hooked. Unhook the theme handler before unregistering properties" end
+
+    local args = { ... }
+    for i = 1, #args do
+        self.properties[ args[ i ] ] = nil
+    end
+end
+
+--[[
+    @instance
+    @desc Links a dependency for property and target provided. When the property given is changed, 'target' will be notified
+    @param <string - property>, <MThemeable - target>
+]]
+function MThemeable:linkDependency( property, target )
+    if not self.dependencyLinks[ property ] then
+        self.dependencyLinks[ property ] = {}
+    end
+
+    table.insert( self.dependencyLinks[ property ], target )
+end
+
+--[[
+    @instance
+    @desc Unlinks dependencies for property provided. If target is provided only dependencies from that target will be unlinked
+    @param <string - property>, [MThemeable - target]
+]]
+function MThemeable:unlinkDependency( property, target )
+    local dependencies = self.dependencyLinks[ property ]
+    if not dependencies then return end
+
+    for i = #dependencies, 1, -1 do
+        local dependency = dependencies[ i ]
+
+        if ( target and dependency == target ) or not target then
+            table.remove( dependencies, i )
+        end
+    end
+end
+
+--[[
+    @instance
+    @desc Destroys the connection to linked objects in reverse (i.e. depended upon -> depended by, instead of depended by -> depended on)
+]]
+function MThemeable:destroyDependencies( type )
+    local function destroy( property, dependencies )
+        for i = 1, #dependencies do
+            dependencies[ i ]:unlinkProperty( property, true )
+        end
+    end
+
+    if not type then
+        for property, depends in pairs( self.dependencyLinks ) do
+            destroy( property, depends )
+        end
+
+        self.dependencyLinks = {}
+    else
+        destroy( type, self.dependencyLinks[ type ] )
+        self.dependencyLinks[ type ] = nil
+    end
+end
+
+--[[
+    @instance
+    @desc Called automatically when a linked property is updated on it's target. Sets the value of the property to match target unless a value
+          is manually set on the object - in which case that value is use (much like theme updates)
+]]
+function MThemeable:updateLinks( ... )
+    local args, links = { ... }, self.links
+    for i = 1, #args do
+        local arg = args[ i ]
+        local link = links[ arg ] or error("Failed to update links. No link exists for property '"..arg.."'", 2)
+
+        self.linkedValues[ arg ] = link[ arg ]
+    end
+end
+
+--[[
+    @instance
+    @desc Configures links so that properties '...' from target will be linked. 'target' will be notified of the link and will
+          notify 'self' of property changes.
+    @param <MThemeable - target>, <vararg - properties>
+]]
+function MThemeable:linkProperties( target, ... )
+    local properties = { ... }
+    for i = 1, #properties do
+        if self.links[ properties[ i ] ] then
+            return error("Failed to link properties. Cannot link property '"..properties[ i ].."' more than once. Unlink this property before linking again.")
+        end
+
+        target:linkDependency( properties[ i ], self )
+        self.links[ properties[ i ] ] = target
+    end
+
+    self:updateLinks( ... )
+    return self
+end
+
+--[[
+    @instance
+    @desc Destroys the link for 'property' if one is present
+    @param <string - property>
+]]
+function MThemeable:unlinkProperty( property, manual )
+    local link = self.links[ property ]
+    if not link then return end
+
+    if not manual then
+        link:unlinkDependency( property, self )
+    end
+    self.links[ property ] = nil
+end
+
+--[[
+    @instance
+    @desc Unlinks all properties given in vararg. If no arguments are given, all links are removed
+    @param [vararg - ...]
+]]
+function MThemeable:unlinkProperties( ... )
+    local args = { ... }
+
+    if #args == 0 then
+        for property, link in pairs( self.links ) do
+            link:unlinkDependency( property, self )
+        end
+
+        self.links = {}
+    else
+        for i = 1, #args do
+            self:unlinkProperty( args[ i ], target )
+        end
+    end
+end
+
+--[[
+    @instance
+    @desc Hooks into the instance by changing setters of registered properties so that the theme manager is notified of the change.
+]]
+function MThemeable:hook()
+    if self.hooked then return error "Failed to hook theme handler. Already hooked" end
+
+    for property in pairs( self.properties ) do
+        local setterName, setterFn = Titanium.getSetterName( property )
+        if self:can( setterName ) then
+            self.setterBackup[ property ] = self.raw[ setterName ]
+            setterFn = self.raw[ setterName ]
+        end
+
+        self[ setterName ] = function( instance, value )
+            local newValue = value
+            if not self.isUpdating then
+                self.mainValues[ property ] = value
+
+                newValue = self:fetchPropertyValue( property )
+            end
+
+            if setterFn then
+                setterFn( self, instance, newValue )
+            else self[ property ] = newValue end
+
+            local depends = self.dependencyLinks[ property ]
+            if depends then
+                for i = 1, #depends do depends[ i ].linkedValues[ property ] = newValue end
+            end
+        end
+
+        self[ self.__resolved[ property ] and "mainValues" or "defaultValues" ][ property ] = self[ property ]
+    end
+    self.hooked = true
+end
+
+--[[
+    @instance
+    @desc Reverses the hooking process by restoring the old setters (stored on hook)
+]]
+function MThemeable:unhook()
+    if not self.hooked then return error "Failed to unhook theme handler. Already unhooked" end
+
+    local setters, setter = self.setterBackup
+    for property in pairs( self.properties ) do
+        setter = setters[ property ]
+        if setter then self.raw[ Titanium.getSetterName( property ) ] = setter end
+    end
+
+    self.setterBackup, self.hooked = {}, false
+end
+
+function MThemeable:fetchPropertyValue( property )
+    local newValue = self.mainValues[ property ]
+    if newValue == nil then
+        newValue = self.linkedValues[ property ]
+    end
+
+    local requireImportant = newValue ~= nil
+
+    local rules, r = self.applicableRules
+    for i = 1, #rules do
+        r = rules[ i ]
+        if r.property == property and ( not requireImportant or r.important ) then
+            newValue = r.value
+
+            if r.important then requireImportant = true end
+        end
+    end
+
+    return newValue
+end
+
+--[[
+    @instance
+    @desc Fetches the value from the application by checking themes for valid rules. If a theme value is found it is applied directly (this does trigger the setter)
+    @param <string - property>
+]]
+function MThemeable:updateProperty( property )
+    if not self.properties[ property ] then
+        return error( "Failed to update property '"..tostring( property ).."'. Property not registered" )
+    end
+
+
+    local new = self:fetchPropertyValue( property )
+    self.isUpdating = true
+    if new then
+        self[ property ] = new
+    elseif self[ property ] ~= self.mainValues[ property ] then --TODO: Check if this elseif is needed, or if simply else will suffice
+        --TODO: Investigate the use of this statement to ensure 'false' main values are not being overriden by the default values
+        self[ property ] = self.mainValues[ property ] or self.defaultValues[ property ]
+    end
+
+    self.isUpdating = false
+end
+
+function MThemeable:queueUpdate()
+    self.needsRuleUpdate = true
+end
+
+--[[
+    @instance
+    @desc Updates each registered property
+]]
+function MThemeable:updateProperties()
+    if self.needsRuleUpdate and self.application then
+        self.needsRuleUpdate = false
+        self.application:cacheApplicableRulesForType( self.__type )
+    end
+
+    for property in pairs( self.properties ) do self:updateProperty( property ) end
+end
+
+--[[
+    @instance
+    @desc Adds class 'class' and updated TML properties
+    @param <string - class>
+]]
+function MThemeable:addClass( class )
+    self.classes[ class ] = true
+    self:queueUpdate()
+    self:updateProperties()
+end
+
+--[[
+    @instance
+    @desc Removes class 'class' and updated TML properties
+    @param <string - class>
+]]
+function MThemeable:removeClass( class )
+    self.classes[ class ] = nil
+    self:queueUpdate()
+    self:updateProperties()
+end
+
+--[[
+    @instance
+    @desc Shortcut method to set class if 'has' is truthy or remove it otherwise (updates properties too)
+    @param <string - class>, [var - has]
+]]
+function MThemeable:setClass( class, has )
+    self.classes[ class ] = has and true or nil
+    self:queueUpdate()
+    self:updateProperties()
+end
+
+--[[
+    @instance
+    @desc Returns true if:
+          - Param passed is a table and all values inside the table are set as classes on this object
+          - Param is string and this object has that class
+    @param <string|table - class>
+    @return <boolean - has>
+]]
+function MThemeable:hasClass( t )
+    if type( t ) == "string" then
+        return self.classes[ t ]
+    elseif type( t ) == "table" then
+        for i = 1, #t do
+            if not self.classes[ t[ i ] ] then
+                return false
+            end
+        end
+
+        return true
+    else
+        return error("Invalid target '"..tostring( t ).."' for class check")
+    end
+end
+
+function MThemeable:onThemeUpdate()
+    self:updateProperties()
+end
+
+function MThemeable:onRemove( parent )
+    self:destroyDependencies()
+    self:unlinkProperties()
+end

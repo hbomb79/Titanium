@@ -1,0 +1,78 @@
+--[[
+    The TermCanvas is an object that draws it's buffer directly to the ComputerCraft term object, unlike the NodeCanvas.
+
+    The TermCanvas should be used by high level objects, like 'Application'. Nodes should not be drawing directly to the term object.
+    If your object needs to draw to the canvas this class should be used.
+
+    Unlike NodeCanvas, TermCanvas has no drawing functions as it's purpose is not to generate the buffer, just draw it to the term object.
+    Nodes generate their content and store it in your buffer (and theirs aswell).
+--]]
+
+local hex = {}
+for i = 0, 15 do
+    hex[2 ^ i] = ("%x"):format( i ) -- %x = lowercase hexadecimal
+    hex[("%x"):format( i )] = 2 ^ i
+end
+
+local tableConcat = table.concat
+
+class TermCanvas extends Canvas {
+    static = { hex = hex };
+}
+
+function TermCanvas:__init__( owner )
+    self:super( owner )
+
+    self.raw.X = owner.raw.X
+    self.raw.Y = owner.raw.Y
+end
+
+function TermCanvas:draw( force )
+    local owner = self.owner
+    local buffer, last = self.buffer, self.last
+    local X, Y, width, height = owner.X, owner.Y - 1, self.width, self.height
+    local colour, backgroundChar, backgroundTextColour, backgroundColour = self.colour, self.backgroundChar, self.backgroundTextColour, self.backgroundColour
+
+    local position, px, lpx = 1
+    for y = 1, height do
+        local changed
+
+        for x = 1, width do
+            px, lpx = buffer[ position ], last[ position ]
+
+            if force or not lpx or ( px[ 1 ] ~= lpx[ 1 ] or px[ 2 ] ~= lpx[ 2 ] or px[ 3 ] ~= lpx[ 3 ] ) then
+                changed = true
+
+                position = position - ( x - 1 )
+                break
+            end
+
+            position = position + 1
+        end
+
+        if changed then
+            local rowText, rowColour, rowBackground, pixel = {}, {}, {}
+
+            for x = 1, width do
+                pixel = buffer[ position ]
+                last[ position ] = pixel
+
+                local c, fg, bg = pixel[1], pixel[2], pixel[3]
+
+                rowColour[ x ] = hex[ type(fg) == "number" and fg ~= 0 and fg or colour or 1 ]
+                rowBackground[ x ] = hex[ type(bg) == "number" and bg ~= 0 and bg or backgroundColour or 32768 ]
+                if c then
+                    rowText[ x ] = c or backgroundChar or " "
+                else
+                    rowText[ x ] = backgroundChar or " "
+                    rowColour[ x ] = hex[ backgroundTextColour or 1 ]
+                end
+
+                position = position + 1
+            end
+
+            term.setCursorPos( X, y + Y )
+            term.blit( tableConcat( rowText ), tableConcat( rowColour ), tableConcat( rowBackground ) )
+        end
+    end
+end

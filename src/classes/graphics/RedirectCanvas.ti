@@ -1,0 +1,160 @@
+--[[
+    The RedirectCanvas is a class to be used by nodes that wish to redirect the term object. This canvas provides a terminal redirect and keeps track
+    of the terminals properties set inside the wrapped program (via the term methods).
+
+    This allows emulation of a shell program inside of Titanium without causing visual issues due to the shell program drawing directly to the terminal and not
+    through Titaniums canvas system.
+--]]
+
+local stringLen, stringSub = string.len, string.sub
+local isColour = term.isColour()
+
+local function testColour( col )
+    if not isColour and ( col ~= 1 or col ~= 32768 or col ~= 256 or col ~= 128 ) then
+        error "Colour not supported"
+    end
+
+    return true
+end
+
+class RedirectCanvas extends NodeCanvas
+
+function RedirectCanvas:__init__( ... )
+    self:resetTerm()
+    self:super( ... )
+end
+
+function RedirectCanvas:resetTerm()
+    self.tX, self.tY, self.tColour, self.tBackgroundColour, self.tCursor = 1, 1, 1, 32768, false;
+    self:clear( 32768, true )
+end
+
+--[[
+    @instance
+    @desc Returns a table compatible with `term.redirect`
+    @return <table - redirect>
+]]
+function RedirectCanvas:getTerminalRedirect()
+    local redirect = {}
+
+    function redirect.write( text )
+        text = tostring( text )
+        local tc, bg, tX, tY = self.tColour, self.tBackgroundColour, self.tX, self.tY
+        local buffer, position = self.buffer, self.width * ( tY - 1 ) + tX
+
+        for i = 1, math.min( stringLen( text ), self.width - tX + 1 ) do
+            buffer[ position ] = { stringSub( text, i, i ), tc, bg }
+            position = position + 1
+        end
+
+        self.tX = tX + stringLen( text )
+    end
+
+    function redirect.blit( text, colour, background )
+        if stringLen( text ) ~= stringLen( colour ) or stringLen( text ) ~= stringLen( background ) then
+            return error "blit arguments must be the same length"
+        end
+
+        local tX, hex = self.tX, TermCanvas.static.hex
+        local buffer, position = self.buffer, self.width * ( self.tY - 1 ) + tX
+
+        for i = 1, math.min( stringLen( text ), self.width - tX + 1 ) do
+            buffer[ position ] = { stringSub( text, i, i ), hex[ stringSub( colour, i, i ) ], hex[ stringSub( background, i, i ) ] }
+            position = position + 1
+        end
+
+        self.tX = tX + stringLen( text )
+    end
+
+    function redirect.clear()
+        self:clear( self.tBackgroundColour, true )
+    end
+
+    function redirect.clearLine()
+        local px = { " ", self.tColour, self.tBackgroundColour }
+        local buffer, position = self.buffer, self.width * ( self.tY - 1 )
+
+        for i = 1, self.width do
+            buffer[ position ] = px
+            position = position + 1
+        end
+    end
+
+    function redirect.getCursorPos()
+        return self.tX, self.tY
+    end
+
+    function redirect.setCursorPos( x, y )
+        self.tX, self.tY = math.floor( x ), math.floor( y )
+    end
+
+    function redirect.getSize()
+        return self.width, self.height
+    end
+
+    function redirect.setCursorBlink( blink )
+        self.tCursor = blink
+    end
+
+    function redirect.setTextColour( tc )
+        if testColour( tc ) then
+            self.tColour = tc
+        end
+    end
+
+    function redirect.getTextColour()
+        return self.tColour
+    end
+
+    function redirect.setBackgroundColour( bg )
+        if testColour( bg ) then
+            self.tBackgroundColour = bg
+        end
+    end
+
+    function redirect.getBackgroundColour()
+        return self.tBackgroundColour
+    end
+
+    function redirect.scroll( n )
+        local offset, buffer, nL = self.width * n, self.buffer, n < 0
+        local pixelCount, blank = self.width * self.height, { " ", self.tColour, self.tBackgroundColour }
+
+        for i = nL and pixelCount or 1, nL and 1 or pixelCount, nL and -1 or 1 do
+            buffer[ i ] = buffer[ i + offset ] or blank
+        end
+    end
+
+    function redirect.isColour()
+        return isColour
+    end
+
+    -- American spelling compatibility layer
+    redirect.isColor = redirect.isColour
+	redirect.setBackgroundColor = redirect.setBackgroundColour
+	redirect.setTextColor = redirect.setTextColour
+	redirect.getBackgroundColor = redirect.getBackgroundColour
+	redirect.getTextColor = redirect.getTextColour
+
+    return redirect
+end
+
+--[[
+    @instance
+    @desc Modified Canvas.clear. Only sets pixels that do not exist (doesn't really clear the canvas, just ensures it is the correct size).
+          This is to prevent the program running via the term redirect isn't cleared away. Call this function with 'force' and all pixels will be
+          replaced (the terminal redirect uses this method).
+
+          Alternatively, self.getTerminalRedirect.clear() will also clear the canvas entirely
+    @param [number - col], [boolean - force]
+]]
+function RedirectCanvas:clear( col, force )
+    local col = col or self.tBackgroundColour
+    local pixel, buffer = { " ", col, col }, self.buffer
+
+    for index = 1, self.width * self.height do
+        if not buffer[ index ] or force then
+            buffer[ index ] = pixel
+        end
+    end
+end

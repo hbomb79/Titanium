@@ -1,0 +1,54 @@
+--[[
+    A focusable object is an object that after a mouse_click and a mouse_up event occur on the object is 'focused'.
+
+    An 'input' is a good example of a focusable node, it is activatable (while being clicked) but it also focusable (allows you to type after being focused).
+]]
+
+abstract class MFocusable {
+    focused = false;
+}
+
+function MFocusable:MFocusable()
+    if Titanium.mixesIn( self, "MThemeable" ) then
+        self:register("focused", "focusedColour", "focusedBackgroundColour")
+    end
+end
+
+function MFocusable:setEnabled( enabled )
+    self.super:setEnabled( enabled )
+
+    if not enabled and self.focused then
+        self:unfocus()
+    end
+end
+
+function MFocusable:setFocused( focused )
+    local raw = self.raw
+    if raw.focused == focused then return end
+
+    self.changed = true
+    self.focused = focused
+end
+
+function MFocusable:focus()
+    if not self.enabled then return end
+
+    if self.application then self.application:focusNode( self ) end
+    self.focused = true
+end
+
+function MFocusable:unfocus()
+    if self.application then self.application:unfocusNode( self ) end
+    self.focused = false
+end
+
+configureConstructor {
+    argumentTypes = {
+        focusedBackgroundColour = "colour",
+        focusedColour = "colour",
+        focused = "boolean"
+    }
+} alias {
+    focusedColor = "focusedColour",
+    focusedBackgroundColor = "focusedBackgroundColour"
+}

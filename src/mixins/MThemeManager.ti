@@ -1,0 +1,122 @@
+--[[
+    The MThemeManager mixin should be used by classes that want to manage objects which are themeable, the main example being the 'Application' class.
+]]
+
+abstract class MThemeManager {
+    themes = {}
+}
+
+--[[
+    @instance
+    @desc Adds the given theme into this objects `themes` table
+    @param <Theme Instance - theme>
+]]
+function MThemeManager:addTheme( theme )
+    self:removeTheme( theme )
+    table.insert( self.themes, theme )
+
+    self:update()
+end
+
+--[[
+    @instance
+    @desc Removes the given theme from this objects `themes` table. Returns true if a theme was removed, false otherwise.
+    @param <Instance 'Theme'/string name - target>
+    @return <boolean - success>
+]]
+function MThemeManager:removeTheme( target )
+    local searchName = ( type( target ) == "string" and true ) or ( not Titanium.typeOf( target, "Theme", true ) and error "Invalid target to remove" )
+    local themes = self.themes
+    for i = 1, #themes do
+        if ( searchName and themes[ i ].name == target ) or ( not searchName and themes[ i ] == target ) then
+            table.remove( themes, i )
+            self:update()
+
+            return true
+        end
+    end
+end
+
+--[[
+    @instance
+    @desc Adds a theme instance named 'name' and imports the file contents from 'location' to this object
+    @param <string - name>, <string - location>
+]]
+function MThemeManager:importTheme( name, location )
+    self:addTheme( Theme.fromFile( name, location ) )
+end
+
+--[[
+    @instance
+    @desc Updates the theme information bound to this object. All nodes under this parent are reset and the rules are reapplied to each.
+          'onThemeUpdate' is called on each child node allowing for each node to update themselves after their new theme information has been applied.
+    @param [table - target]
+]]
+function MThemeManager:update( target )
+    self:cacheAllApplicableRules()
+
+    local target = target or self.collatedNodes
+    for i = 1, #target do target[ i ]:onThemeUpdate() end
+end
+
+--[[
+    @instance
+    @desc Resets the applicableRules table on all nodes of type 'type' that are under this node (collated/query)
+    @param <string - type>
+]]
+function MThemeManager:resetApplicableRules( type )
+    local nodes = type == "*" and self.collatedNodes or self:query( type ).result
+    for i = 1, #nodes do
+        nodes[ i ].applicableRules = {}
+    end
+end
+
+--[[
+    @instance
+    @desc Iterates over the rules given and applies them as 'applicable rules' to each eligible node (collated/query).
+          These 'applicable rules' are then used by the node to determine theme properties.
+    @param <table - rules>
+]]
+function MThemeManager:cacheApplicableRules( rules )
+    local rule
+
+    for i = 1, #rules do
+        rule = rules[ i ]
+
+        self:query( rule.query ):each(function( item )
+            local applicable = item.applicableRules
+            applicable[ #applicable + 1 ] = rule
+        end)
+    end
+end
+
+--[[
+    @instance
+    @desc Iterates over each theme bound to this object and caches the rules for type 'type' by passing them to 'MThemeManager.cacheApplicableRules'
+    @param <string - type>, [boolean - manualReset]
+]]
+function MThemeManager:cacheApplicableRulesForType( type, manualReset )
+    local themes = self.themes
+    if not manualReset then self:resetApplicableRules( type ) end
+
+    for i = 1, #themes do
+        self:cacheApplicableRules( themes[ i ].rules[ type ] or {} )
+    end
+end
+
+--[[
+    @instance
+    @desc Caches all rules from all themes bound to this object by passing them to 'MThemeManager.cacheApplicableRules'
+    @param [boolean - manualReset]
+]]
+function MThemeManager:cacheAllApplicableRules( manualReset )
+    local themes, rules = self.themes
+    if not manualReset then self:resetApplicableRules "*" end
+
+    for i = 1, #themes do
+        rules = themes[ i ].rules
+        for type in pairs( rules ) do
+            self:cacheApplicableRules( rules[ type ] )
+        end
+    end
+end

@@ -1,0 +1,105 @@
+--[[
+    The Theme class is a basic class designed to hold styling rules.
+
+    Themes are added to objects using the MThemeManager mixin (or a custom implementation). These themes then dictate the appearance of objects that utilize 'MThemeable'.
+]]
+local function getTagDetails( rule )
+    return ( rule.arguments.id and ( "#" .. rule.arguments.id ) or "" ) .. (function( classString ) local classes = ""; for className in classString:gmatch("%S+") do classes = classes .. "."..className end; return classes end)( rule.arguments["class"] or "" )
+end
+
+local function splitXMLTheme( queue, tree )
+    for i = 1, #tree do
+        local children = tree[ i ].children
+        if children then
+            for c = 1, #children do
+                queue[ #queue + 1 ] = { tree[ i ].type .. getTagDetails( tree[ i ] ), children[ c ], tree[ i ] }
+            end
+        end
+    end
+
+    return queue
+end
+
+class Theme {
+    name = false;
+
+    rules = {};
+}
+
+--[[
+    @constructor
+    @desc Constructs the Theme by setting the name.
+    @param <string - name>, [string - source]
+]]
+function Theme:__init__( name, source )
+    self.name = type( name ) == "string" and name or error("Failed to initialise Theme. Name '"..tostring( name ).."' is invalid, expected string.")
+
+    if source then self.rules = Theme.parse( source ) end
+end
+
+--[[
+    @static
+    @desc Parses XML source code by lexing/parsing it into an XML tree. The XML is then parsed into theme rules
+    @param <string - source>
+    @return <table - rules>
+]]
+function Theme.static.parse( source )
+    local queue, rawRules, q = splitXMLTheme( {}, XMLParser( source ).tree ), {}, 1
+
+    local function processQueueEntry( entry )
+        local queryPrefix, rule = entry[ 1 ], entry[ 2 ]
+        local children = rule.children
+
+        if children then
+            for c = 1, #children do
+                if not Titanium.getClass( rule.type ) then
+                    return error( "Failed to generate theme data. Child target '"..rule.type.."' doesn't exist as a Titanium class" )
+                end
+
+                queue[ #queue + 1 ] = { queryPrefix .. " " .. ( rule.arguments.direct and "> " or "" ) .. rule.type .. getTagDetails( rule ), children[ c ], rule }
+            end
+        elseif rule.content then
+            local owner = entry[ 3 ]
+            local ownerType = owner.type
+
+            local parentReg = Titanium.getClass( ownerType ).getRegistry()
+            local argumentTypes = parentReg.constructor and parentReg.constructor.argumentTypes or {}
+
+
+            if not rawRules[ ownerType ] then rawRules[ ownerType ] = {} end
+            table.insert( rawRules[ ownerType ], {
+                query = queryPrefix,
+                property = rule.type,
+                value = XMLParser.convertArgType( rule.content, argumentTypes[ parentReg.alias[ rule.type ] or rule.type ] ),
+                important = rule.arguments.important
+            })
+        else
+            return error( "Failed to generate theme data. Invalid theme rule found. No value (XML_CONTENT) has been set for tag '"..rule.type.."'" )
+        end
+    end
+
+    while q <= #queue do
+        processQueueEntry( queue[ q ] )
+        q = q + 1
+    end
+
+    return rawRules
+end
+
+--[[
+    @static
+    @desc Creates a Theme instance with the name passed and the source as the contents of the file at 'path'.
+    @param <string - name>, <string - path>
+    @return <Theme Instance - Theme>
+]]
+function Theme.static.fromFile( name, path )
+    if not fs.exists( path ) then
+        return error( "Path '"..tostring( path ).."' cannot be found" )
+    end
+
+    local h = fs.open( path, "r" )
+    local content = h.readAll()
+    h.close()
+
+    return Theme( name, content )
+end

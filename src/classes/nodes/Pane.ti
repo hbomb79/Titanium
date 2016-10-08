@@ -1,0 +1,47 @@
+--[[
+    A pane is a very simple node that simply draws a box at 'X', 'Y' with dimensions 'width', 'height'.
+]]
+
+class Pane extends Node {
+    backgroundColour = colours.black;
+
+    allowMouse = true;
+    useAnyCallbacks = true;
+}
+
+--[[
+    @instance
+    @desc Resolves arguments and calls super constructor.
+]]
+function Pane:__init__( ... )
+    self:resolve( ... )
+    self:super()
+end
+
+--[[
+    @instance
+    @desc Clears the canvas, the canvas background colour becomes 'backgroundColour' during the clear.
+    @param [boolean - force]
+]]
+function Pane:draw( force )
+    local raw = self.raw
+    if raw.changed or force then
+        raw.canvas:clear()
+        raw.changed = false
+    end
+end
+
+--[[
+    @instance
+    @desc Handles any mouse events cast onto this node to prevent nodes under it being affected by them.
+    @param <MouseEvent - event>, <boolean - handled>, <boolean - within>
+]]
+function Pane:onMouse( event, handled, within )
+    if not within or handled then return end
+
+    event.handled = true
+end
+
+configureConstructor({
+    orderedArguments = {"X", "Y", "width", "height", "backgroundColour"}
+}, true)

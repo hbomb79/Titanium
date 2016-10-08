@@ -1,0 +1,79 @@
+--[[
+    A Label is a node which displays a single line of text. The text cannot be changed by the user directly, however the text can be changed by the program.
+--]]
+
+class Label extends Node {
+    labelFor = false;
+
+    allowMouse = true;
+    active = false;
+}
+
+--[[
+    @constructor
+    @param <string - text>, [number - X], [number - Y]
+]]
+function Label:__init__( ... )
+    self:resolve( ... )
+    self.raw.width = #self.text
+
+    self:super()
+    self:register "text"
+end
+
+--[[
+    @instance
+    @desc Mouse click event handler. On click the label will wait for a mouse up, if found labelFor is notified
+    @param <MouseEvent Instance - event>, <boolean - handled>, <boolean - within>
+]]
+function Label:onMouseClick( event, handled, within )
+    self.active = self.labelFor and within and not handled
+end
+
+--[[
+    @instance
+    @desc If the mouse click handler has set the label to active, trigger the onLabelClicked callback
+    @param <MouseEvent Instance - event>, <boolean - handled>, <boolean - within>
+]]
+function Label:onMouseUp( event, handled, within )
+    if not self.labelFor then return end
+
+    local labelFor = self.application:getNode( self.labelFor, true )
+    if self.active and not handled and within and labelFor:can "onLabelClicked" then
+        labelFor:onLabelClicked( self, event, handled, within )
+    end
+
+    self.active = false
+end
+
+--[[
+    @instance
+    @desc Clears the Label's canvas and draws a line of text if the label has changed.
+    @param [boolean - force]
+]]
+function Label:draw( force )
+    local raw = self.raw
+    if raw.changed or force then
+        raw.canvas:drawTextLine( 1, 1, raw.text )
+
+        raw.changed = false
+    end
+end
+
+--[[
+    @instance
+    @desc Sets the text of a node. Once set, the nodes 'changed' status is set to true along with its parent(s)
+    @param <string - text>
+]]
+function Label:setText( text )
+    if self.text == text then return end
+
+    self.text = text
+    self.width = #text
+end
+
+configureConstructor({
+    orderedArguments = { "text", "X", "Y" },
+    requiredArguments = { "text" },
+    argumentTypes = { text = "string" }
+}, true)

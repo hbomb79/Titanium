@@ -1,0 +1,251 @@
+local function resetNode( self, node )
+    node:queueAreaReset()
+
+    node.parent = nil
+    node.application = nil
+
+    if self.focusedNode == node then
+        node.focused = false
+    end
+
+    if node:can "onRemove" then
+        node:onRemove( self )
+    end
+
+    self.changed = true
+    self:clearCollatedNodes()
+end
+
+abstract class MNodeContainer {
+    nodes = {}
+}
+
+--[[
+    @instance
+    @desc Adds a node to the object. This node will have its object and parent (this) set
+    @param <Instance 'Node' - node>
+    @return 'param1 (node)'
+]]
+function MNodeContainer:addNode( node )
+    if not Titanium.typeOf( node, "Node", true ) then
+        return error( "Cannot add '"..tostring( node ).."' as Node on '"..tostring( self ).."'" )
+    end
+
+    node.parent = self
+    if Titanium.typeOf( self, "Application", true ) then
+        node.application = self
+    else
+        if Titanium.typeOf( self.application, "Application", true ) then
+            node.application = self.application
+        end
+    end
+
+    self.changed = true
+    self:clearCollatedNodes()
+
+    table.insert( self.nodes, node )
+    node:updateProperties()
+
+    if node.focused then node:focus() end
+    return node
+end
+
+--[[
+    @instance
+    @desc Removes a node matching the name* provided OR, if a node object is passed the actual node. Returns false if not found or (true and node)
+    @param <Instance 'Node'/string name - target>
+    @return <boolean - success>, [node - removedNode**]
+
+    *Note: In order for the node to be removed its 'name' field must match the 'name' parameter.
+    **Note: Removed node will only be returned if a node was removed (and thus success 'true')
+]]
+function MNodeContainer:removeNode( target )
+    local searchName = type( target ) == "string"
+
+    if not searchName and not Titanium.typeOf( target, "Node", true ) then
+        return error( "Cannot perform search for node using target '"..tostring( target ).."' to remove." )
+    end
+
+    local nodes, node, nodeName = self.nodes, nil
+    for i = 1, #nodes do
+        node = nodes[ i ]
+
+        if ( searchName and node.id == target ) or ( not searchName and node == target ) then
+            resetNode( self, node )
+
+            table.remove( nodes, i )
+            return true, node
+        end
+    end
+
+    return false
+end
+
+function MNodeContainer:clearNodes()
+    local nodes = self.nodes
+    for i = #nodes, 1, -1 do
+        resetNode( self, nodes[ i ] )
+        table.remove( nodes, i )
+    end
+end
+
+--[[
+    @instance
+    @desc Searches for (and returns) a node with the 'id' specified. If 'recursive' is true and a node that contains others is found, the node will also be searched.
+    @param <string - id>, [boolean - recursive]
+    @return [Node Instance - node]
+]]
+function MNodeContainer:getNode( id, recursive )
+    local nodes, node = recursive and self.collatedNodes or self.nodes
+
+    for i = 1, #nodes do
+        node = nodes[ i ]
+        if node.id == id then
+            return node
+        end
+    end
+end
+
+--[[
+    @instance
+    @desc Returns true if the mouse event passed is in bounds of a visible child node
+    @param <MouseEvent - event>
+    @return [boolean - insideBounds]
+]]
+function MNodeContainer:isMouseColliding( event )
+    local eX, eY, nodes = event.X - self.X + 1, event.Y - self.Y + 1, self.nodes
+    for i = 1, #nodes do
+        local node = nodes[ i ]
+        local nodeX, nodeY = node.X, node.Y
+
+        if node.visible and eX >= nodeX and eX <= nodeX + node.width - 1 and eY >= nodeY and eY <= nodeY + node.height - 1 then
+            return true
+        end
+    end
+
+    return false
+end
+
+--[[
+    @instance
+    @desc Returns a 'NodeQuery' instance containing the nodes that matched the query and methods to manipulate
+    @param <string - query>
+    @return <NodeQuery Instance - Query Result>
+]]
+function MNodeContainer:query( query )
+    return NodeQuery( self, query )
+end
+
+--[[
+    @instance
+    @desc Clears the collatedNodes of all parents forcing them to update their collatedNodes cache on next retrieval
+]]
+function MNodeContainer:clearCollatedNodes()
+    self.collatedNodes = false
+
+    local parent = self.parent
+    if parent then
+        parent:clearCollatedNodes()
+    end
+end
+
+function MNodeContainer:getCollatedNodes()
+    if not self.collatedNodes or #self.collatedNodes == 0 then
+        self:collate()
+    end
+
+    return self.collatedNodes
+end
+
+--[[
+    @instance
+    @desc Caches all nodes under this container (and child containers) in 'collatedNodes'.
+          This list maybe out of date if 'collate' isn't called before usage. Caching is not automatic.
+    @param [table - collated]
+]]
+function MNodeContainer:collate( collated )
+    local collated = collated or {}
+
+    local nodes, node = self.nodes
+    for i = 1, #nodes do
+        node = nodes[ i ]
+        collated[ #collated + 1 ] = node
+
+        local collatedNode = node.collatedNodes
+        if collatedNode then
+            for i = 1, #collatedNode do
+                collated[ #collated + 1 ] = collatedNode[ i ]
+            end
+        end
+    end
+
+    self.collatedNodes = collated
+end
+
+--[[
+    @instance
+    @desc Sets the enabled property of the node to 'enabled'. Sets node's 'changed' to true.
+    @param <boolean - enabled>
+]]
+function MNodeContainer:setEnabled( enabled )
+    self.super:setEnabled( enabled )
+    if self.parentEnabled then
+        local nodes = self.nodes
+        for i = 1, #nodes do
+            nodes[ i ].parentEnabled = enabled
+        end
+    end
+end
+
+function MNodeContainer:setParentEnabled( enabled )
+    self.super:setParentEnabled( enabled )
+
+    local nodes = self.nodes
+    for i = 1, #nodes do
+        nodes[ i ].parentEnabled = enabled
+    end
+end
+
+
+--[[
+    @instance
+    @desc Iterates over child nodes to ensure that nodes added to this container prior to Application set are updated (with the new Application)
+    @param <Application - app>
+]]
+function MNodeContainer:setApplication( app )
+    self.application = app
+
+    local nodes = self.nodes
+    for i = 1, #nodes do
+        nodes[ i ].application = app
+    end
+end
+
+--[[
+    @instance
+    @desc Clears the area provided and queues a redraw for child nodes intersecting the area.
+          The content of the child node will not be update, it's content will only be drawn to it's parent.
+    @param <number - x>, <number - y>, <number - width>, <number - height>
+]]
+function MNodeContainer:redrawArea( x, y, width, height, xOffset, yOffset )
+    if not self.canvas then return end
+    self.canvas:clearArea( x, y, width, height )
+
+    xOffset = xOffset or 0
+    yOffset = yOffset or 0
+
+    local nodes, node, nodeX, nodeY = self.nodes
+    for i = 1, #nodes do
+        node = nodes[ i ]
+        nodeX, nodeY = node.X + xOffset, node.Y + yOffset
+
+        if not ( nodeX + node.width - 1 < x or nodeX > x + width or nodeY + node.height - 1 < y or nodeY > y + height ) then
+            node.needsRedraw = true
+        end
+    end
+
+    local parent = self.parent
+    if parent then
+        parent:redrawArea( self.X + x - 1, self.Y + y - 1, width, height )
+    end
+end

@@ -1,0 +1,167 @@
+--[[
+    The Canvas object is used by all components. It facilitates the drawing of pixels which are stored in its buffer.
+
+    The Canvas object is abstract. If you need a canvas for your object 'NodeCanvas' and 'TermCanvas' are provided with Titanium and may suite your needs.
+--]]
+
+local function range( xBoundary, xDesired, width, canvasWidth )
+    local x1 = xBoundary > xDesired and 1 - xDesired or 1
+    local x2 = xDesired + width > canvasWidth and canvasWidth - xDesired or width
+
+    return x1, x2
+end
+
+abstract class Canvas {
+    buffer = {};
+    last = {};
+
+    width = 51;
+    height = 19;
+
+    backgroundColour = 32768;
+    colour = 1;
+
+    transparent = false;
+}
+
+--[[
+    @constructor
+    @desc Constructs the canvas instance and binds it with the owner supplied.
+    @param <ClassInstance - owner>
+]]
+function Canvas:__init__( owner )
+    self.raw.owner = Titanium.isInstance( owner ) and owner or error("Invalid argument for Canvas. Expected instance owner, got '"..tostring( owner ).."'")
+    self.raw.width = owner.raw.width
+    self.raw.height = owner.raw.height
+
+    self.raw.colour = owner.raw.colour
+    self.raw.backgroundChar = owner.raw.backgroundChar
+    if self.raw.backgroundChar == "nil" then
+        self.raw.backgroundChar = nil
+    end
+    self.raw.backgroundTextColour = owner.raw.backgroundTextColour
+    self.raw.backgroundColour = owner.raw.backgroundColour
+
+    self:clear()
+end
+
+--[[
+    @instance
+    @desc Replaces the canvas with a blank one
+    @param [number - colour]
+]]
+function Canvas:clear( colour )
+    local pixel, buffer = { not self.transparent and self.backgroundChar, self.colour, self.transparent and 0 or colour or self.backgroundColour }, self.buffer
+
+    for index = 1, self.width * self.height do
+        buffer[ index ] = pixel
+    end
+end
+
+--[[
+    @instance
+    @desc Clears an area of the canvas defined by the arguments provided.
+    @param <number - areaX>, <number - areaY>, <number - areaWidth>, <number - areaHeight>, [number - colour]
+]]
+function Canvas:clearArea( aX, aY, aWidth, aHeight, colour )
+    local aY, aX, cWidth = aY - 1, aX - 1, self.width
+    local pixel, buffer = { not self.transparent and self.backgroundChar, self.colour, self.transparent and 0 or colour or self.backgroundColour }, self.buffer
+
+    local xBoundary, yBoundary = cWidth - aX, self.height
+    local effectiveWidth = xBoundary < aWidth and xBoundary or aWidth
+    for y = 0, -1 + ( aHeight < yBoundary and aHeight or yBoundary ) do
+        local pos = aX + ( y + aY ) * cWidth
+        for x = 1, effectiveWidth do
+            buffer[ pos + x ] = pixel
+        end
+    end
+end
+
+--[[
+    @instance
+    @desc Updates the transparency setting of the canvas and then clears the canvas to apply this setting
+    @param <number - colour>
+]]
+function Canvas:setTransparent( transparent )
+    self.transparent = transparent
+    self:clear()
+end
+
+--[[
+    @instance
+    @desc Updates the colour of the canvas and then clears the canvas
+    @param <number - colour>
+]]
+function Canvas:setColour( colour )
+    self.colour = colour
+    self:clear()
+end
+
+--[[
+    @instance
+    @desc Updates the background colour of the canvas and then clears the canvas
+    @param <number - backgroundColour>
+]]
+function Canvas:setBackgroundColour( backgroundColour )
+    self.backgroundColour = backgroundColour
+    self:clear()
+end
+
+--[[
+    @instance
+    @desc Updates the background character to be used when clearing the canvas. Clears the canvas to apply the change
+    @param <string/false/nil - char>
+]]
+function Canvas:setBackgroundChar( char )
+    self.backgroundChar = char
+    self:clear()
+end
+
+--[[
+    @instance
+    @desc Draws the canvas to the target 'canvas' using the X and Y offsets. Pixels that are marked transparent are not drawn.
+    @param <Canvas - canvas>, [number - offsetX], [number - offsetY]
+]]
+function Canvas:drawTo( canvas, offsetX, offsetY )
+    local offsetX = offsetX - 1 or 0
+    local offsetY = offsetY - 1 or 0
+
+    local sRaw, tRaw = self.raw, canvas.raw
+    local width, height, buffer = sRaw.width, sRaw.height, sRaw.buffer
+    local tWidth, tHeight, tBuffer = tRaw.width, tRaw.height, tRaw.buffer
+
+    local colour, backgroundColour, backgroundTextColour = sRaw.colour, sRaw.backgroundColour, sRaw.backgroundTextColour
+    local xStart, xEnd = range( 1, offsetX, width, tWidth )
+
+    local cache, tCache, top, tc, tf, tb, bot, bc, bf, bb, tPos = 0, offsetX + ( offsetY * tWidth )
+    for y = 1, height do
+        local cY = y + offsetY
+        if cY >= 1 and cY <= tHeight then
+            for x = xStart, xEnd do
+                top = buffer[ cache + x ]
+                tc, tf, tb, tPos = top[ 1 ], top[ 2 ], top[ 3 ], tCache + x
+                bot = tBuffer[ tPos ]
+                bc, bf, bb = bot[ 1 ], bot[ 2 ], bot[ 3 ]
+
+                if tc and ( tf and tf ~= 0 ) and ( tb and tb ~= 0 ) then
+                    tBuffer[ tPos ] = top
+                elseif not tc and tf == 0 and tb == 0 and bc and bf ~= 0 and bb ~= 0 then
+                    tBuffer[ tPos ] = bot
+                else
+                    local nc, nf, nb = tc or bc, tf or colour, tb or backgroundColour
+
+                    if not tc then
+                        nf = backgroundTextColour or bf
+                    end
+
+                    tBuffer[ tPos ] = { nc, nf == 0 and bf or nf, nb == 0 and bb or nb }
+                end
+            end
+        elseif cY > tHeight then
+            break
+        end
+
+        cache = cache + width
+        tCache = tCache + tWidth
+    end
+end

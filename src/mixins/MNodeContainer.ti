@@ -1,3 +1,21 @@
+local function resetNode( self, node )
+    node:queueAreaReset()
+
+    node.parent = nil
+    node.application = nil
+
+    if self.focusedNode == node then
+        node.focused = false
+    end
+
+    if node:can "onRemove" then
+        node:onRemove( self )
+    end
+
+    self.changed = true
+    self:clearCollatedNodes()
+end
+
 abstract class MNodeContainer {
     nodes = {}
 }
@@ -10,7 +28,7 @@ abstract class MNodeContainer {
 ]]
 function MNodeContainer:addNode( node )
     if not Titanium.typeOf( node, "Node", true ) then
-        return error( "Cannot add '"..tostring( node ).." as Node on '"..tostring( self ).."'" )
+        return error( "Cannot add '"..tostring( node ).."' as Node on '"..tostring( self ).."'" )
     end
 
     node.parent = self
@@ -53,17 +71,7 @@ function MNodeContainer:removeNode( target )
         node = nodes[ i ]
 
         if ( searchName and node.id == target ) or ( not searchName and node == target ) then
-            node:queueAreaReset()
-
-            node.parent = nil
-            node.application = nil
-
-            if self.focusedNode == node then
-                node.focused = false
-            end
-
-            self.changed = true
-            self:clearCollatedNodes()
+            resetNode( self, node )
 
             table.remove( nodes, i )
             return true, node
@@ -71,6 +79,14 @@ function MNodeContainer:removeNode( target )
     end
 
     return false
+end
+
+function MNodeContainer:clearNodes()
+    local nodes = self.nodes
+    for i = #nodes, 1, -1 do
+        resetNode( self, nodes[ i ] )
+        table.remove( nodes, i )
+    end
 end
 
 --[[
@@ -88,6 +104,26 @@ function MNodeContainer:getNode( id, recursive )
             return node
         end
     end
+end
+
+--[[
+    @instance
+    @desc Returns true if the mouse event passed is in bounds of a visible child node
+    @param <MouseEvent - event>
+    @return [boolean - insideBounds]
+]]
+function MNodeContainer:isMouseColliding( event )
+    local eX, eY, nodes = event.X - self.X + 1, event.Y - self.Y + 1, self.nodes
+    for i = 1, #nodes do
+        local node = nodes[ i ]
+        local nodeX, nodeY = node.X, node.Y
+
+        if node.visible and eX >= nodeX and eX <= nodeX + node.width - 1 and eY >= nodeY and eY <= nodeY + node.height - 1 then
+            return true
+        end
+    end
+
+    return false
 end
 
 --[[

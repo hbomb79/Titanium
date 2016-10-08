@@ -3,8 +3,6 @@ stages:
   - test
 
 before_script:
-    - rm -f titanium.lua
-    - rm -f titanium.min.lua
     - apt-get update && apt-get -y install luajit luarocks
     - luarocks install luafilesystem
 
@@ -24,7 +22,9 @@ build:
   script:
     - echo "Running development build. Not building minified"
     - luajit ./bin/construct.lua --source src --output titanium.lua
+  environment: production
   artifacts:
+    name: "devel_${CI_BUILD_NAME}_${CI_BUILD_REF_NAME}"
     paths:
       - titanium.lua
   except:
@@ -36,7 +36,9 @@ build-release:
     - echo "Running release build. Building minified"
     - luajit ./bin/construct.lua --source src --output titanium.lua
     - luajit ./bin/construct.lua --source src --output titanium.min.lua --minify
+  environment: release
   artifacts:
+    name: "release_${CI_BUILD_REF_NAME}"
     paths:
       - titanium.lua
       - titanium.min.lua
@@ -65,7 +67,3 @@ test-release:
     - master
   dependencies:
     - build-release
-
-# Cache files outside git index
-cache:
-  untracked: true

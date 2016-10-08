@@ -68,27 +68,37 @@ function TML:parseTree()
         for t = 1, #tree do
             target = tree[ t ]
 
-            local classArg = target.arguments["class"]
-            if classArg then target.arguments["class"] = nil end
-
-            local itemClass = Titanium.getClass( target.type ) or error( "Failed to spawn XML tree. Failed to find class '"..target.type.."'" )
-            local itemInstance = itemClass( formArguments( itemClass, target ) )
-
-            if classArg then
-                itemInstance.classes = type( itemInstance.classes ) == "table" and itemInstance.classes or {}
-                for className in classArg:gmatch "%S+" do
-                    itemInstance.classes[ className ] = true
+            if parent:can "addTMLObject" then
+                local obj, children = parent:addTMLObject( target )
+                if obj and children then
+                    table.insert( queue, { obj, children } )
                 end
-            end
-
-            if target.children then
-                table.insert( queue, { itemInstance, target.children } )
-            end
-
-            if parent:can "addNode" then
-                parent:addNode( itemInstance )
             else
-                return error("Failed to spawn XML tree. "..tostring( parent ).." cannot contain nodes.")
+                local classArg = target.arguments["class"]
+                if classArg then target.arguments["class"] = nil end
+
+                local itemClass = Titanium.getClass( target.type ) or error( "Failed to spawn XML tree. Failed to find class '"..target.type.."'" )
+                if not Titanium.typeOf( itemClass, "Node" ) and target.type ~= "Page" then --TODO: Remove this page exception when issue #28 is resolved
+                    error("Failed to spawn XML tree. Class '"..target.type.."' is not a valid node")
+                end
+
+                local itemInstance = itemClass( formArguments( itemClass, target ) )
+                if classArg then
+                    itemInstance.classes = type( itemInstance.classes ) == "table" and itemInstance.classes or {}
+                    for className in classArg:gmatch "%S+" do
+                        itemInstance.classes[ className ] = true
+                    end
+                end
+
+                if target.children then
+                    table.insert( queue, { itemInstance, target.children } )
+                end
+
+                if parent:can "addNode" then
+                    parent:addNode( itemInstance )
+                else
+                    return error("Failed to spawn XML tree. "..tostring( parent ).." cannot contain nodes.")
+                end
             end
         end
 

@@ -25,7 +25,19 @@
         <Label text="p" id="right" X=10 Y=16 class="sub hotkey_part"/>
 
         <Button text="Shell" width=7 height=1 X=43 Y=2 id="shell_toggle"/>
-        <Image X=29 Y=5 path="example/ui/logo"/>
+
+        <Dropdown X=23 Y=6 width=25 maxHeight=4>
+            <Option value="1">Example Option 1</Option>
+            <Option value="2">Example Option 2</Option>
+            <Option value="3">Example Option 3</Option>
+            <Option value="4">Example Option 4</Option>
+            <Option value="5">Example Option 5</Option>
+            <Option value="6">Example Option 6</Option>
+            <Option value="7">Example Option 7</Option>
+            <Option value="8">Example Option 8</Option>
+            <Option value="9">Example Option 9</Option>
+            <Option value="10">Example Option 10</Option>
+        </Dropdown>
 
         <Container id="pane" width=21 height=19 X=52 backgroundColour="grey">
             <Label text="Settings" colour=1 X=2 Y=2/>

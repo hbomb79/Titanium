@@ -104,10 +104,10 @@ function ScrollContainer:handle( eventObj )
     else cloneEv = eventObj end
 
     if cloneEv then self:shipEvent( cloneEv ) end
-    if not self.super.super:handle( eventObj ) then return end
+    local r = self.super.super:handle( eventObj )
 
     eventObj.isWithin = isWithin
-    return true
+    return r == nil and true or r
 end
 
 function ScrollContainer:isNodeInBounds( node, width, height )
@@ -164,6 +164,16 @@ function ScrollContainer:setXScroll( xScroll )
     if ( not self.propagateMouse ) or oX ~= self.xScroll then
         return true
     end
+end
+
+function ScrollContainer:setHeight( height )
+    self.super:setHeight( height )
+    self:cacheContent()
+end
+
+function ScrollContainer:setWidth( width )
+    self.super:setWidth( width )
+    self:cacheContent()
 end
 
 --[[ Caching Functions ]]--

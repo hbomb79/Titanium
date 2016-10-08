@@ -177,26 +177,6 @@ end
 
 --[[
     @instance
-    @desc Closes the context menu if a mouse click occurs that is not inside of any menus
-    @param <MouseEvent - event>, <boolean - handled>, <boolean - within>
-    @return [boolean - insideBounds]
-]]
-function ContextMenu:isMouseColliding( event )
-    local eX, eY, nodes = event.X - self.X + 1, event.Y - self.Y + 1, self.nodes
-    for i = 1, #nodes do
-        local node = nodes[ i ]
-        local nodeX, nodeY = node.X, node.Y
-
-        if node.visible and eX >= nodeX and eX <= nodeX + node.width - 1 and eY >= nodeY and eY <= nodeY + node.height - 1 then
-            return true
-        end
-    end
-
-    return false
-end
-
---[[
-    @instance
     @desc Closes the frame using 'frameID', which represents the position of the frame in the 'nodes' table
     @param <number - frameID>
 ]]

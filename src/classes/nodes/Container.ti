@@ -96,15 +96,15 @@ function Container:shipEvent( event )
 end
 
 function Container:setWidth( width )
-	self.width = width
+	self.super:setWidth( width )
 	local nodes = self.nodes
 	for i = 1, #nodes do
 		nodes[i].needsRedraw = true
 	end
 end
 
-function Container:setHeight( width )
-	self.height = height
+function Container:setHeight( height )
+	self.super:setHeight( height )
 	local nodes = self.nodes
 	for i = 1, #nodes do
 		nodes[i].needsRedraw = true

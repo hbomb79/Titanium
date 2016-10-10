@@ -95,6 +95,22 @@ function Container:shipEvent( event )
     end
 end
 
+function Container:setWidth( width )
+	self.super:setWidth( width )
+	local nodes = self.nodes
+	for i = 1, #nodes do
+		nodes[i].needsRedraw = true
+	end
+end
+
+function Container:setHeight( height )
+	self.super:setHeight( height )
+	local nodes = self.nodes
+	for i = 1, #nodes do
+		nodes[i].needsRedraw = true
+	end
+end
+
 
 configureConstructor({
     orderedArguments = { "X", "Y", "width", "height", "nodes", "backgroundColour" },

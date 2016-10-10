@@ -117,6 +117,16 @@ function Canvas:setBackgroundChar( char )
     self:clear()
 end
 
+function Canvas:setWidth( width )
+	self.width = width
+	self:clear()
+end
+
+function Canvas:setHeight( height )
+	self.height = height
+	self:clear()
+end
+
 --[[
     @instance
     @desc Draws the canvas to the target 'canvas' using the X and Y offsets. Pixels that are marked transparent are not drawn.

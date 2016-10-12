@@ -136,7 +136,7 @@ function PageContainer:collate( collated )
     self.collatedNodes = collated
 end
 
-configureConstructor({
+configure({
     orderedArguments = { "X", "Y", "width", "height", "pages", "backgroundColour" },
     argumentTypes = { pages = "table" }
 }, true)

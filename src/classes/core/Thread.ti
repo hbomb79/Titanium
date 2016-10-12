@@ -59,7 +59,7 @@ function Thread:handle( ... )
     end
 end
 
-configureConstructor {
+configure {
     orderedArguments = { "func", "titaniumEvents", "id" },
     requiredArguments = { "func" }
 }

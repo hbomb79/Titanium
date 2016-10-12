@@ -487,7 +487,7 @@ local function spawn( target, ... )
 
         local args, config = { ... }, classReg.constructor
         if not config then
-            throw("Failed to resolve "..tostring( instance ).." constructor arguments. No configuration has been set via 'configureConstructor'.")
+            throw("Failed to resolve "..tostring( instance ).." constructor arguments. No configuration has been set via 'configure'.")
         end
 
         local configRequired, configOrdered, configTypes, configProxy = config.requiredArguments, config.orderedArguments, config.argumentTypes or {}, config.useProxy or {}
@@ -797,15 +797,15 @@ function alias( target )
     return propertyCatch
 end
 
-function configureConstructor( config, clearOrdered, clearRequired )
+function configure( config, clearOrdered, clearRequired )
     isBuilding(
-        "Failed to configure class constructor\n",
-        string.format( ERROR_NOT_BUILDING, "configureConstructor" )
+        "Failed to configure class\n",
+        string.format( ERROR_NOT_BUILDING, "configure" )
     )
 
     if type( config ) ~= "table" then
         throw (
-            "Failed to configure class constructor\n",
+            "Failed to configure class\n",
             "Expected type 'table' as first argument"
         )
     end

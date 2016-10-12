@@ -63,7 +63,7 @@ function Image.static.setImageParser( extension, parserFunction )
 end
 
 function Image:draw() end
-configureConstructor {
+configure {
     orderedArguments = { "path" },
     requiredArguments = { "path" },
     useProxy = { "path" },

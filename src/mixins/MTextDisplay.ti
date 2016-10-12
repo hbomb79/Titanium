@@ -92,7 +92,7 @@ function MTextDisplay:drawText( bg, tc )
     end
 end
 
-configureConstructor {
+configure {
     argumentTypes = {
         verticalPadding = "number",
         horizontalPadding = "number",

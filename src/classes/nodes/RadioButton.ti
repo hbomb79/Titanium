@@ -93,7 +93,7 @@ function RadioButton.static.getValue( group )
     end
 end
 
-configureConstructor({
+configure({
     orderedArguments = { "X", "Y", "group" },
     requiredArguments = { "group" },
     argumentTypes = { group = "string" },

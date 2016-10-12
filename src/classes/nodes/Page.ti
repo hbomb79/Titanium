@@ -40,7 +40,7 @@ function Page:setEnabled( enabled )
 end
 
 function Page:onThemeUpdate() end
-configureConstructor {
+configure {
     orderedArguments = { "name" },
     argumentTypes = {
         name = "string"

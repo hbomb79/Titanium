@@ -41,7 +41,7 @@ function MTogglable:setToggled( toggled, ... )
     end
 end
 
-configureConstructor {
+configure {
     argumentTypes = {
         toggled = "boolean",
         toggledColour = "colour",

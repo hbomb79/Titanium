@@ -253,7 +253,7 @@ function Input:getCaretInfo()
 end
 
 
-configureConstructor({
+configure({
     orderedArguments = { "X", "Y", "width" },
     argumentTypes = { value = "string", position = "number", selection = "number", placeholder = "string", placeholderColour = "colour" },
     useProxy = { "toggled" }

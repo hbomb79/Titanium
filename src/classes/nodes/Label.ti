@@ -72,7 +72,7 @@ function Label:setText( text )
     self.width = #text
 end
 
-configureConstructor({
+configure({
     orderedArguments = { "text", "X", "Y" },
     requiredArguments = { "text" },
     argumentTypes = { text = "string" }

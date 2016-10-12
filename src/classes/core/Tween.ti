@@ -98,7 +98,7 @@ function Tween.static.addEasing( easingName, easingFunction )
     return Tween
 end
 
-configureConstructor {
+configure {
     orderedArguments = { "object", "name", "property", "final", "duration", "easing", "promise" },
     requiredArguments = { "object", "name", "property", "final", "duration" },
     argumentTypes = {

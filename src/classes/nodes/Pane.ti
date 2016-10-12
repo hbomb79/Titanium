@@ -42,6 +42,6 @@ function Pane:onMouse( event, handled, within )
     event.handled = true
 end
 
-configureConstructor({
+configure({
     orderedArguments = {"X", "Y", "width", "height", "backgroundColour"}
 }, true)

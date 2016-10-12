@@ -96,7 +96,7 @@ function Container:shipEvent( event )
 end
 
 
-configureConstructor({
+configure({
     orderedArguments = { "X", "Y", "width", "height", "nodes", "backgroundColour" },
     argumentTypes = {
         nodes = "table"

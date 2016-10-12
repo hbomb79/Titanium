@@ -159,7 +159,7 @@ function Dropdown:addTMLObject( TMLObj )
     end
 end
 
-configureConstructor({
+configure({
     orderedArguments = { "X", "Y", "width", "maxHeight", "prompt" },
     argumentTypes = {
         maxHeight = "number",

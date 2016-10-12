@@ -97,7 +97,7 @@ function Component:setBackgroundTextColour( backgroundTextColour )
     self.changed = true
 end
 
-configureConstructor {
+configure {
     orderedArguments = { "X", "Y", "width", "height" },
     argumentTypes = { X = "number", Y = "number", width = "number", height = "number", colour = "colour", backgroundColour = "colour", backgroundTextColour = "colour", transparent = "boolean" }
 } alias {

@@ -83,7 +83,7 @@ function Checkbox:draw( force )
     end
 end
 
-configureConstructor( {
+configure( {
     orderedArguments = { "X", "Y" },
     argumentTypes = {
         checkedMark = "string",

@@ -42,7 +42,7 @@ function MFocusable:unfocus()
     self.focused = false
 end
 
-configureConstructor {
+configure {
     argumentTypes = {
         focusedBackgroundColour = "colour",
         focusedColour = "colour",

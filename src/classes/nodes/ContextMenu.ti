@@ -197,7 +197,7 @@ function ContextMenu:closeFrame( frameID )
     self.changed = true
 end
 
-configureConstructor {
+configure {
     orderedArguments = { "structure" },
     requiredArguments = { "structure" },
     argumentTypes = {

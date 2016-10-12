@@ -186,6 +186,6 @@ function Node:animate( ... )
     return self.application:addAnimation( Tween( self, ... ) )
 end
 
-configureConstructor {
+configure {
     argumentTypes = { enabled = "boolean", visible = "boolean", disabledColour = "colour", disabledBackgroundColour = "colour" }
 }

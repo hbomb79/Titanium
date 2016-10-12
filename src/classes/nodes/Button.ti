@@ -93,7 +93,7 @@ function Button:setWidth( width )
     self:wrapText()
 end
 
-configureConstructor {
+configure {
     orderedArguments = { "text" },
     requiredArguments = { "text" },
     argumentTypes = {

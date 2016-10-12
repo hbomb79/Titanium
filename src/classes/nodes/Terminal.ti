@@ -106,7 +106,7 @@ end
 
 function Terminal:draw( force ) end
 
-configureConstructor({
+configure({
     orderedArguments = { "X", "Y", "width", "height", "chunk" },
     argumentTypes = { chunk = "function" },
     useProxy = { "chunk" }

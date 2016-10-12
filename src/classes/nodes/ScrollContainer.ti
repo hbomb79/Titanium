@@ -233,7 +233,7 @@ function ScrollContainer:cacheScrollbarPosition()
     self:redrawArea( 1, 1, self.width, self.height )
 end
 
-configureConstructor {
+configure {
     argumentTypes = {
         scrollbarColour = "colour",
         activeScrollbarColour = "colour",

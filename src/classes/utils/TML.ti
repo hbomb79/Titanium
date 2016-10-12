@@ -37,6 +37,10 @@ end
 ]]
 
 class TML {
+    static = {
+        macros = {}
+    };
+
     tree = false;
     parent = false;
 }
@@ -58,7 +62,7 @@ end
     @desc Parses 'self.tree' by creating and adding node instances to their parents.
 ]]
 function TML:parseTree()
-    local queue = { { self.parent, self.tree } }
+    local queue, macros = { { self.parent, self.tree } }, TML.static.macros
 
     local i, parent, tree = 1
     while i <= #queue do
@@ -68,11 +72,12 @@ function TML:parseTree()
         for t = 1, #tree do
             target = tree[ t ]
 
-            if parent:can "addTMLObject" then
-                local obj, children = parent:addTMLObject( target )
-                if obj and children then
-                    table.insert( queue, { obj, children } )
-                end
+            --TODO: Handle macro arguments, like <Button large/> using the class system (ClassObj.getRegistry.tmlMacros)
+            local macro, appendParent, appendChildren = macros[ target.type ]
+            if macro then
+                appendParent, appendChildren = macro( target, parent, queue )
+            elseif parent:can "addTMLObject" then
+                appendParent, appendChildren = parent:addTMLObject( target )
             else
                 local classArg = target.arguments["class"]
                 if classArg then target.arguments["class"] = nil end
@@ -90,15 +95,16 @@ function TML:parseTree()
                     end
                 end
 
-                if target.children then
-                    table.insert( queue, { itemInstance, target.children } )
-                end
-
+                appendParent, appendChildren = itemInstance, target.children
                 if parent:can "addNode" then
                     parent:addNode( itemInstance )
                 else
                     return error("Failed to spawn XML tree. "..tostring( parent ).." cannot contain nodes.")
                 end
+            end
+
+            if appendParent and appendChildren then
+                table.insert( queue, { appendParent, appendChildren } )
             end
         end
 
@@ -120,4 +126,26 @@ function TML.static.fromFile( parent, path )
     h.close()
 
     return TML( parent, content )
+end
+
+
+function TML.static.assignMacro( tagType, callback, override )
+    if type( tagType ) ~= "string" or type( callback ) ~= "function" then
+        return error "Failed to assign macro callback. Expected string, function, [boolean]"
+    end
+
+    local macros = TML.static.macros
+    if macros[ tagType ] and not override then
+        return error("Failed to assign macro callback for type '"..tostring( tagType ).."'. A macro definition already exists for this type. Pass 'true' as argument #3 to override or use TML.static.unassignMacro to remove macro")
+    end
+
+    macros[ tagType ] = callback
+end
+
+function TML.static.unassignMacro( tagType )
+    if type( tagType ) ~= "string" then
+        return error "Failed to unassign macro. Tag type (arg #1) must be a string"
+    end
+
+    TML.static.macros[ tagType ] = nil
 end

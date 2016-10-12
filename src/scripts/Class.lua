@@ -301,7 +301,7 @@ local function compileCurrent()
         allMixins[ target ] = true
         local reg = classRegistry[ target ]
 
-        local t = { { reg.keys, currentRegistry.keys, ownedKeys }, { reg.static, currentRegistry.static, ownedStatics }, { reg.alias, currentRegistry.alias, currentRegistry.alias } }
+        local t = { { reg.keys, currentRegistry.keys, ownedKeys }, { reg.static, currentRegistry.static, ownedStatics }, { reg.alias, currentRegistry.alias, currentRegistry.alias }, { reg.tmlMacros, currentRegistry.tmlMacros, currentRegistry.tmlMacros } }
         for i = 1, #t do
             local source, target, owned = t[ i ][ 1 ], t[ i ][ 2 ], t[ i ][ 3 ]
             for key, value in pairs( source ) do
@@ -340,19 +340,27 @@ local function compileCurrent()
 
         superKeys, currentRegistry.super.matrix = compileSupers( supers )
 
+        local lastSuperReg = classRegistry[ supers[ 1 ].__type ]
         -- Inherit alias from previous super
         local currentAlias = currentRegistry.alias
-        for alias, redirect in pairs( classRegistry[ supers[ 1 ].__type ].alias ) do
+        for alias, redirect in pairs( lastSuperReg.alias ) do
             if currentAlias[ alias ] == nil then
                 currentAlias[ alias ] = redirect
             end
         end
 
-        for mName in pairs( classRegistry[ supers[ 1 ].__type ].allMixins ) do
+        local currentMacros = currentRegistry.tmlMacros
+        for macroTarget, callback in pairs( lastSuperReg.tmlMacros ) do
+            if not currentMacros[ macroTarget ] then
+                currentMacros[ macroTarget ] = callback
+            end
+        end
+
+        for mName in pairs( lastSuperReg.allMixins ) do
             allMixins[ mName ] = true
         end
 
-        compileConstructor( classRegistry[ supers[ 1 ].__type ] )
+        compileConstructor( lastSuperReg )
     end
 
     -- Generate instance function wrappers
@@ -655,6 +663,7 @@ function class( name )
         mixins = {},
         allMixins = {},
         alias = {},
+        tmlMacros = {},
 
         constructor = false,
         super = false,
@@ -713,6 +722,18 @@ function class( name )
     function classObj:isCompiled() return classReg.compiled end
 
     function classObj:getRegistry() return classReg end
+
+    local macros = classReg.tmlMacros
+    function classObj:setTMLMacro( macroName, callback )
+        if type( macroName ) ~= "string" or type( callback ) ~= "function" then
+            throw (
+                "Failed to set TML macro on class '"..name.."'\n",
+                "Expected string, function arguments."
+            )
+        end
+
+        macros[ macroName ] = callback
+    end
 
     setmetatable( classObj, classMt )
 
@@ -817,6 +838,16 @@ function configure( config, clearOrdered, clearRequired )
     for key, value in pairs( config ) do constructor[ key ] = value end
 
     currentRegistry.constructor = constructor
+    return propertyCatch
+end
+
+function setTMLMacro( ... )
+    isBuilding (
+        "Failed to set TML macro\n",
+        string.format( ERROR_NOT_BUILDING, "setTMLMacro" )
+    )
+
+    currentClass:setTMLMacro( ... )
     return propertyCatch
 end
 

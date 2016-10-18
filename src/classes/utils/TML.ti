@@ -113,6 +113,11 @@ end
     @return <TML Instance - instance>
 ]]
 function TML.static.fromFile( parent, path )
+    if not Titanium.isInstance( parent ) then
+        return error "Expected Titanium instance as first argument (parent)"
+    end
+
+    local fs = ( parent.context or Titanium.VFS or _G ).fs
     if not fs.exists( path ) then return error( "Path "..tostring( path ).." cannot be found" ) end
 
     local h = fs.open( path, "r" )

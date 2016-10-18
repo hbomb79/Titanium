@@ -4,6 +4,10 @@
 --]]
 
 class Application extends Component mixin MThemeManager mixin MKeyHandler mixin MCallbackManager mixin MAnimationManager mixin MNodeContainer {
+    static = {
+        defaultContext = _G
+    };
+
     width = 51;
     height = 19;
 
@@ -22,7 +26,7 @@ class Application extends Component mixin MThemeManager mixin MKeyHandler mixin 
 ]]
 function Application:__init__( ... )
     self:resolve( ... )
-    self.canvas = TermCanvas( self )
+    self.canvas, self.context = TermCanvas( self ), Titanium.VFS or Application.static.defaultContext
 
     self:setMetaMethod("add", function( a, b )
         local t = a ~= self and a or b
@@ -160,8 +164,10 @@ end
     @instance
     @desc Begins the program loop
 ]]
-function Application:start()
-    -- local animationTimer = timer.new( 0 )
+function Application:start( preserve )
+    if not preserve then
+        Titanium.VFS = nil
+    end
 
     self.running = true
     while self.running do
@@ -170,7 +176,6 @@ function Application:start()
         local eName = event[ 1 ]
 
         if eName == "timer" and event[ 2 ] == self.timer then
-            -- animationTimer = timer.new( .5 )
             self:updateAnimations()
         elseif eName == "terminate" and self.terminatable then
             printError "Application Terminated"

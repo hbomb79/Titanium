@@ -10,7 +10,7 @@ local lfs, explore, showHelp = type( fs ) ~= "table" and require "lfs"
 local SETTINGS = {
     EXTRACT = {
         targets = {},
-        output = "/"
+        output = "/" --TODO
     },
     TITANIUM = {
         INSTALL = false,
@@ -303,7 +303,8 @@ if next( class_assets ) then
     output = output .. "local classSource = " .. serialise( class_assets ).."\n"
 end
 
-if next( vfs_assets ) then
+local useVFS = next( vfs_assets )
+if useVFS then
     output = output .. "local vfsAssets = " .. serialise( vfs_assets ) .. [[
 
 local VFS_ENV = setmetatable({
@@ -430,6 +431,10 @@ end
 
 if next( class_assets ) then
     output = output .. [[
+if not _G.Titanium then
+    return error "Failed to execute Titanium package. Titanium is not loaded. Please load Titanium before executing this package, or use -ti and -tia when packaging to install and load Titanium automatically"
+end
+
 local loaded = {}
 local function loadClass( name, source )
     if loaded[ name ] then return end
@@ -465,16 +470,23 @@ end
 
 local init = SETTINGS.INIT_FILE
 if init then
+    output = output .. ( useVFS and "\nTitanium.VFS = VFS_ENV\n" or "\nTitanium.VFS = nil\n" )
+
     if vfs_assets[ init ] then
         output = output .. [[
 
 local fn, err = VFS_ENV.loadstring( vfsAssets[ "]]..init..[[" ], "]] .. getName( init ) .. [[" )
 if fn then fn()
-else return error( "Failed to run file from bundle vfs: "..tostring( err ) ) end]]
+else return error( "Failed to run file from bundle vfs: "..tostring( err ) ) end
+]]
     elseif extract_assets[ init ] then
-        output = output .. "VFS_ENV.dofile \""..init.."\""
+        output = output .. "VFS_ENV.dofile \""..init.."\"\n"
     else
         error("Init file '"..init.."' is invalid. Not found inside application bundle")
+    end
+
+    if useVFS then
+        output = output .. "\nTitanium.VFS = nil\n"
     end
 else
     error("Failed to compile project. No init file specified (--init/-i)=path")

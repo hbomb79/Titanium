@@ -4,22 +4,32 @@
     Call with --help/-h to display help
 ]]
 
-local lfs, explore, showHelp = type( fs ) ~= "table" and require "lfs"
+local lfs, explore, addFromExplore, showHelp = type( fs ) ~= "table" and require "lfs"
 
 --[[ Constants ]]--
 local SETTINGS = {
     EXTRACT = {
-        targets = {},
-        output = "/" --TODO
+        TARGETS = {},
+        EXCLUDE = {},
+        ALLOW_OVERRIDE = true
     },
     TITANIUM = {
         INSTALL = false,
-        AUTOLOAD = false,
         DISABLE_CHECK = false
     },
     SOURCE = {
-        classes = {},
-        location = "src"
+        CLASSES = {},
+        EXCLUDE = {},
+        LOCATION = "src"
+    },
+    VFS = {
+        ENABLE = true,
+        RESTRICT = false,
+        EXCLUDE = {}
+    },
+
+    GLOBAL_EXCLUDE = {
+        [".DS_Store"] = true
     },
 
     PICKLE_LOCATION = "Pickle.lua",
@@ -28,85 +38,79 @@ local SETTINGS = {
     MINIFY_SOURCE = false,
 
     INIT_FILE = false,
-    VFS_SANDBOX = false,
 
     OUTPUT_LOCATION = "titanium-project.tpkg"
 }
 
-local FLAGS = {
-    {"source", "s", function( path )
-        SETTINGS.SOURCE.location = path
-    end, true},
+local FLAGS
+FLAGS = {
+    -- Source flags
+    {"source", "s", function( path ) SETTINGS.SOURCE.location = path end, true, "Defines the source folder for your project. Files not set as a class file or extractable (see below) will be accessible via virtual file system"},
+    {"class-source", "cs", function( path ) addFromExplore( SETTING.SOURCE.CLASSES, path ) end, true, "Files inside the path given will be set as a class file and will be executed and the class created will be compiled"},
+    {"extract", "e", function( path ) addFromExplore( path, SETTINGS.EXTRACT.TARGETS ) end, true, "Files inside the path given will be extracted from the package when it's executed"},
+    {"output", "o", function( location ) SETTINGS.OUTPUT_LOCATION = location end, true, "The output path of the package"},
+    {"init", "i", function( path ) SETTINGS.INIT_FILE = path end, true, "This file will be run when the package is executed"},
+    {"minify", "m", function() SETTINGS.MINIFY_SOURCE = true end, false, "Files ending with the `.ti` or `.lua` extension will be minified"},
 
-    {"class-source", "cs", function( path )
-        local r = explore( path )
-        for i = 1, #r do SETTINGS.SOURCE.classes[ r[ i ] ] = true end
-    end, true},
+    -- Path Exclusion
+    {"exclude-class-source", "exclude-cs", function( path ) addFromExplore( path, SETTINGS.SOURCE.EXCLUDE ) end, true, "Files inside this path will not be loaded as a class file"},
+    {"exclude-extract", false, function( path ) addFromExplore( path, SETTINGS.EXTRACT.EXCLUDE ) end, true, "Files inside this path will not be extracted"},
+    {"exclude-vfs", false, function( path ) addFromExplore( path, SETTINGS.VFS.EXCLUDE ) end, true, "Files inside this path will not be available via the virtual file system"},
+    {"exclude", false, function( path ) addFromExplore( path, SETTINGS.GLOBAL_EXCLUDE ) end, false, "Files inside this path will not be processed"},
+    {"block-extract-override", false, function() SETTINGS.EXTRACT.ALLOW_OVERRIDE = false end, false, "Disallows the package to be extracted to a certain path at execution time"},
 
-    {"extract", "e", function( path )
-        local r = explore( path )
-        for i = 1, #r do SETTINGS.EXTRACT.targets[ r[ i ] ] = true end
-    end, true},
+    -- Titanium flags
+    {"titanium", "ti", function( path ) SETTINGS.TITANIUM.INSTALL = path end, true, "Automatically download titanium to the path specified and load it if Titanium isn't already loaded"},
+    {"titanium-disable-check", "tid", function() SETTINGS.TITANIUM.DISABLE_CHECK = true end, false, "Supresses the error that will occur when packaging class files without -ti. Allows Titanium to be loaded externally"},
 
-    {"output", "o", function( location ) SETTINGS.OUTPUT_LOCATION = location end, true},
+    -- VFS Flags
+    {"vfs-disable", false, function() SETTINGS.VFS.ENABLED = false end, false, "Disables the virtual file system"},
+    {"vfs-restrict", false, function() SETTINGS.VFS.RESTRICT = true end, false, "The packages environment _G and _ENV variables will refer to the sandbox environment"},
 
-    {"pickle-source", false, function( path )
-        SETTINGS.PICKLE_LOCATION = path
-    end, true},
+    -- Advanced flags
+    {"pickle-source", false, function( path ) SETTINGS.PICKLE_LOCATION = path end, true, "The path given will be executed when the builder is run outside of ComputerCraft and will be used to serialize tables"},
+    {"minify-source", false, function( path ) SETTINGS.MINIFY_LOCATION = path end, true, "The path given will be executed when the builder is run with minify enabled. This file will be used to minify Lua source code"},
 
-    {"minify-source", false, function( path )
-        SETTINGS.MINIFY_LOCATION = path
-    end, true},
-
-    {"minify", "m", function()
-        SETTINGS.MINIFY_SOURCE = true
-    end},
-
-    {"titanium", "ti", function( path )
-        SETTINGS.TITANIUM.INSTALL = path
-    end, true},
-
-    {"titanium-autoload", "tia", function()
-        SETTINGS.TITANIUM.AUTOLOAD = true
-    end},
-
-    {"titanium-disable-check", "tid", function()
-        SETTINGS.TITANIUM.DISABLE_CHECK = true
-    end},
-
-    {"init", "i", function( path )
-        SETTINGS.INIT_FILE = path
-    end, true},
-
-    {"vfs-enable", "ve", function()
-        SETTINGS.VFS_SANDBOX = true
-    end},
-
+    -- Help flag
     {"help", "h", function()
-        local isCC = type( textutils ) == "table" and type( textutils.pagedPrint ) == "function"
-        if isCC then term.setCursorPos( 1, 2 ) term.clear() end
+        local isCC = type( textutils ) == "table" and type( term ) == "table"
 
-        ( isCC and textutils.pagedPrint or print ) [[
-Titanium Packager Help
-======================
+        local isColour = isCC and term.isColour
+        if type( isColour ) == "function" then isColour = isColour() end
 
---source (-s): Defines the source folder for your project. All files inside will be included in the bundle. Files not set as a class file or extractable (see below) will be accessible via virtual file system.
---extract (-e): Files inside the path given will be set as extractable and will be extracted from the bundle when it's executed.
---class-source (-cs): Files inside the path given will be set as a class file and will be executed and the class created will be compiled.
---output (-o): The path given defines where the build file will be output.
---minify (-m): Files ending with the `.ti` or `.lua` extension will be minified.
---titanium (-ti): Inserts a snippet into the build to automatically download titanium to the path specified if it doesn't exist.
---init (-i): Sets the project init file to the path given. This file will be run when the bundle is invoked.
---help (-h): Shows this help menu.
+        local function colPrint( col, text ) term.setTextColour( col ); write( text ) end
 
-Advanced flags:
----------------
---pickle-source: The path given will be executed when the builder is run outside of ComputerCraft and will be used to serialize tables.
---minify-source: The path given will be executed when the builder is run with minify enabled. This file will be used to minify Lua source code.
-]]
+        showHelp = true
 
-    showHelp = true
-    end}
+        local f
+        for i = 1, #FLAGS do
+            f = FLAGS[ i ]
+
+            if isColour then
+                colPrint( colours.orange, ("--%s"):format( f[ 1 ] ) )
+                if f[ 2 ] then colPrint( colours.blue, "(-"..f[ 2 ]..")" ) end
+                colPrint( colours.white, ": " .. f[ 5 ] .. "\n\n" )
+            else
+                print( ("--%s%s: %s"):format( f[ 1 ], f[ 2 ] and "(-"..f[ 2 ]..")" or "", f[ 5 ] ) .. "\n" )
+            end
+
+            if isCC then
+                local x, y = term.getCursorPos()
+
+                term.setCursorPos( 1, select( 2, term.getSize() ) )
+
+                write "Click to continue (key to exit)"
+                while true do
+                    local e = os.pullEvent()
+                    if e == "mouse_click" then break
+                    elseif e == "key" then return end
+                end
+
+                term.clearLine()
+                term.setCursorPos( x, y )
+            end
+        end
+    end, false, "Show this help menu"}
 }
 
 --[[ Helper Functions ]]--
@@ -142,18 +146,16 @@ function explore( path, results )
     if isDir( path ) then
         if type( fs ) == "table" then
             for _, file in pairs( fs.list( path ) ) do
-                if file ~= ".DS_Store" then
-                    local p = path .. "/" .. file
-                    if isDir( p ) then
-                        results = explore( p, results )
-                    else
-                        results[ #results + 1 ] = p
-                    end
+                local p = path .. "/" .. file
+                if isDir( p ) then
+                    results = explore( p, results )
+                else
+                    results[ #results + 1 ] = p
                 end
             end
         else
             for file in lfs.dir( path ) do
-                if file ~= "." and file ~= ".." and file ~= ".DS_Store" then
+                if file ~= "." and file ~= ".." then
                     local p = path .. "/" .. file
 
                     if lfs.attributes( p, "mode" ) == "directory" then
@@ -168,6 +170,11 @@ function explore( path, results )
     else return error("Path '"..tostring( path ).."' cannot be explored. Doesn't exist.") end
 
     return results
+end
+
+function addFromExplore( tbl, path )
+    local r = explore( path )
+    for i = 1, #r do tbl[ r[ i ] ] = true end
 end
 
 local preprocessTargets = {"class", "extends", "alias", "mixin"}
@@ -188,6 +195,7 @@ local function preprocess( text )
     return text
 end
 
+local doMinify = SETTINGS.MINIFY_SOURCE
 local function getFileContents( path, allowMinify, allowPreprocess )
     if isFile( path ) then
         local file, err = io.open( path )
@@ -199,12 +207,11 @@ local function getFileContents( path, allowMinify, allowPreprocess )
         file:close()
 
         cnt = allowPreprocess and preprocess( cnt ) or cnt
-        if allowMinify and SETTINGS.MINIFY_SOURCE then
+        if allowMinify and doMinify then
             if type( _G.Minify ) ~= "function" then dofile( SETTINGS.MINIFY_LOCATION ) end
 
             local ok, cnt = Minify( cnt )
-
-            if not ok and cnt then error( "Failed to minify target '"..tostring(path).."': "..tostring( cnt ) ) end
+            if not ok and cnt then error( "Failed to minify target '"..tostring( path ).."': "..tostring( cnt ) ) end
 
             return cnt
         end
@@ -265,20 +272,25 @@ end
 if showHelp then return end
 
 --[[ Main ]]--
+local GLOBAL_EXCLUDE, EXTRACT_EXCLUDE, CLASS_EXCLUDE, VFS_EXCLUDE = SETTINGS.GLOBAL_EXCLUDE, SETTINGS.EXTRACT.EXCLUDE, SETTINGS.SOURCE.EXCLUDE, SETTINGS.VFS.EXCLUDE
 local vfs_assets, extract_assets, class_assets = {}, {}, {}
-for file in pairs( SETTINGS.EXTRACT.targets ) do
-    extract_assets[ file ] = getFileContents( file, file:find("%.lua$") or file:find("%.ti$") )
+for file in pairs( SETTINGS.EXTRACT.TARGETS ) do
+    if not ( GLOBAL_EXCLUDE[ file ] or EXTRACT_EXCLUDE[ file ] ) then
+        extract_assets[ file ] = getFileContents( file, file:find("%.lua$") or file:find("%.ti$") )
+    end
 end
 
-for file in pairs( SETTINGS.SOURCE.classes ) do
-    class_assets[ getName( file ) ] = getFileContents( file, true, true )
+for file in pairs( SETTINGS.SOURCE.CLASSES ) do
+    if not ( GLOBAL_EXCLUDE[ file ] or CLASS_EXCLUDE[ file ] ) then
+        class_assets[ getName( file ) ] = getFileContents( file, true, true )
+    end
 end
 
 do
-    local r, rI = explore( SETTINGS.SOURCE.location )
+    local r, rI = explore( SETTINGS.SOURCE.LOCATION )
     for i = 1, #r do
         rI = r[ i ]
-        if not ( class_assets[ getName( rI ) ] or extract_assets[ rI ] ) then
+        if not ( class_assets[ getName( rI ) ] or extract_assets[ rI ] ) and not ( GLOBAL_EXCLUDE[ rI ] or VFS_EXCLUDE[ rI ] ) then
             vfs_assets[ rI ] = getFileContents( rI, rI:find("%.lua$") or rI:find("%.ti$") )
         end
     end
@@ -296,7 +308,7 @@ local output = [=[
 
 ]=]
 if next( class_assets ) then
-    if not SETTINGS.TITANIUM.DISABLE_CHECK and not ( SETTINGS.TITANIUM.INSTALL and SETTINGS.TITANIUM.AUTOLOAD ) then
+    if not SETTINGS.TITANIUM.DISABLE_CHECK and not SETTINGS.TITANIUM.INSTALL then
         error "Failed to compile project. When class source is present, The Titanium module must be set to automatically install AND load. Use flags -ti and -tia to enable, or -tid to disable this check"
     end
 
@@ -420,20 +432,19 @@ if not fs.exists( "]] .. titanium .. [[" ) then
         h.close()
     else error "Failed to download Titanium" end
 end
-]]
 
-    if SETTINGS.TITANIUM.AUTOLOAD then
-        output = output .. 'if not _G.Titanium then dofile "'.. titanium .. '" end\n'
-    end
-elseif SETTINGS.TITANIUM.AUTOLOAD then
-    print "WARNING: The Titanium module is set to auto load, however it's install location is not set. Use flag -ti=<location> to enable module installation"
+if not _G.Titanium then dofile "]] .. titanium .. [[" end
+]]
 end
+
+output = output .. [[
+if not _G.Titanium then
+    return error "Failed to execute Titanium package. Titanium is not loaded. Please load Titanium before executing this package, or repackage this application using the --titanium flag."
+end
+]]
 
 if next( class_assets ) then
     output = output .. [[
-if not _G.Titanium then
-    return error "Failed to execute Titanium package. Titanium is not loaded. Please load Titanium before executing this package, or use -ti and -tia when packaging to install and load Titanium automatically"
-end
 
 local loaded = {}
 local function loadClass( name, source )

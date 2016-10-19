@@ -324,7 +324,7 @@ if useVFS then
 local VFS_ENV = setmetatable({
     fs = setmetatable({}, { __index = _G["fs"] })
 },{__index = _ENV or getfenv()})
-]] .. ( SETTINGS.VFS_SANDBOX and "VFS_ENV._G = VFS_ENV\nVFS_ENV._ENV = VFS_ENV\n" or "" ) .. [[
+]] .. ( SETTINGS.VFS.RESTRICT and "VFS_ENV._G = VFS_ENV\nVFS_ENV._ENV = VFS_ENV\n" or "" ) .. [[
 
 function VFS_ENV.load(src, name, mode, env)
 	return load( src, name or '(load)', mode, env or VFS_ENV )

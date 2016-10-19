@@ -45,8 +45,8 @@ local SETTINGS = {
 local FLAGS
 FLAGS = {
     -- Source flags
-    {"source", "s", function( path ) SETTINGS.SOURCE.location = path end, true, "Defines the source folder for your project. Files not set as a class file or extractable (see below) will be accessible via virtual file system"},
-    {"class-source", "cs", function( path ) addFromExplore( SETTING.SOURCE.CLASSES, path ) end, true, "Files inside the path given will be set as a class file and will be executed and the class created will be compiled"},
+    {"source", "s", function( path ) SETTINGS.SOURCE.LOCATION = path end, true, "Defines the source folder for your project. Files not set as a class file or extractable (see below) will be accessible via virtual file system"},
+    {"class-source", "cs", function( path ) addFromExplore( path, SETTINGS.SOURCE.CLASSES ) end, true, "Files inside the path given will be set as a class file and will be executed and the class created will be compiled"},
     {"extract", "e", function( path ) addFromExplore( path, SETTINGS.EXTRACT.TARGETS ) end, true, "Files inside the path given will be extracted from the package when it's executed"},
     {"output", "o", function( location ) SETTINGS.OUTPUT_LOCATION = location end, true, "The output path of the package"},
     {"init", "i", function( path ) SETTINGS.INIT_FILE = path end, true, "This file will be run when the package is executed"},

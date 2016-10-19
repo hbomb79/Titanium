@@ -63,7 +63,7 @@ FLAGS = {
     {"titanium-disable-check", "tid", function() SETTINGS.TITANIUM.DISABLE_CHECK = true end, false, "Supresses the error that will occur when packaging class files without -ti. Allows Titanium to be loaded externally"},
 
     -- VFS Flags
-    {"vfs-disable", false, function() SETTINGS.VFS.ENABLED = false end, false, "Disables the virtual file system"},
+    {"vfs-disable", false, function() SETTINGS.VFS.ENABLE = false end, false, "Disables the virtual file system"},
     {"vfs-restrict", false, function() SETTINGS.VFS.RESTRICT = true end, false, "The packages environment _G and _ENV variables will refer to the sandbox environment"},
 
     -- Advanced flags
@@ -317,7 +317,7 @@ if next( class_assets ) then
     output = output .. "local classSource = " .. serialise( class_assets ).."\n"
 end
 
-local useVFS = next( vfs_assets )
+local useVFS = SETTINGS.VFS.ENABLE and next( vfs_assets )
 if useVFS then
     output = output .. "local vfsAssets = " .. serialise( vfs_assets ) .. [[
 
@@ -454,7 +454,7 @@ local function loadClass( name, source )
 
     local className = name:gsub( "%..*", "" )
     if not Titanium.getClass( className ) then
-        local output, err = VFS_ENV.loadstring( source, name )
+        local output, err = ( VFS_ENV or _G ).loadstring( source, name )
         if not output or err then return error( "Failed to load Lua chunk. File '"..name.."' has a syntax error: "..tostring( err ), 0 ) end
 
         local ok, err = pcall( output )
@@ -485,7 +485,7 @@ local init = SETTINGS.INIT_FILE
 if init then
     output = output .. ( useVFS and "\nTitanium.VFS = VFS_ENV\n" or "\nTitanium.VFS = nil\n" )
 
-    if vfs_assets[ init ] then
+    if useVFS and vfs_assets[ init ] then
         output = output .. [[
 
 local fn, err = VFS_ENV.loadstring( vfsAssets[ "]]..init..[[" ], "]] .. getName( init ) .. [[" )
@@ -493,9 +493,9 @@ if fn then fn()
 else return error( "Failed to run file from bundle vfs: "..tostring( err ) ) end
 ]]
     elseif extract_assets[ init ] then
-        output = output .. "VFS_ENV.dofile \""..init.."\"\n"
+        output = output .. ( useVFS and "VFS_ENV." or "" ) .. "dofile \""..init.."\"\n"
     else
-        error("Init file '"..init.."' is invalid. Not found inside application bundle")
+        error("Init file '"..init.."' is invalid. Not found inside application bundle. " .. ( not SETTINGS.VFS.ENABLE and not next( extract_assets ) and "This maybe caused by the VFS and extract being disabled. Re-enable the VFS or extract the files needed using --extract" or "" ))
     end
 
     if useVFS then

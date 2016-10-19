@@ -7,7 +7,7 @@
 local lfs, explore, addFromExplore, showHelp = type( fs ) ~= "table" and require "lfs"
 
 --[[ Constants ]]--
-local SETTINGS = {
+local SETTINGS, FLAGS = {
     EXTRACT = {
         TARGETS = {},
         EXCLUDE = {},
@@ -42,7 +42,6 @@ local SETTINGS = {
     OUTPUT_LOCATION = "titanium-project.tpkg"
 }
 
-local FLAGS
 FLAGS = {
     -- Source flags
     {"source", "s", function( path ) SETTINGS.SOURCE.LOCATION = path end, true, "Defines the source folder for your project. Files not set as a class file or extractable (see below) will be accessible via virtual file system"},

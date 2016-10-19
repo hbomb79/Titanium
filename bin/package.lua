@@ -308,7 +308,8 @@ local output = [=[
     Built using Titanium Packager (Harry Felton - hbomb79)
 ]]
 
-]=]
+local exportDirectory = ]=] .. ( SETTINGS.EXTRACT.ALLOW_OVERRIDE and 'select( 1, ... ) or ""' or '""' ) .. "\n"
+
 if next( class_assets ) then
     if not SETTINGS.TITANIUM.DISABLE_CHECK and not SETTINGS.TITANIUM.INSTALL then
         error "Failed to compile project. When class source is present, The Titanium module must be set to automatically install AND load. Use flags -ti and -tia to enable, or -tid to disable this check"
@@ -395,7 +396,7 @@ function VFS.open( path, mode )
         handle.close = function() content = "" end
 
         return handle
-    else return fs.open( path, mode ) end
+    else return fs.open( fs.combine( exportDirectory, path ), mode ) end
 end
 
 function VFS.exists( path )
@@ -403,7 +404,7 @@ function VFS.exists( path )
         return true
     end
 
-    return fs.exists( path )
+    return fs.exists( fs.combine( exportDirectory, path ) )
 end
 ]]
 end
@@ -412,8 +413,9 @@ if next( extract_assets ) then
     output = output .. "local extractAssets = "..serialise( extract_assets ) .. [[
 
 for file, content in pairs( extractAssets ) do
-    if not fs.exists( file ) then
-        local h = fs.open( file, "w" )
+    local path = fs.combine( exportDirectory, file )
+    if not fs.exists( path ) then
+        local h = fs.open( path, "w" )
         h.write( content )
         h.close()
     end
@@ -424,10 +426,11 @@ end
 local titanium = SETTINGS.TITANIUM.INSTALL
 if titanium then
     output = output .. [[
-if not fs.exists( "]] .. titanium .. [[" ) then
+local tiPath = fs.combine( exportDirectory, "]] .. titanium .. [[")
+if not fs.exists( tiPath ) then
     local h = http.get "https://gist.githubusercontent.com/hbomb79/28de5f20b2053ed42cec855c778910d1/raw/titanium.min.lua"
     if h then
-        local f = fs.open( "]] .. titanium .. [[", "w" )
+        local f = fs.open( tiPath, "w" )
         f.write( h.readAll() )
         f.close()
 
@@ -435,7 +438,7 @@ if not fs.exists( "]] .. titanium .. [[" ) then
     else error "Failed to download Titanium" end
 end
 
-if not _G.Titanium then dofile "]] .. titanium .. [[" end
+if not _G.Titanium then dofile( tiPath ) end
 ]]
 end
 
@@ -488,12 +491,16 @@ if init then
     if useVFS and vfs_assets[ init ] then
         output = output .. [[
 
-local fn, err = VFS_ENV.loadstring( vfsAssets[ "]]..init..[[" ], "]] .. getName( init ) .. [[" )
+local fn, err = VFS_ENV.loadfile "]]..init..[["
 if fn then fn()
 else return error( "Failed to run file from bundle vfs: "..tostring( err ) ) end
 ]]
     elseif extract_assets[ init ] then
-        output = output .. ( useVFS and "VFS_ENV." or "" ) .. "dofile \""..init.."\"\n"
+        if useVFS then
+            output = output .. "VFS_ENV.dofile '"..init.."'\n"
+        else
+            output = output .. "dofile( fs.combine( exportDirectory, '"..init.."' ) )"
+        end
     else
         error("Init file '"..init.."' is invalid. Not found inside application bundle. " .. ( not SETTINGS.VFS.ENABLE and not next( extract_assets ) and "This maybe caused by the VFS and extract being disabled. Re-enable the VFS or extract the files needed using --extract" or "" ))
     end

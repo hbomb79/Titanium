@@ -73,6 +73,9 @@ FLAGS = {
 
     -- Help flag
     {"help", "h", function()
+        print "Titanium packager help"
+        print( ("="):rep( 22 ) .. "\n" )
+
         local isCC = type( textutils ) == "table" and type( term ) == "table"
 
         local isColour = isCC and term.isColour
@@ -99,11 +102,12 @@ FLAGS = {
 
                 term.setCursorPos( 1, select( 2, term.getSize() ) )
 
-                write "Click to continue (key to exit)"
+                write "Any key to continue (q to exit)"
                 while true do
-                    local e = os.pullEvent()
-                    if e == "mouse_click" then break
-                    elseif e == "key" then return end
+                    local e, k = os.pullEvent "key"
+                    if k == keys.q then sleep() return end
+
+                    break
                 end
 
                 term.clearLine()

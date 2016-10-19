@@ -176,7 +176,7 @@ function explore( path, results )
     return results
 end
 
-function addFromExplore( tbl, path )
+function addFromExplore( path, tbl )
     local r = explore( path )
     for i = 1, #r do tbl[ r[ i ] ] = true end
 end
@@ -199,7 +199,6 @@ local function preprocess( text )
     return text
 end
 
-local doMinify = SETTINGS.MINIFY_SOURCE
 local function getFileContents( path, allowMinify, allowPreprocess )
     if isFile( path ) then
         local file, err = io.open( path )
@@ -211,7 +210,7 @@ local function getFileContents( path, allowMinify, allowPreprocess )
         file:close()
 
         cnt = allowPreprocess and preprocess( cnt ) or cnt
-        if allowMinify and doMinify then
+        if allowMinify and SETTINGS.MINIFY_SOURCE then
             if type( _G.Minify ) ~= "function" then dofile( SETTINGS.MINIFY_LOCATION ) end
 
             local ok, cnt = Minify( cnt )
@@ -508,5 +507,11 @@ else
 end
 
 local handle = io.open( SETTINGS.OUTPUT_LOCATION, "w" )
-handle:write( output )
+if SETTINGS.MINIFY_SOURCE then
+    local ok, cnt = Minify( output )
+    if not ok and cnt then error( "Failed to minify complete build file: " .. cnt ) end
+
+    handle:write( cnt )
+else handle:write( output ) end
+
 handle:close()

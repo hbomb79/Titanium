@@ -72,21 +72,15 @@ FLAGS = {
 
     -- Help flag
     {"help", "h", function()
-        print "Titanium packager help"
-        print( ("="):rep( 22 ) .. "\n" )
-
+        print( "Titanium packager help\n" .. ("="):rep( 22 ) .. "\n" )
         local isCC = type( textutils ) == "table" and type( term ) == "table"
-
-        local isColour = isCC and term.isColour
-        if type( isColour ) == "function" then isColour = isColour() end
+        local isColour = isCC and term.isColour and ( type( term.isColour ) ~= "function" or ( type( term.isColour ) == "function" and term.isColour() ) )
 
         local function colPrint( col, text ) term.setTextColour( col ); write( text ) end
 
         showHelp = true
-
-        local f
         for i = 1, #FLAGS do
-            f = FLAGS[ i ]
+            local f = FLAGS[ i ]
 
             if isColour then
                 colPrint( colours.orange, ("--%s"):format( f[ 1 ] ) )
@@ -100,12 +94,9 @@ FLAGS = {
                 local x, y = term.getCursorPos()
 
                 term.setCursorPos( 1, select( 2, term.getSize() ) )
-
-                write "Any key to continue (q to exit)"
+                term.write "Any key to continue (q to exit)"
                 while true do
-                    local e, k = os.pullEvent "key"
-                    if k == keys.q then sleep() return end
-
+                    if select( 2, os.pullEvent "key" ) == keys.q then sleep() return end
                     break
                 end
 
@@ -312,7 +303,7 @@ local exportDirectory = ]=] .. ( SETTINGS.EXTRACT.ALLOW_OVERRIDE and 'select( 1,
 
 if next( class_assets ) then
     if not SETTINGS.TITANIUM.DISABLE_CHECK and not SETTINGS.TITANIUM.INSTALL then
-        error "Failed to compile project. When class source is present, The Titanium module must be set to automatically install AND load. Use flags -ti and -tia to enable, or -tid to disable this check"
+        error "Failed to compile project. When class source is present, The Titanium module must be set to automatically install. Use flag --titanium to set the install path, or --titanium-disable-check to disable this check"
     end
 
     output = output .. "local classSource = " .. serialise( class_assets ).."\n"

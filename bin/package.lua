@@ -266,7 +266,7 @@ if showHelp then return end
 
 --[[ Main ]]--
 local GLOBAL_EXCLUDE, EXTRACT_EXCLUDE, CLASS_EXCLUDE, VFS_EXCLUDE = SETTINGS.GLOBAL_EXCLUDE, SETTINGS.EXTRACT.EXCLUDE, SETTINGS.SOURCE.EXCLUDE, SETTINGS.VFS.EXCLUDE
-local vfs_assets, extract_assets, class_assets = {}, {}, {}
+local vfs_assets, vfs_dirs, extract_assets, class_assets = {}, {}, {}, {}
 for file in pairs( SETTINGS.EXTRACT.TARGETS ) do
     if not ( GLOBAL_EXCLUDE[ file ] or EXTRACT_EXCLUDE[ file ] ) then
         extract_assets[ file ] = getFileContents( file, file:find("%.lua$") or file:find("%.ti$") )
@@ -286,6 +286,15 @@ do
         if not ( class_assets[ getName( rI ) ] or extract_assets[ rI ] ) and not ( GLOBAL_EXCLUDE[ rI ] or VFS_EXCLUDE[ rI ] ) then
             vfs_assets[ rI ] = getFileContents( rI, rI:find("%.lua$") or rI:find("%.ti$") )
         end
+    end
+end
+
+for path in pairs( vfs_assets ) do
+    while path do
+        path = path:match "^(.+)/"
+        if not path then break end
+
+        vfs_dirs[ path ] = true
     end
 end
 
@@ -317,6 +326,8 @@ local VFS_ENV = setmetatable({
     fs = setmetatable({}, { __index = _G["fs"] })
 },{__index = _ENV or getfenv()})
 ]] .. ( SETTINGS.VFS.RESTRICT and "VFS_ENV._G = VFS_ENV\nVFS_ENV._ENV = VFS_ENV\n" or "" ) .. [[
+
+local VFS_DIRS = ]] .. serialise( vfs_dirs ) .. [[
 
 function VFS_ENV.load(src, name, mode, env)
 	return load( src, name or '(load)', mode, env or VFS_ENV )
@@ -350,6 +361,7 @@ if type( setfenv ) == "function" then setfenv( VFS_ENV.dofile, VFS_ENV ) end
 
 local VFS = VFS_ENV.fs
 function VFS.open( path, mode )
+    local path = fs.combine( "", path )
     if vfsAssets[ path ] then
         if mode == "w" or mode == "wb" or mode == "a" or mode == "ab" then
             return error("Cannot open file in mode '"..tostring( mode ).."'. File is inside of Titanium VFS and is read only")
@@ -390,10 +402,20 @@ function VFS.open( path, mode )
     else return fs.open( fs.combine( exportDirectory, path ), mode ) end
 end
 
+function VFS.isReadOnly( path )
+    if vfsAssets[ fs.combine( "", path ) ] then return true end
+
+    return false
+end
+
+function VFS.isDir( path )
+    local path = fs.combine( "", path )
+    return VFS_DIRS[ path ] or fs.isDir( fs.combine( exportDirectory, path ) )
+end
+
 function VFS.exists( path )
-    if vfsAssets[ path ] then
-        return true
-    end
+    local path = fs.combine( "", path )
+    if vfsAssets[ path ] or VFS_DIRS[ path ] then return true end
 
     return fs.exists( fs.combine( exportDirectory, path ) )
 end

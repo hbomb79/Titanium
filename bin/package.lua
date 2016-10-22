@@ -329,6 +329,8 @@ local VFS_ENV = setmetatable({
 
 local VFS_DIRS = ]] .. serialise( vfs_dirs ) .. [[
 
+local matches = { ["^"] = "%^", ["$"] = "%$", ["("] = "%(", [")"] = "%)", ["%"] = "%%", ["*"] = "[^/]*", ["."] = "%.", ["["] = "%[", ["]"] = "%]", ["+"] = "%+", ["-"] = "%-" }
+
 function VFS_ENV.load(src, name, mode, env)
 	return load( src, name or '(load)', mode, env or VFS_ENV )
 end
@@ -361,7 +363,7 @@ if type( setfenv ) == "function" then setfenv( VFS_ENV.dofile, VFS_ENV ) end
 
 local VFS = VFS_ENV.fs
 function VFS.open( path, mode )
-    local path = fs.combine( "", path )
+    path = fs.combine( "", path )
     if vfsAssets[ path ] then
         if mode == "w" or mode == "wb" or mode == "a" or mode == "ab" then
             return error("Cannot open file in mode '"..tostring( mode ).."'. File is inside of Titanium VFS and is read only")
@@ -403,18 +405,59 @@ function VFS.open( path, mode )
 end
 
 function VFS.isReadOnly( path )
-    if vfsAssets[ fs.combine( "", path ) ] then return true end
+    path = fs.combine( "", path )
+    if vfsAssets[ path ] then return true end
 
-    return false
+    return fs.isReadOnly( fs.combine( exportDirectory, path ) )
+end
+
+function VFS.list( target )
+    target = fs.combine( "", target )
+    local list = fs.list( target ) or {}
+
+    local function addResult( res )
+        for i = 1, #list do if list[ i ] == res then return end end
+        list[ #list + 1 ] = res
+    end
+
+    if VFS_DIRS[ target ] then
+        for path in pairs( vfsAssets ) do
+            if path:match( ("^%s/"):format( target ) ) then
+                addResult( path:match( ("^%s/([^/]+)"):format( target ) ) )
+            end
+        end
+    elseif target == "" then
+        for path in pairs( vfsAssets ) do addResult( path:match "^([^/]+)" ) end
+    end
+
+    return list
+end
+
+function VFS.find( target )
+    target = fs.combine( "", target )
+    local list = fs.find( target ) or {}
+
+    target = ("^(%s)(.*)$"):format( target:gsub( ".", matches ) )
+    for path in pairs( vfsAssets ) do
+        local res, tail = path:match( target )
+        if res and ( tail == "" or tail:sub( 1, 1 ) == "/" ) then
+            local isMatch
+            for i = 1, #list do if list[ i ] == res then isMatch = true; break end end
+
+            if not isMatch then list[ #list + 1 ] = res end
+        end
+    end
+
+    return list
 end
 
 function VFS.isDir( path )
-    local path = fs.combine( "", path )
+    path = fs.combine( "", path )
     return VFS_DIRS[ path ] or fs.isDir( fs.combine( exportDirectory, path ) )
 end
 
 function VFS.exists( path )
-    local path = fs.combine( "", path )
+    path = fs.combine( "", path )
     if vfsAssets[ path ] or VFS_DIRS[ path ] then return true end
 
     return fs.exists( fs.combine( exportDirectory, path ) )

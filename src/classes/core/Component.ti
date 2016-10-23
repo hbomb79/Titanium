@@ -2,7 +2,7 @@
     A Component is an object that can be respresented visually.
 --]]
 
-abstract class Component {
+abstract class Component mixin MPropertyManager {
     width = 1;
     height = 1;
     X = 1;

@@ -1,0 +1,171 @@
+--[[
+    Tracks property changes and invokes custom callbacks when they change.
+
+    Note: Only supports watching of arguments that have had their types set via `configure`.
+]]
+
+abstract class MPropertyManager {
+    links = {};
+    foreignLinks = {};
+}
+
+--[[
+    @constructor
+    @desc Hooks into all properties whose types have been defined. Un-hooked arguments cannot be watched.
+]]
+function MPropertyManager:MPropertyManager()
+    local properties = Titanium.getClass( self.__type ):getRegistry().constructor
+    if not ( properties or properties.argumentTypes ) then return end
+
+    for property in pairs( properties.argumentTypes ) do
+        local setterName = Titanium.getSetterName( property )
+        local oldSetter = self.raw[ setterName ]
+
+        self[ setterName ] = function( instance, value )
+            value = self:updateWatchers( property, value )
+
+            if oldSetter then
+                oldSetter( self, instance, value )
+            else
+                self[ property ] = value
+            end
+        end
+    end
+end
+
+--[[
+    @instance
+    @desc Invokes the callback function of any watching links, passing the instance and value.
+    @param <string - property>, [var - value]
+    @return [var - value]
+]]
+function MPropertyManager:updateWatchers( property, value )
+    local function updateWatchers( prop )
+        local watchers = self.links[ prop ]
+        if watchers then
+            for i = 1, #watchers do
+                value = watchers[ i ][ 1 ]( self, prop, value ) or value
+            end
+        end
+    end
+
+    if property == "*" then
+        for prop in pairs( self.links ) do updateWatchers( prop ) end
+    else
+        updateWatchers( property )
+    end
+
+    return value
+end
+
+--[[
+    @instance
+    @desc Adds a watch instruction on 'object' for 'property'. The instruction is logged in 'foreignLinks' for future modification (ie: destruction)
+    @param <string - property>, <Instance - object>, <function - callback>, [string - name]
+]]
+function MPropertyManager:watchForeignProperty( property, object, callback, name )
+    if object == self then
+        return error "Target object is not foreign. Select a foreign object or use :watchProperty"
+    end
+
+    if not self.foreignLinks[ property ] then self.foreignLinks[ property ] = {} end
+    table.insert( self.foreignLinks[ property ], object )
+
+    object:watchProperty( property, callback, name, self )
+end
+
+--[[
+    @instance
+    @desc Destroys the watch instruction for 'property'. If 'property' is '*', all property watchers are removed. If 'object' is given, only foreign links towards 'object' will be removed.
+    @param <string - property>, [Instance - object]
+]]
+function MPropertyManager:unwatchForeignProperty( property, object, name )
+    local function unwatchProp( prop )
+        local foreignLinks = self.foreignLinks[ prop ]
+
+        if foreignLinks then
+            for i = #foreignLinks, 1, -1 do
+                if not object or foreignLinks[ i ] == object then
+                    foreignLinks[ i ]:unwatchProperty( prop, name, true )
+                    table.remove( foreignLinks, i )
+                end
+            end
+        end
+    end
+
+    if property == "*" then
+        for prop in pairs( self.foreignLinks ) do unwatchProp( prop ) end
+    else
+        unwatchProp( property )
+    end
+end
+
+--[[
+    @instance
+    @desc Removes headless references of 'property' to foreign links for 'object'. Used when the foreign target (object) has severed connection and traces must be removed from the creator (self).
+    @param <string - property>, <string - object>
+]]
+function MPropertyManager:destroyForeignLink( property, object )
+    local links = self.foreignLinks[ property ]
+    if not links then return end
+
+    for i = #links, 1, -1 do
+        if links[ i ] == object then
+            table.remove( links, i )
+        end
+    end
+end
+
+--[[
+    @instance
+    @desc Instructs this object to call 'callback' when 'property' changes
+    @param <string - property>, <function - callback>, [string - name], [boolean - foreignOrigin]
+]]
+function MPropertyManager:watchProperty( property, callback, name, foreignOrigin )
+    if name then
+        self:unwatchProperty( property, name )
+    end
+
+    if not self.links[ property ] then self.links[ property ] = {} end
+    table.insert( self.links[ property ], { callback, name, foreignOrigin } )
+end
+
+--[[
+    @instance
+    @desc Removes watch instructions for 'property'. If 'name' is given, only watch instructions with that name will be removed.
+          If 'foreign' is true, watch instructions marked as originating from a foreign source will also be removed - else, only local instructions will be removed.
+          If 'disconnectForeign' and 'foreign' are true, foreign links will be removed and disconnected from their origin
+    @param <string - property>, [string - name], [boolean - foreign], [boolean - disconnectForeign]
+]]
+function MPropertyManager:unwatchProperty( property, name, foreign, disconnectForeign )
+    local function unwatchProp( prop )
+        local links = self.links[ prop ]
+
+        if links then
+            for i = #links, 1, -1 do
+                if ( not name or links[ i ][ 2 ] == name ) and ( foreign or ( not foreign and not links[ i ][ 3 ] ) ) then
+                    if foreign and disconnectForeign then
+                        links[ i ][ 3 ]:destroyForeignLink( prop, self )
+                    end
+
+                    table.remove( links, i )
+                end
+            end
+        end
+    end
+
+    if property == "*" then
+        for prop in pairs( self.links ) do unwatchProp( prop ) end
+    else
+        unwatchProp( property )
+    end
+end
+
+--[[
+    @instance
+    @desc Destroys local and foreign watcher instructions
+]]
+function MPropertyManager:onRemove()
+    self:unwatchForeignProperty "*"
+    self:unwatchProperty( "*", false, true, true )
+end

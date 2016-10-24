@@ -134,17 +134,17 @@ end
     @instance
     @desc Removes watch instructions for 'property'. If 'name' is given, only watch instructions with that name will be removed.
           If 'foreign' is true, watch instructions marked as originating from a foreign source will also be removed - else, only local instructions will be removed.
-          If 'disconnectForeign' and 'foreign' are true, foreign links will be removed and disconnected from their origin
-    @param <string - property>, [string - name], [boolean - foreign], [boolean - disconnectForeign]
+          If 'preserveForeign' and 'foreign' are true, foreign links will be removed, however they will NOT be disconnected from their origin
+    @param <string - property>, [string - name], [boolean - foreign], [boolean - preserveForeign]
 ]]
-function MPropertyManager:unwatchProperty( property, name, foreign, disconnectForeign )
+function MPropertyManager:unwatchProperty( property, name, foreign, preserveForeign )
     local function unwatchProp( prop )
         local links = self.links[ prop ]
 
         if links then
             for i = #links, 1, -1 do
                 if ( not name or links[ i ][ 2 ] == name ) and ( foreign or ( not foreign and not links[ i ][ 3 ] ) ) then
-                    if foreign and disconnectForeign then
+                    if foreign and not preserveForeign then
                         links[ i ][ 3 ]:destroyForeignLink( prop, self )
                     end
 
@@ -167,5 +167,5 @@ end
 ]]
 function MPropertyManager:onRemove()
     self:unwatchForeignProperty "*"
-    self:unwatchProperty( "*", false, true, true )
+    self:unwatchProperty( "*", false, true )
 end

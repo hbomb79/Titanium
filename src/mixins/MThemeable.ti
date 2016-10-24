@@ -49,7 +49,7 @@ end
 
 --[[
     @instance
-    @desc Hooks into the instance by changing setters of registered properties so that the theme manager is notified of the change.
+    @desc Hooks into the instance by creating watch instructions that inform the mixin of property changes.
 ]]
 function MThemeable:hook()
     if self.hooked then return error "Failed to hook theme handler. Already hooked" end
@@ -70,18 +70,13 @@ end
 
 --[[
     @instance
-    @desc Reverses the hooking process by restoring the old setters (stored on hook)
+    @desc Removes the watch instructions originating from this mixin (identified by 'THEME_HOOK_<ID>' name)
 ]]
 function MThemeable:unhook()
     if not self.hooked then return error "Failed to unhook theme handler. Already unhooked" end
+    self:unwatchProperty( "*", "THEME_HOOK_" .. self.__ID )
 
-    local setters, setter = self.setterBackup
-    for property in pairs( self.properties ) do
-        setter = setters[ property ]
-        if setter then self.raw[ Titanium.getSetterName( property ) ] = setter end
-    end
-
-    self.setterBackup, self.hooked = {}, false
+    self.hooked = false
 end
 
 function MThemeable:fetchPropertyValue( property )

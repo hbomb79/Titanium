@@ -44,7 +44,11 @@ function MPropertyManager:updateWatchers( property, value )
         local watchers = self.links[ prop ]
         if watchers then
             for i = 1, #watchers do
-                value = watchers[ i ][ 1 ]( self, prop, value ) or value
+                local newVal = watchers[ i ][ 1 ]( self, prop, value )
+
+                if newVal ~= nil then
+                    value = newVal
+                end
             end
         end
     end

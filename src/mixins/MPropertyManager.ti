@@ -31,6 +31,12 @@ function MPropertyManager:MPropertyManager()
             end
         end
     end
+
+    -- Destroys local and foreign watcher instructions
+    self:on("remove", function( instance )
+        self:unwatchForeignProperty "*"
+        self:unwatchProperty( "*", false, true )
+    end)
 end
 
 --[[
@@ -163,13 +169,4 @@ function MPropertyManager:unwatchProperty( property, name, foreign, preserveFore
     else
         unwatchProp( property )
     end
-end
-
---[[
-    @instance
-    @desc Destroys local and foreign watcher instructions
-]]
-function MPropertyManager:onRemove()
-    self:unwatchForeignProperty "*"
-    self:unwatchProperty( "*", false, true )
 end

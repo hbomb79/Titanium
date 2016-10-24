@@ -4,18 +4,12 @@
 
     The mixin stores all properties set directly on the object in `mainValues`. These values are prioritised over values from themes unless the theme rule is designated as 'important'.
 
-    This mixin also handles property links. `links` contains information about all the links that this object has made, `dependencyLinks` contains information about other
-    objects that have linked properties on this object. When a property is changed here, `dependencyLinks` should be notified. Likewise, this object will be notified of
-    a property change on any objects linked to.
+    This mixin no longer handles property links as this functionality has been replaced by a more robust system 'MPropertyManager'.
 ]]
 
 abstract class MThemeable {
     isUpdating = false;
     hooked = false;
-
-    links = {};
-    linkedValues = {};
-    dependencyLinks = {};
 
     properties = {};
     classes = {};
@@ -23,7 +17,6 @@ abstract class MThemeable {
 
     mainValues = {};
     defaultValues = {};
-    setterBackup = {};
 }
 
 --[[
@@ -56,164 +49,22 @@ end
 
 --[[
     @instance
-    @desc Links a dependency for property and target provided. When the property given is changed, 'target' will be notified
-    @param <string - property>, <MThemeable - target>
-]]
-function MThemeable:linkDependency( property, target )
-    if not self.dependencyLinks[ property ] then
-        self.dependencyLinks[ property ] = {}
-    end
-
-    table.insert( self.dependencyLinks[ property ], target )
-end
-
---[[
-    @instance
-    @desc Unlinks dependencies for property provided. If target is provided only dependencies from that target will be unlinked
-    @param <string - property>, [MThemeable - target]
-]]
-function MThemeable:unlinkDependency( property, target )
-    local dependencies = self.dependencyLinks[ property ]
-    if not dependencies then return end
-
-    for i = #dependencies, 1, -1 do
-        local dependency = dependencies[ i ]
-
-        if ( target and dependency == target ) or not target then
-            table.remove( dependencies, i )
-        end
-    end
-end
-
---[[
-    @instance
-    @desc Destroys the connection to linked objects in reverse (i.e. depended upon -> depended by, instead of depended by -> depended on)
-]]
-function MThemeable:destroyDependencies( type )
-    local function destroy( property, dependencies )
-        for i = 1, #dependencies do
-            dependencies[ i ]:unlinkProperty( property, true )
-        end
-    end
-
-    if not type then
-        for property, depends in pairs( self.dependencyLinks ) do
-            destroy( property, depends )
-        end
-
-        self.dependencyLinks = {}
-    else
-        destroy( type, self.dependencyLinks[ type ] )
-        self.dependencyLinks[ type ] = nil
-    end
-end
-
---[[
-    @instance
-    @desc Called automatically when a linked property is updated on it's target. Sets the value of the property to match target unless a value
-          is manually set on the object - in which case that value is use (much like theme updates)
-]]
-function MThemeable:updateLinks( ... )
-    local args, links = { ... }, self.links
-    for i = 1, #args do
-        local arg = args[ i ]
-        local link = links[ arg ] or error("Failed to update links. No link exists for property '"..arg.."'", 2)
-
-        self.linkedValues[ arg ] = link[ arg ]
-    end
-end
-
---[[
-    @instance
-    @desc Configures links so that properties '...' from target will be linked. 'target' will be notified of the link and will
-          notify 'self' of property changes.
-    @param <MThemeable - target>, <vararg - properties>
-]]
-function MThemeable:linkProperties( target, ... )
-    local properties = { ... }
-    for i = 1, #properties do
-        if self.links[ properties[ i ] ] then
-            return error("Failed to link properties. Cannot link property '"..properties[ i ].."' more than once. Unlink this property before linking again.")
-        end
-
-        target:linkDependency( properties[ i ], self )
-        self.links[ properties[ i ] ] = target
-    end
-
-    self:updateLinks( ... )
-    return self
-end
-
---[[
-    @instance
-    @desc Destroys the link for 'property' if one is present
-    @param <string - property>
-]]
-function MThemeable:unlinkProperty( property, manual )
-    local link = self.links[ property ]
-    if not link then return end
-
-    if not manual then
-        link:unlinkDependency( property, self )
-    end
-    self.links[ property ] = nil
-end
-
---[[
-    @instance
-    @desc Unlinks all properties given in vararg. If no arguments are given, all links are removed
-    @param [vararg - ...]
-]]
-function MThemeable:unlinkProperties( ... )
-    local args = { ... }
-
-    if #args == 0 then
-        for property, link in pairs( self.links ) do
-            link:unlinkDependency( property, self )
-        end
-
-        self.links = {}
-    else
-        for i = 1, #args do
-            self:unlinkProperty( args[ i ], target )
-        end
-    end
-end
-
---[[
-    @instance
     @desc Hooks into the instance by changing setters of registered properties so that the theme manager is notified of the change.
 ]]
 function MThemeable:hook()
     if self.hooked then return error "Failed to hook theme handler. Already hooked" end
 
     for property in pairs( self.properties ) do
-        local setterName, setterFn = Titanium.getSetterName( property )
-        if self:can( setterName ) then
-            self.setterBackup[ property ] = self.raw[ setterName ]
-            setterFn = self.raw[ setterName ]
-        end
+        self:watchProperty( property, function( _, __, value )
+            if self.isUpdating then return end
 
-        self[ setterName ] = function( instance, value )
-            local newValue = value
-            if not self.isUpdating then
-                self.mainValues[ property ] = value
-
-                newValue = self:fetchPropertyValue( property )
-            end
-
-            if setterFn then
-                setterFn( self, instance, newValue )
-            else self[ property ] = newValue end
-
-            local depends = self.dependencyLinks[ property ]
-            if depends then
-                for i = 1, #depends do depends[ i ].linkedValues[ property ] = newValue end
-            end
-        end
+            self.mainValues[ property ] = value
+            return self:fetchPropertyValue( property )
+        end, "THEME_HOOK_" .. self.__ID )
 
         self[ self.__resolved[ property ] and "mainValues" or "defaultValues" ][ property ] = self[ property ]
     end
+
     self.hooked = true
 end
 
@@ -235,10 +86,6 @@ end
 
 function MThemeable:fetchPropertyValue( property )
     local newValue = self.mainValues[ property ]
-    if newValue == nil then
-        newValue = self.linkedValues[ property ]
-    end
-
     local requireImportant = newValue ~= nil
 
     local rules, r = self.applicableRules
@@ -353,9 +200,4 @@ end
 
 function MThemeable:onThemeUpdate()
     self:updateProperties()
-end
-
-function MThemeable:onRemove( parent )
-    self:destroyDependencies()
-    self:unlinkProperties()
 end

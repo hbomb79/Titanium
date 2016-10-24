@@ -170,3 +170,44 @@ function MPropertyManager:unwatchProperty( property, name, foreign, preserveFore
         unwatchProp( property )
     end
 end
+
+--[[
+    @instance
+    @desc Links properties given to 'target'. Properties can consist of tables or string values. If table, the first index represents the name of the foreign property to link to (belonging to 'target') and the second the local property to bind (belongs to 'self')
+          If the property is a string, the foreign property and local property match and a simple bind is produced
+    @param <Instance - target>, <var - properties>
+    @return <Instance - self>
+]]
+function MPropertyManager:linkProperties( target, ... )
+    local function createLink( foreignProperty, localProperty )
+        localProperty = localProperty or foreignProperty
+        self:watchForeignProperty( foreignProperty, target, function( _, __, value )
+            self[ localProperty ] = value
+        end, "PROPERTY_LINK_" .. self.__ID )
+
+        self[ localProperty ] = target[ foreignProperty ]
+    end
+
+    local properties = { ... }
+    for i = 1, #properties do
+        local prop = properties[ i ]
+        if type( prop ) == "table" then createLink( prop[ 1 ], prop[ 2 ] ) else createLink( prop ) end
+    end
+
+    return self
+end
+
+--[[
+    @instance
+    @desc Removes the property link for foreign properties ..., bound to 'target'. The properties provided represent the foreign property that is bound to, not the local property.
+    @param <Instance - target>, <... - foreignProperties>
+    @return <Instance - self>
+]]
+function MPropertyManager:unlinkProperties( target, ... )
+    local properties = { ... }
+    for i = 1, #properties do
+        self:unwatchForeignProperty( properties[ i ], target, "PROPERTY_LINK_" .. self.__ID )
+    end
+
+    return self
+end

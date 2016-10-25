@@ -38,6 +38,8 @@ function MNodeContainer:addNode( node )
         if Titanium.typeOf( self.application, "Application", true ) then
             node.application = self.application
         end
+
+        node.parentEnabled = self.enabled
     end
 
     self.changed = true
@@ -200,9 +202,9 @@ end
 function MNodeContainer:setParentEnabled( enabled )
     self.super:setParentEnabled( enabled )
 
-    local nodes = self.nodes
+    local newEnabled, nodes = self.enabled, self.nodes
     for i = 1, #nodes do
-        nodes[ i ].parentEnabled = enabled
+        nodes[ i ].parentEnabled = newEnabled
     end
 end
 

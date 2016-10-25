@@ -38,8 +38,6 @@ function MNodeContainer:addNode( node )
         if Titanium.typeOf( self.application, "Application", true ) then
             node.application = self.application
         end
-
-        node.parentEnabled = self.enabled
     end
 
     self.changed = true

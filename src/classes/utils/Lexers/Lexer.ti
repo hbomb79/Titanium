@@ -75,7 +75,6 @@ end
     @desc Removes all trailing spaces from
 ]]
 function Lexer:trimStream()
-    -- Search for newlines
     local stream = self.stream
 
     local newLn = stream:match("^(\n+)")
@@ -85,6 +84,8 @@ function Lexer:trimStream()
 
     self.stream = stream:sub( spaces )
     self.char = self.char + spaces - 1
+
+    return self.stream
 end
 
 --[[

@@ -53,7 +53,7 @@ end
 ]]
 function XMLLexer:tokenize()
     self:trimStream()
-    local stream, openTag, currentAttribute, definingAttribute = self.stream, self.openTag, self.currentAttribute, self.definingAttribute
+    local stream, openTag, currentAttribute, definingAttribute = self:trimStream(), self.openTag, self.currentAttribute, self.definingAttribute
     local first = stream:sub( 1, 1 )
 
     if stream:find "^<(%w+)" then

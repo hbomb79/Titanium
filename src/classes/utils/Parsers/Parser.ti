@@ -31,6 +31,14 @@ end
 
 --[[
     @instance
+    @desc Returns the token 'amount' ahead of the current position. Defaults to one position ahead
+]]
+function Parser:peek( amount )
+    return self.tokens[ self.position + ( amount or 1 ) ]
+end
+
+--[[
+    @instance
     @desc Advances 'position' by one and returns the token at the new position
 ]]
 function Parser:stepForward( amount )

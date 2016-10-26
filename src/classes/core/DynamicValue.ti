@@ -11,6 +11,11 @@ class DynamicValue {
 function DynamicValue:__init__( ... )
     self:resolve( ... )
     self:attach()
+
+    local reg = Titanium.getClass( self.target.__type ):getRegistry().constructor
+    if reg and reg.argumentTypes then
+        self.type = reg.argumentTypes[ self.property ]
+    end
 end
 
 --[[
@@ -54,7 +59,7 @@ function DynamicValue:solve()
     local ok, val = pcall( fn, self.propertyValues )
     if not ok then return error("Failed to solve dyamic value equation ("..tostring( eq ).."). Runtime exception: " .. tostring( val )) end
 
-    self.target[ self.property ] = val
+    self.target[ self.property ] = XMLParser.convertArgType( val, self.type )
 end
 
 configureConstructor {
@@ -63,5 +68,6 @@ configureConstructor {
         property = "string",
         properties = "table",
         equation = "string"
-    }
+    },
+    requiredArguments = true
 }

@@ -52,5 +52,9 @@ end
 ]]
 function Parser:throw( e, token )
     local token = token or self:getCurrentToken()
+    if not token then
+        return error( "Parser ("..tostring( self.__type )..") Error: "..e, 2 )
+    end
+
     return error( "Parser ("..tostring( self.__type )..") Error. Line "..token.line..", char "..token.char .. ": "..e, 2 )
 end

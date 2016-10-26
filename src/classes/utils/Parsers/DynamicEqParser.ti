@@ -1,0 +1,147 @@
+class DynamicEqParser extends Parser {
+    state = "root";
+    stacks = {{}};
+    output = "local args = ...; return ";
+}
+
+function DynamicEqParser:__init__( expression )
+    self:super( DynamicEqLexer( expression ).tokens )
+end
+
+function DynamicEqParser:resolveStacks( target )
+    local stacks, instances = self.stacks, {}
+    for i = 1, #stacks - ( #stacks[ #stacks ] == 0 and 1 or 0 ) do
+        local stack = stacks[ i ]
+        if #stack <= 1 then
+            self:throw("Invalid stack '".. stack[ 1 ] .."'. At least 2 parts must exist to resolve")
+        end
+
+        local stackStart, instancePoint = stack[ 1 ]
+        if stackStart == "self" then
+            instancePoint = target
+        elseif stackStart == "parent" then
+            instancePoint = target.parent
+        elseif stackStart == "application" then
+            instancePoint = target.application
+        elseif stackStart == "root" then
+            instancePoint = self.root
+        else self:throw("Invalid stack start '"..stackStart.."'") end
+
+        for p = 2, #stack - 1 do
+            if not instancePoint then self:throw("Failed to resolve stacks. Index '"..stack[ p ].."' could not be accessed on '"..tostring( instancePoint ).."'") end
+            instancePoint = instancePoint[ stack[ p ] ]
+        end
+
+        if not instancePoint then self:throw "Invalid instance" elseif not stack[ #stack ] then self:throw "Invalid property" end
+        instances[ #instances + 1 ] = { stack[ #stack ], instancePoint }
+    end
+
+    return instances
+end
+
+function DynamicEqParser:setState( state )
+    self.state = state
+end
+
+function DynamicEqParser:parseRootState( token )
+    token = token or self:getCurrentToken()
+    if token.type == "NAME" then
+        self:appendToStack( token.value )
+        self:setState "name"
+
+        self.output = self.output .. "args["..#self.stacks.."]"
+    elseif token.type == "STRING" then
+        self:parseStringState()
+    elseif token.type == "CHAR" or token.type == "NUMBER" then
+        local following, leading = self:peek(), self:peek( -1 )
+        if following and following.type ~= "OPERATOR" then self:throw( "Unexpected '"..token.value.."' before '"..following.value.."'. Expected operator." ) end
+        if leading and leading.type ~= "OPERATOR" then self:throw( "Unexpected '"..token.value.."' following '"..leading.value.."'. Expected operator." ) end
+
+        self.output = self.output .. token.value
+    elseif token.type == "OPERATOR" then
+        if not token.unary then
+            self:setState "operator"
+        end
+
+        self.output = self.output .. token.value
+    else
+        self:throw("Unexpected block '"..token.value.."' of token type '"..token.type.."'.")
+    end
+end
+
+function DynamicEqParser:parseStringState( token )
+    token = token or self:getCurrentToken()
+
+    local preceding, following, isMath = self:peek( -1 ), self:peek()
+    if preceding and preceding.type == "OPERATOR" and preceding.value == "#" then
+        preceding, isMath = self:peek( -2 ), true
+    end
+
+    if following and ( following.type ~= "OPERATOR" or ( not isMath and following.value ~= ".." ) ) then
+        self:throw( "Unexpected '"..token.value.."' before '"..following.value.."'. Expected " .. ( not isMath and "'..' " or "" ) .. "operator" )
+    end
+
+    if preceding and ( preceding.type ~= "OPERATOR" or ( not isMath and preceding.value ~= ".." ) ) then
+        self:throw( "Unexpected '"..token.value.."' following '"..preceding.value.."'. Expected " .. ( not isMath and "'..' " or "" ) .. "operator" )
+    end
+
+    self.output = self.output .. token.surroundedBy .. token.value .. token.surroundedBy
+end
+
+function DynamicEqParser:parseOperatorState( token )
+    token = token or self:getCurrentToken()
+    if token.type == "CHAR" or token.type == "NUMBER" then
+        self.output = self.output .. token.value
+    elseif token.type == "STRING" then
+        self:parseStringState( token )
+    elseif token.type == "NAME" then
+        self:setState "root"
+        self:parseRootState()
+    elseif not token.unary then
+        self:throw("Unexpected block '"..token.value.."' of token type '"..token.type.."'. Expected value (literal) following operator")
+    end
+end
+
+function DynamicEqParser:parseNameState( token )
+    token = token or self:getCurrentToken()
+    if token.type == "DOT" then
+        local trailing = self:peek()
+        if trailing.type == "NAME" then
+            self:stepForward()
+            self:appendToStack( trailing.value )
+        else
+            local last = self:getStack()
+            self:throw("Failed to index '" .. last[ #last ] .. "'. No name following dot.")
+        end
+    else
+        self:setState "root"
+        table.insert( self.stacks, {} )
+
+        self:parseRootState( token )
+    end
+end
+
+function DynamicEqParser:getStack( offset )
+    return self.stacks[ #self.stacks + ( offset or 0 ) ]
+end
+
+function DynamicEqParser:appendToStack( value, stackOffset )
+    table.insert( self:getStack( stackOffset ), value )
+end
+
+function DynamicEqParser:parse()
+    local token = self:stepForward()
+    while token do
+        if self.state == "root" then
+            self:parseRootState()
+        elseif self.state == "name" then
+            self:parseNameState()
+        elseif self.state == "operator" then
+            self:parseOperatorState()
+        else
+            self:throw("Invalid parser state '"..self.state.."'")
+        end
+
+        token = self:stepForward()
+    end
+end

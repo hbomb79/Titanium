@@ -31,6 +31,14 @@ end
 
 --[[
     @instance
+    @desc Returns the token 'amount' ahead of the current position. Defaults to one position ahead
+]]
+function Parser:peek( amount )
+    return self.tokens[ self.position + ( amount or 1 ) ]
+end
+
+--[[
+    @instance
     @desc Advances 'position' by one and returns the token at the new position
 ]]
 function Parser:stepForward( amount )
@@ -44,5 +52,9 @@ end
 ]]
 function Parser:throw( e, token )
     local token = token or self:getCurrentToken()
+    if not token then
+        return error( "Parser ("..tostring( self.__type )..") Error: "..e, 2 )
+    end
+
     return error( "Parser ("..tostring( self.__type )..") Error. Line "..token.line..", char "..token.char .. ": "..e, 2 )
 end

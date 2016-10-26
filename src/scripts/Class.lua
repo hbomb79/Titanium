@@ -418,7 +418,7 @@ local function spawn( target, ... )
         end
     end
 
-    local instanceObj, instanceMt = { raw = raw, __type = target, __instance = true }, { __metatable = {} }
+    local instanceObj, instanceMt = { raw = raw, __type = target, __instance = true, __ID = instanceID }, { __metatable = {} }
     local getting, useGetters, setting, useSetters = {}, true, {}, true
     function instanceMt:__index( k )
         local k = alias[ k ] or k

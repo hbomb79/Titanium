@@ -1,0 +1,73 @@
+class DynamicValue {
+    propertyValues = {};
+    properties = {};
+}
+
+--[[
+    @constructor
+    @desc Creates watcher instructions towards 'target' for each property linked
+    @param <Instance - target>, <string - property>, <table - properties>, <string - equation>
+]]
+function DynamicValue:__init__( ... )
+    self:resolve( ... )
+    self:attach()
+
+    local reg = Titanium.getClass( self.target.__type ):getRegistry().constructor
+    if reg and reg.argumentTypes then
+        self.type = reg.argumentTypes[ self.property ]
+    end
+end
+
+--[[
+    @instance
+    @desc Attach watch instructions to each required argument
+]]
+function DynamicValue:attach()
+    local properties = self.properties
+    for i = 1, #properties do
+        local obj, prop = properties[ i ][ 2 ], properties[ i ][ 1 ]
+
+        obj:watchProperty( prop, function( _, __, val )
+            self.propertyValues[ i ] = val
+            self:solve()
+        end, "DYNAMIC_LINK_" .. self.__ID )
+
+        self.propertyValues[ i ] = obj[ prop ]
+    end
+end
+
+--[[
+    @instance
+    @desc Detaches the watcher instructions towards the targets of the dynamic value
+]]
+function DynamicValue:detach()
+    local properties = self.properties
+    for i = 1, #properties do
+        local prop = properties[ i ]
+        prop[ 2 ]:unwatchProperty( prop[ 1 ], "DYNAMIC_LINK_" .. self.__ID )
+    end
+end
+
+--[[
+    @instance
+    @desc Solves the 'equation' by inserting the values fetched off of linked targets
+]]
+function DynamicValue:solve()
+    local fn, err = loadstring( self.equation )
+    if not fn then return error("Failed to solve dynamic value equation ("..tostring( eq ).."). Parse exception: " .. tostring( err )) end
+
+    local ok, val = pcall( fn, self.propertyValues )
+    if not ok then return error("Failed to solve dyamic value equation ("..tostring( eq ).."). Runtime exception: " .. tostring( val )) end
+
+    self.target[ self.property ] = XMLParser.convertArgType( val, self.type )
+end
+
+configureConstructor {
+    orderedArguments = { "target", "property", "properties", "equation" },
+    argumentTypes = {
+        property = "string",
+        properties = "table",
+        equation = "string"
+    },
+    requiredArguments = true
+}

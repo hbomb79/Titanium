@@ -5,8 +5,7 @@ function QueryLexer:tokenize()
         self:pushToken { type = "QUERY_SEPERATOR" }
     end
 
-    self:trimStream()
-    local stream = self.stream
+    local stream = self:trimStream()
 
     if self.inCondition then
         self:tokenizeCondition( stream )

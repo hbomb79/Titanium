@@ -5,13 +5,11 @@ class DynamicValue {
 
 --[[
     @constructor
-    @desc Creates watcher instructions towards 'target' for each arguments linked
-    @param <Instance - target>, <string - property>, <table - arguments>, <string - equation>
+    @desc Creates watcher instructions towards 'target' for each property linked
+    @param <Instance - target>, <string - property>, <table - properties>, <string - equation>
 ]]
-function DynamicValue:__init__( target, property, arguments, equation )
-    self.equation = equation
-    self.properties = arguments
-
+function DynamicValue:__init__( ... )
+    self:resolve( ... )
     self:attach()
 end
 
@@ -50,15 +48,20 @@ end
     @desc Solves the 'equation' by inserting the values fetched off of linked targets
 ]]
 function DynamicValue:solve()
-    local eq = self.equation:format( unpack( self.propertyValues ) )
-    local fn, err = loadstring( eq )
-
+    local fn, err = loadstring( self.equation )
     if not fn then return error("Failed to solve dynamic value equation ("..tostring( eq ).."). Parse exception: " .. tostring( err )) end
 
-    local ok, val = pcall( fn )
-    if not ok then
-        return error("Failed to solve dyamic value equation ("..tostring( eq ).."). Runtime exception: " .. tostring( val ))
-    end
+    local ok, val = pcall( fn, self.propertyValues )
+    if not ok then return error("Failed to solve dyamic value equation ("..tostring( eq ).."). Runtime exception: " .. tostring( val )) end
 
     self.target[ self.property ] = val
 end
+
+configureConstructor {
+    orderedArguments = { "target", "property", "properties", "equation" },
+    argumentTypes = {
+        property = "string",
+        properties = "table",
+        equation = "string"
+    }
+}

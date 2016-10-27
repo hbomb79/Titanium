@@ -23,9 +23,7 @@ function DynamicEqParser:resolveStacks( target )
             instancePoint = target.parent
         elseif stackStart == "application" then
             instancePoint = target.application
-        elseif stackStart == "root" then
-            instancePoint = self.root
-        else self:throw("Invalid stack start '"..stackStart.."'") end
+        else self:throw("Invalid stack start '"..stackStart.."'. Only self, parent and application allowed") end
 
         for p = 2, #stack - 1 do
             if not instancePoint then self:throw("Failed to resolve stacks. Index '"..stack[ p ].."' could not be accessed on '"..tostring( instancePoint ).."'") end
@@ -50,9 +48,11 @@ function DynamicEqParser:parseRootState( token )
         self:setState "name"
 
         self.output = self.output .. "args["..#self.stacks.."]"
+    elseif token.type == "CHAR" then
+        self.output = self.output .. token.value
     elseif token.type == "STRING" then
         self:parseStringState()
-    elseif token.type == "CHAR" or token.type == "NUMBER" then
+    elseif token.type == "NUMBER" then
         local following, leading = self:peek(), self:peek( -1 )
         if following and following.type ~= "OPERATOR" then self:throw( "Unexpected '"..token.value.."' before '"..following.value.."'. Expected operator." ) end
         if leading and leading.type ~= "OPERATOR" then self:throw( "Unexpected '"..token.value.."' following '"..leading.value.."'. Expected operator." ) end

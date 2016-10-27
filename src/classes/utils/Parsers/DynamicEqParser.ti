@@ -106,12 +106,12 @@ function DynamicEqParser:parseNameState( token )
     token = token or self:getCurrentToken()
     if token.type == "DOT" then
         local trailing = self:peek()
-        if trailing.type == "NAME" then
+        if trailing and trailing.type == "NAME" then
             self:stepForward()
             self:appendToStack( trailing.value )
         else
             local last = self:getStack()
-            self:throw("Failed to index '" .. last[ #last ] .. "'. No name following dot.")
+            self:throw("Failed to index '" .. table.concat( last, "." ) .. "'. No name following dot.")
         end
     else
         self:setState "root"

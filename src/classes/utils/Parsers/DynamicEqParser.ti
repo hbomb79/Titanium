@@ -116,12 +116,12 @@ function DynamicEqParser:parseRootState( token )
         elseif token.ambiguos then
             local trailing = self:testForTerms( false, true )
 
-            if not ( ( ( trailing or self:testForOperator( false, UNA_AMBIG ) ) and self:testForTerms( true, false, true ) ) or ( self:testForOperator( BIN_AMBIG ) and trailing ) ) then
+            if not ( ( ( trailing or ( self:testForOperator( false, UNA_AMBIG ) and self:testForTerms( true ) ) ) and self:testForTerms( true, false, true ) ) or ( self:testForOperator( BIN_AMBIG ) and trailing ) ) then
                 self:throw("Unexpected ambiguos operator '"..token.value.."'")
             end
         else self:throw("Unknown operator '"..token.value.."'") end
 
-        self:appendToOutput( not token.unary and (" %s "):format( token.value ) )
+        self:appendToOutput( (" %s "):format( token.value ) )
     else
         self:throw("Unexpected block '"..token.value.."' of token type '"..token.type.."'.")
     end

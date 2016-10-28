@@ -39,6 +39,39 @@ end
 
 --[[
     @instance
+    @desc Tests the adjacent tokens to see if they are the correct type. Offsets can be provided and missing tokens can be configured to cause test failure
+    @param [string - before], [string - after], [boolean - optional], [number - beforeOffset], [number - afterOffset], [boolean - disallowMissing]
+
+    Note: If a token doesn't exist, it will NOT cause the test to fail unless 'disallowMissing' is set to true.
+]]
+function Parser:testAdjacent( before, after, optional, beforeOffset, afterOffset, disallowMissing )
+    local leading, leadingPass, trailing, trailingPass = false, not before, false, not after
+    local function test( token, filter )
+        if not token then return not disallowMissing end
+
+        if type( filter ) == "table" then
+            for i = 1, #filter do
+                if token.type == filter[ i ] then return true end
+            end
+        else return token.type == filter end
+    end
+
+    if before then
+        leading = self:peek( -1 - ( beforeOffset or 0 ) )
+        leadingPass = test( leading, before )
+    end
+
+
+    if after then
+        trailing = self:peek( 1 + ( afterOffset or 0 ) )
+        trailingPass = test( trailing, after )
+    end
+
+    return ( optional and ( trailingPass or leadingPass ) or ( not optional and trailingPass and leadingPass ) ), leading, trailing
+end
+
+--[[
+    @instance
     @desc Advances 'position' by one and returns the token at the new position
 ]]
 function Parser:stepForward( amount )

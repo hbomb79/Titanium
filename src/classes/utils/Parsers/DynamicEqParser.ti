@@ -1,3 +1,7 @@
+local TERMS = { "NAME", "STRING", "NUMBER", "PAREN" }
+local BIN_AMBIG = { "binary", "ambiguos" }
+local UNA_AMBIG = { "unary", "ambiguos" }
+
 class DynamicEqParser extends Parser {
     state = "root";
     stacks = {{}};
@@ -6,6 +10,30 @@ class DynamicEqParser extends Parser {
 
 function DynamicEqParser:__init__( expression )
     self:super( DynamicEqLexer( expression ).tokens )
+end
+
+function DynamicEqParser:testForOperator( beforeType, afterType, optional, beforeOffset, afterOffset )
+    local pass, before, after = self:testAdjacent( beforeType and "OPERATOR", afterType and "OPERATOR", false, beforeOffset, afterOffset, not optional )
+    if not pass then return false end
+
+    local function test( token, filter )
+        if not token then return true elseif not filter then return false end
+        if type( filter ) == "table" then
+            for i = 1, #filter do
+                if token[ filter[ i ] ] or filter[ i ] == "*" then return true end
+            end
+        else
+            if type == "*" then return true end
+            return token[ filter ]
+        end
+    end
+
+    local bT, aT = test( before, beforeType ), test( after, afterType )
+    if beforeType and afterType then return bT and aT else return ( beforeType and bT ) or ( afterType and aT ) end
+end
+
+function DynamicEqParser:testForTerms( pre, post, optional )
+    return self:testAdjacent( pre and TERMS, post and TERMS, false, false, false, not optional )
 end
 
 function DynamicEqParser:resolveStacks( target )
@@ -37,68 +65,65 @@ function DynamicEqParser:resolveStacks( target )
     return instances
 end
 
-function DynamicEqParser:setState( state )
-    self.state = state
+function DynamicEqParser:appendToOutput( str )
+    self.output = self.output .. ( str or self:getCurrentToken().value )
 end
 
 function DynamicEqParser:parseRootState( token )
     token = token or self:getCurrentToken()
     if token.type == "NAME" then
+        local filter = { "OPERATOR", "DOT", "PAREN" }
+        if not self:testAdjacent( filter, filter ) then self:throw("Unexpected name '"..token.value.."'") end
+
         self:appendToStack( token.value )
         self:setState "name"
 
-        self.output = self.output .. "args["..#self.stacks.."]"
-    elseif token.type == "CHAR" then
-        self.output = self.output .. token.value
-    elseif token.type == "STRING" then
-        self:parseStringState()
-    elseif token.type == "NUMBER" then
-        local following, leading = self:peek(), self:peek( -1 )
-        if following and following.type ~= "OPERATOR" then self:throw( "Unexpected '"..token.value.."' before '"..following.value.."'. Expected operator." ) end
-        if leading and leading.type ~= "OPERATOR" then self:throw( "Unexpected '"..token.value.."' following '"..leading.value.."'. Expected operator." ) end
+        self:appendToOutput( "args["..#self.stacks.."]" )
+    elseif token.type == "PAREN" then
+        if token.value == "(" then
+            if not ( self:testForOperator( BIN_AMBIG, false, true ) and ( self:testForTerms( false, true ) or self:testForOperator( false, UNA_AMBIG ) ) ) then
+                self:throw("Unexpected parentheses '"..token.value.."'")
+            end
+        elseif token.value == ")" then
+            if not ( self:testForTerms( true ) and self:testForOperator( false, "binary", true ) ) then
+                self:throw("Unexpected parentheses '"..token.value.."'")
+            end
+        else self:throw("Invalid parentheses '"..token.value.."'") end
 
-        self.output = self.output .. token.value
-    elseif token.type == "OPERATOR" then
-        if not token.unary then
-            self:setState "operator"
+        self:appendToOutput()
+    elseif token.type == "STRING" then
+        local unaryOffset = self:testForOperator "unary" and 1 or 0
+        if not ( ( self:testForOperator( BIN_AMBIG, false, false, unaryOffset ) or self:testAdjacent( "PAREN", false, false, unaryOffset ) ) and ( self:testForOperator( false, "binary", true ) or self:testAdjacent( false, "PAREN" ) ) ) then
+            self:throw("Unexpected string '"..token.value.."'")
         end
 
-        self.output = self.output .. token.value
+        self:appendToOutput( ("%s%s%s"):format( token.surroundedBy, token.value, token.surroundedBy ) )
+    elseif token.type == "NUMBER" then
+        if not self:testAdjacent( { "OPERATOR", "PAREN" }, { "OPERATOR", "PAREN" }, false, false, false ) then
+            self:throw("Unexpected number '"..token.value.."'")
+        end
+
+        self:appendToOutput()
+    elseif token.type == "OPERATOR" then
+        if token.unary then
+            if not ( self:testForTerms( false, true ) and ( self:testForOperator( BIN_AMBIG ) or self:testAdjacent "PAREN" ) ) then
+                self:throw("Unexpected unary operator '"..token.value.."'. Operator must follow a binary operator and precede a term")
+            end
+        elseif token.binary then
+            if not ( self:testForTerms( true ) and ( self:testForOperator( false, "unary" ) or self:testForTerms( false, true ) ) ) then
+                self:throw("Unexpected binary operator '"..token.value.."'. Expected terms before and after operator, or unary operator following")
+            end
+        elseif token.ambiguos then
+            local trailing = self:testForTerms( false, true )
+
+            if not ( ( ( trailing or self:testForOperator( false, UNA_AMBIG ) ) and self:testForTerms( true, false, true ) ) or ( self:testForOperator( BIN_AMBIG ) and trailing ) ) then
+                self:throw("Unexpected ambiguos operator '"..token.value.."'")
+            end
+        else self:throw("Unknown operator '"..token.value.."'") end
+
+        self:appendToOutput( not token.unary and (" %s "):format( token.value ) )
     else
         self:throw("Unexpected block '"..token.value.."' of token type '"..token.type.."'.")
-    end
-end
-
-function DynamicEqParser:parseStringState( token )
-    token = token or self:getCurrentToken()
-
-    local preceding, following, isMath = self:peek( -1 ), self:peek()
-    if preceding and preceding.type == "OPERATOR" and preceding.value == "#" then
-        preceding, isMath = self:peek( -2 ), true
-    end
-
-    if following and ( following.type ~= "OPERATOR" or ( not isMath and following.value ~= ".." ) ) then
-        self:throw( "Unexpected '"..token.value.."' before '"..following.value.."'. Expected " .. ( not isMath and "'..' " or "" ) .. "operator" )
-    end
-
-    if preceding and ( preceding.type ~= "OPERATOR" or ( not isMath and preceding.value ~= ".." ) ) then
-        self:throw( "Unexpected '"..token.value.."' following '"..preceding.value.."'. Expected " .. ( not isMath and "'..' " or "" ) .. "operator" )
-    end
-
-    self.output = self.output .. token.surroundedBy .. token.value .. token.surroundedBy
-end
-
-function DynamicEqParser:parseOperatorState( token )
-    token = token or self:getCurrentToken()
-    if token.type == "CHAR" or token.type == "NUMBER" then
-        self.output = self.output .. token.value
-    elseif token.type == "STRING" then
-        self:parseStringState( token )
-    elseif token.type == "NAME" then
-        self:setState "root"
-        self:parseRootState()
-    elseif not token.unary then
-        self:throw("Unexpected block '"..token.value.."' of token type '"..token.type.."'. Expected value (literal) following operator")
     end
 end
 
@@ -129,6 +154,10 @@ function DynamicEqParser:appendToStack( value, stackOffset )
     table.insert( self:getStack( stackOffset ), value )
 end
 
+function DynamicEqParser:setState( state )
+    self.state = state
+end
+
 function DynamicEqParser:parse()
     local token = self:stepForward()
     while token do
@@ -136,8 +165,6 @@ function DynamicEqParser:parse()
             self:parseRootState()
         elseif self.state == "name" then
             self:parseNameState()
-        elseif self.state == "operator" then
-            self:parseOperatorState()
         else
             self:throw("Invalid parser state '"..self.state.."'")
         end

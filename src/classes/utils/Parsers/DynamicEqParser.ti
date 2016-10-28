@@ -85,7 +85,7 @@ function DynamicEqParser:parseRootState( token )
                 self:throw("Unexpected parentheses '"..token.value.."'")
             end
         elseif token.value == ")" then
-            if not ( self:testForTerms( true ) and self:testForOperator( false, "binary", true ) ) then
+            if not ( self:testForTerms( true ) and self:testForOperator( false, BIN_AMBIG, true ) ) then
                 self:throw("Unexpected parentheses '"..token.value.."'")
             end
         else self:throw("Invalid parentheses '"..token.value.."'") end
@@ -93,7 +93,7 @@ function DynamicEqParser:parseRootState( token )
         self:appendToOutput()
     elseif token.type == "STRING" then
         local unaryOffset = self:testForOperator "unary" and 1 or 0
-        if not ( ( self:testForOperator( BIN_AMBIG, false, false, unaryOffset ) or self:testAdjacent( "PAREN", false, false, unaryOffset ) ) and ( self:testForOperator( false, "binary", true ) or self:testAdjacent( false, "PAREN" ) ) ) then
+        if not ( ( self:testForOperator( BIN_AMBIG, false, false, unaryOffset ) or self:testAdjacent( "PAREN", false, false, unaryOffset ) ) and ( self:testForOperator( false, BIN_AMBIG, true ) or self:testAdjacent( false, "PAREN" ) ) ) then
             self:throw("Unexpected string '"..token.value.."'")
         end
 

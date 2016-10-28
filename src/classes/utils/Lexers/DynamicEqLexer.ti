@@ -24,6 +24,12 @@ function DynamicEqLexer:tokenize()
     elseif not self:lexNumber() then
         if first == "'" or first == '"' then
             self:pushToken { type = "STRING", value = self:consumeString( first ), surroundedBy = first }
+        elseif stream:find "^and" then
+            self:pushToken { type = "OPERATOR", value = self:consumePattern "^and", binary = true }
+        elseif stream:find "^or" then
+            self:pushToken { type = "OPERATOR", value = self:consumePattern "^or", binary = true }
+        elseif stream:find "^not" then
+            self:pushToken { type = "OPERATOR", value = self:consumePattern "^not", unary = true }
         elseif stream:find "^[#]" then
             self:pushToken { type = "OPERATOR", value = self:consumePattern "^[#]", unary = true }
         elseif stream:find "^[/%*%%]" then
@@ -33,9 +39,9 @@ function DynamicEqLexer:tokenize()
         elseif stream:find "^%=%=" then
             self:pushToken { type = "OPERATOR", value = self:consumePattern "^%=%=", binary = true }
         elseif stream:find "^[%+%-]" then
-            self:pushToken { type = "OPERATOR", value = self:consumePattern "^[%+%-]" }
+            self:pushToken { type = "OPERATOR", value = self:consumePattern "^[%+%-]", ambiguos = true }
         elseif stream:find "^[%(%)]" then
-            self:pushToken { type = "CHAR", value = self:consumePattern "^[%(%)]" }
+            self:pushToken { type = "PAREN", value = self:consumePattern "^[%(%)]" }
         elseif stream:find "^%." then
             self:pushToken { type = "DOT", value = self:consumePattern "^%." }
         elseif stream:find "^%w+" then

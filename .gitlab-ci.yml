@@ -28,7 +28,7 @@ build:
     paths:
       - titanium.lua
   except:
-    - master
+    - tags
 
 build-release:
   stage: build
@@ -43,7 +43,7 @@ build-release:
       - titanium.lua
       - titanium.min.lua
   only:
-    - master
+    - tags
 
 test:
   <<: *test_definition
@@ -52,7 +52,7 @@ test:
     - echo "Testing development build"
     - luajit emu/cli.lua . bin/ci/run_test.lua titanium.lua tml
   except:
-    - master
+    - tags
   dependencies:
     - build
 
@@ -64,6 +64,6 @@ test-release:
     - luajit emu/cli.lua . bin/ci/run_test.lua titanium.lua tml
     - luajit emu/cli.lua . bin/ci/run_test.lua titanium.min.lua tml
   only:
-    - master
+    - tags
   dependencies:
     - build-release

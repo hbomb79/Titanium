@@ -11,7 +11,7 @@ local args = { ... }
 
 --[[ Constants ]]--
 -- Credit to https://github.com/Team-CC-Corp/Grin/blob/master/lib/json for this API
-local JSON_API, JSON = [[local ba={["\n"]="\\n",["\r"]="\\r",["\t"]="\\t",["\b"]="\\b",["\f"]="\\f",["\""]="\\\"",["\\"]="\\\\"}
+local JSON_API = [[local ba={["\n"]="\\n",["\r"]="\\r",["\t"]="\\t",["\b"]="\\b",["\f"]="\\f",["\""]="\\\"",["\\"]="\\\\"}
 local function ca(cb)local db=0;for _c,ac in pairs(cb)do
 if type(_c)~="number"then return false elseif _c>db then db=_c end end;return db==#cb end
 local da={['\n']=true,['\r']=true,['\t']=true,[' ']=true,[',']=true,[':']=true}

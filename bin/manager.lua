@@ -216,6 +216,15 @@ local function selectTag( y )
     end
 end
 
+local function finished()
+    clr()
+    posOut( WIDTH - 9, 1, "Up-to-date", 256 )
+    centreOut( 7, { "Your Titanium installation is", "up-to-date" }, colours.cyan, 1 )
+    centreOut( 10, "Click anywhere to exit", 256 )
+
+    os.pullEvent "mouse_click"
+end
+
 local function install( tag )
     clr()
     posOut( WIDTH - 13, 1, "Fetching build", 256 )
@@ -243,6 +252,8 @@ local function install( tag )
     f = fs.open( VERSION_PATH, "w" )
     f.write( tag )
     f.close()
+
+    finished()
 end
 
 local function update()
@@ -262,12 +273,7 @@ local function update()
         h.close()
 
         if version == tags[ 1 ] then
-            clr()
-            posOut( WIDTH - 9, 1, "Up-to-date", 256 )
-            centreOut( 7, { "Your Titanium installation is", "up-to-date" }, colours.cyan, 1 )
-            centreOut( 10, "Click anywhere to exit", 256 )
-
-            os.pullEvent "mouse_click"
+            finished()
         else
             install( tags[ 1 ] )
         end

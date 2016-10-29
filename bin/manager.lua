@@ -7,7 +7,7 @@
         OR `manager.lua update <path> [minify] [versionPath] [silent]`
 ]]
 
-local args = { ... }
+local args, filename = { ... }, shell and shell.getRunningProgram() or "path/to/manager"
 
 --[[ Constants ]]--
 -- Credit to https://github.com/Team-CC-Corp/Grin/blob/master/lib/json for this API
@@ -79,13 +79,13 @@ elseif MODE == "update" then
 elseif MODE == "help" then
     textutils.pagedPrint([[
 To install Titanium:
-manager.lua install <path> [tag] [minify] [versionPath] [silent]
+]]..filename..[[ install <path> [tag] [minify] [versionPath] [silent]
 
 To update:
-manager.lua update <path> [minify] [versionPath] [silent]
+]]..filename..[[ update <path> [minify] [versionPath] [silent]
 
 To show this menu:
-manager.lua help
+]]..filename..[[ help
 
 If minify, minified builds will be downloaded if available
 
@@ -107,7 +107,7 @@ local function exception( errorMessage )
 end
 
 if not ( MODE and PATH ) then
-    exception "Missing mode and path arguments. See `manager.lua help`"
+    exception( "Missing mode and path arguments. See `"..filename.." help`" )
 end
 
 local function posOut( x, y, text, fg, bg )
@@ -289,12 +289,12 @@ if MODE == "install" then
     }, colours.cyan, 1 )
 
     if not TAG and SILENT then
-        exception "No tag specified. Cannot display tag selector when silenced. See `manager.lua help`"
+        exception( "No tag specified. Cannot display tag selector when silenced. See `"..filename.." help`" )
     end
 
     install( TAG or selectTag( 10 ) )
 elseif MODE == "update" then
     update()
 else
-    exception("Unknown manager mode '"..MODE.."'. See `manager.lua help`")
+    exception("Unknown manager mode '"..MODE.."'. See `"..filename.." help`")
 end

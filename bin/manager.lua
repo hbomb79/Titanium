@@ -109,19 +109,14 @@ if not ( MODE and PATH ) then
     exception "Missing mode and path arguments. See `manager.lua help`"
 end
 
-local function out( message, fg, bg )
+local function posOut( x, y, text, fg, bg )
     if SILENT then return end
+    term.setCursorPos( x, y )
 
     if fg then term.setTextColour( fg ) end
     if bg then term.setBackgroundColour( bg ) term.clearLine() end
 
-    print( message )
-end
-
-local function posOut( x, y, text, ... )
-    if SILENT then return end
-    term.setCursorPos( x, y )
-    out( text, ... )
+    print( text )
 end
 
 local function centreOut( y, text, ... )

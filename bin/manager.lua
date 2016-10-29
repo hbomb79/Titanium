@@ -75,7 +75,7 @@ local TAG, MINIFY, VERSION_PATH, SILENT
 if MODE == "install" then
     TAG, MINIFY, VERSION_PATH, SILENT = args[ 3 ], args[ 4 ], args[ 5 ] or ".titanium-version", args[ 6 ]
 elseif MODE == "update" then
-    MINIFY, VERSION_PATH, SILENT = args[ 3 ], args[ 4 ] or ".titanium-version", args[ 6 ]
+    MINIFY, VERSION_PATH, SILENT = args[ 3 ], args[ 4 ] or ".titanium-version", args[ 5 ]
 elseif MODE == "help" then
     textutils.pagedPrint([[
 To install Titanium:

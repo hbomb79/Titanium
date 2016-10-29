@@ -99,6 +99,7 @@ end
 
 if MINIFY and MINIFY:lower() == "false" then MINIFY = false end
 if SILENT and SILENT:lower() == "false" then SILENT = false end
+if VERSION_PATH and VERSION_PATH:lower() == "false" then VERSION_PATH = ".titanium-version" end
 if TAG and TAG:lower() == "false" then TAG = false end
 
 local function exception( errorMessage )

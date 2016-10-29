@@ -212,6 +212,8 @@ local function selectTag( y )
 end
 
 local function finished()
+    if SILENT then return end
+
     clr()
     posOut( WIDTH - 9, 1, "Up-to-date", 256 )
     centreOut( 7, { "Your Titanium installation is", "up-to-date" }, colours.cyan, 1 )

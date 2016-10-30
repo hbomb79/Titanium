@@ -3,8 +3,7 @@
 
     The Titanium Manager is a versatile tool that can be used to install and update Titanium installations.
 
-    Usage: `manager.lua install <path> [tag] [minify] [versionPath] [silent]`
-        OR `manager.lua update <path> [minify] [versionPath] [silent]`
+    Usage: `manager.lua [--help] [--update] [--path=<path>] [--tag=<tag>] [--version-path=<path>] [--silent]`
 ]]
 
 local args, filename, showHelp = { ... }, shell and shell.getRunningProgram() or "path/to/manager"

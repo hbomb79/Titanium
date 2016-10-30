@@ -67,13 +67,14 @@ local JSON, TAGS = setmetatable( {}, { __index = _G } )
 select( 1, load( JSON_API, "JSON_API", "t", JSON ) )()
 
 local WIDTH, HEIGHT = term.getSize()
-local MODE, PATH, VERSION_PATH, TAG, SILENT, FLAGS = "install", "titanium.lua", ".titanium-version"
+local MODE, PATH, VERSION_PATH, TAG, SILENT, FORCE, FLAGS = "install", "titanium.lua", ".titanium-version"
 FLAGS = {
     {"path", function( val ) PATH = val end, true, "The path that Titanium will be installed to."},
     {"tag", function( val ) TAG = val end, true, "The target tag. If it is 'latest', the latest version of Titanium will be downloaded, otherwise that release will be downloaded if available."},
     {"version-path", function( path ) VERSION_PATH = path end, true, "The path used to determine the installations version. Should be provided when installing/updating if another installation may share the same version file."},
     {"update", function() MODE = "update" end, false, "If provided, the Titanium installation will be updated if the version file provided differs from the latest release."},
     {"silent", function() SILENT = true end, false, "If set, no graphical output will be displayed unless an exception occurs."},
+    {"force", function() FORCE = true end, false, "If set, updates or installations will proceed regardless of the current version."},
     {"help", function()
         local isColour = term.isColour and type( term.isColour ) ~= "function" or ( type( term.isColour ) == "function" and term.isColour() )
         local function colPrint( col, text ) term.setTextColour( col ); write( text ) end
@@ -254,12 +255,40 @@ local function selectTag( y )
     end
 end
 
-local function install( tag )
+local function checkVersion( version )
+    if not fs.exists( VERSION_PATH ) then return true end
+
+    local h = fs.open( VERSION_PATH, "r" )
+    local v = h.readAll()
+    h.close()
+
+    return version ~= v
+end
+
+local function alreadyUpdated( tag )
+    if not SILENT then
+        local isLatest = TAGS[ 1 ] == tag
+
+        clr()
+        posOut( WIDTH - ( isLatest and 9 or 7 ), 1, isLatest and "Up-to-date" or "Complete", 256 )
+
+        centreOut( 7, { "Your Titanium installation is", ( isLatest and "already up-to-date" or "already running on '"..tag.."'" ) }, colours.cyan, 1 )
+        centreOut( 10, "Click anywhere to exit", 256 )
+
+        os.pullEvent "mouse_click"
+    end
+end
+
+local function install( tag, update )
     clr()
     posOut( WIDTH - 9, 1, "Installing", 256 )
 
     centreOut( 7, { "Please wait while we gather", "build information about", "tag '"..tag.."'" }, colours.cyan, 1 )
     centreOut( 11, "This might take a while", 256, 1 )
+
+    if not update and not checkVersion( tag ) and not FORCE then
+        return alreadyUpdated( tag )
+    end
 
     local h = http.get( "http://harryfelton.web44.net/titanium/serve-build.php?tag="..tag )
     if not h then exception("Failed to fetch build information for tag '"..tag.."'") end
@@ -294,27 +323,12 @@ local function install( tag )
 end
 
 local function update()
-    if not fs.exists( VERSION_PATH ) or not fs.exists( PATH ) then
-        install( TAGS[ 1 ] )
-    else
-        local h = fs.open( VERSION_PATH, "r" )
-        local version = h.readAll()
-        h.close()
-
-        if version == TAGS[ 1 ] then
-            if not SILENT then
-                clr()
-                posOut( WIDTH - 9, 1, "Up-to-date", 256 )
-
-                centreOut( 7, { "Your Titanium installation is", "already up-to-date" }, colours.cyan, 1 )
-                centreOut( 10, "Click anywhere to exit", 256 )
-
-                os.pullEvent "mouse_click"
-            end
-        else
-            install( TAGS[ 1 ] )
-        end
+    local latestTag = TAGS[ 1 ]
+    if checkVersion( latestTag ) or not fs.exists( PATH ) or FORCE then
+        return install( latestTag, true )
     end
+
+    alreadyUpdated( latestTag )
 end
 
 getTags()
@@ -325,7 +339,7 @@ if MODE == "install" then
         exception( "No tag specified. Cannot display tag selector when silenced. See `"..filename.." --help`" )
     end
 
-    install( ( TAG and TAG:lower() == "latest" and TAGS[ 1 ] ) or selectTag( 11 ) )
+    install( ( TAG and ( TAG:lower() == "latest" and TAGS[ 1 ] ) or TAG ) or selectTag( 11 ) )
 elseif MODE == "update" then
     update()
 else

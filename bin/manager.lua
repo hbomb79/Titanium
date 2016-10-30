@@ -7,7 +7,7 @@
         OR `manager.lua update <path> [minify] [versionPath] [silent]`
 ]]
 
-local args, filename = { ... }, shell and shell.getRunningProgram() or "path/to/manager"
+local args, filename, showHelp = { ... }, shell and shell.getRunningProgram() or "path/to/manager"
 
 --[[ Constants ]]--
 -- Credit to https://github.com/Team-CC-Corp/Grin/blob/master/lib/json for this API
@@ -68,46 +68,78 @@ local JSON, TAGS = setmetatable( {}, { __index = _G } )
 select( 1, load( JSON_API, "JSON_API", "t", JSON ) )()
 
 local WIDTH, HEIGHT = term.getSize()
-local MODE = args[ 1 ]
-local PATH = args[ 2 ]
+local MODE, PATH, VERSION_PATH, TAG, SILENT, FLAGS = "install", "titanium.lua", ".titanium-version"
+FLAGS = {
+    {"path", function( val ) PATH = val end, true, "The path that Titanium will be installed to."},
+    {"tag", function( val ) TAG = val end, true, "The target tag. If it is 'latest', the latest version of Titanium will be downloaded, otherwise that release will be downloaded if available."},
+    {"version-path", function( path ) VERSION_PATH = path end, true, "The path used to determine the installations version. Should be provided when installing/updating if another installation may share the same version file."},
+    {"update", function() MODE = "update" end, false, "If provided, the Titanium installation will be updated if the version file provided differs from the latest release."},
+    {"silent", function() SILENT = true end, false, "If set, no graphical output will be displayed unless an exception occurs."},
+    {"help", function()
+        local isColour = term.isColour and type( term.isColour ) ~= "function" or ( type( term.isColour ) == "function" and term.isColour() )
+        local function colPrint( col, text ) term.setTextColour( col ); write( text ) end
 
-local TAG, MINIFY, VERSION_PATH, SILENT
-if MODE == "install" then
-    TAG, MINIFY, VERSION_PATH, SILENT = args[ 3 ], args[ 4 ], args[ 5 ] or ".titanium-version", args[ 6 ]
-elseif MODE == "update" then
-    MINIFY, VERSION_PATH, SILENT = args[ 3 ], args[ 4 ] or ".titanium-version", args[ 5 ]
-elseif MODE == "help" then
-    textutils.pagedPrint([[
-To install Titanium:
-]]..filename..[[ install <path> [tag] [minify] [versionPath] [silent]
+        showHelp = true
+        for i = 1, #FLAGS do
+            local f = FLAGS[ i ]
 
-To update:
-]]..filename..[[ update <path> [minify] [versionPath] [silent]
+            if isColour then
+                colPrint( colours.orange, ("--%s"):format( f[ 1 ] ) )
+                colPrint( colours.white, ": " .. f[ 4 ] .. "\n\n" )
+            else
+                print( ("--%s: %s"):format( f[ 1 ], f[ 4 ] ) .. "\n" )
+            end
 
-To show this menu:
-]]..filename..[[ help
+            local x, y = term.getCursorPos()
 
-If minify, minified builds will be downloaded if available
+            term.setCursorPos( 1, select( 2, term.getSize() ) )
+            term.write "Any key to continue (q to exit)"
 
-If versionPath, the path given will be used to get and set version information
+            if select( 2, os.pullEvent "key" ) == keys.q then sleep() return end
 
-If silent, no output to screen unless an exception occurs
-]])
+            term.clearLine()
+            term.setCursorPos( x, y )
+        end
+    end, false, "Show this help menu"}
+}
 
-return
+local function checkFlags( property, singleton, value )
+    for f = 1, #FLAGS do
+        flag = FLAGS[ f ]
+        if ( ( singleton and not flag[ 3 ] ) or ( not singleton and flag[ 3 ] ) ) and flag[ 1 ] == property then
+            flag[ 2 ]( value )
+            return true
+        end
+    end
 end
 
-if MINIFY and MINIFY:lower() == "false" then MINIFY = false end
-if SILENT and SILENT:lower() == "false" then SILENT = false end
-if VERSION_PATH and VERSION_PATH:lower() == "false" then VERSION_PATH = ".titanium-version" end
-if TAG and TAG:lower() == "false" then TAG = false end
+for i = 1, #args do
+    local property, value = args[ i ]:match "^%-%-([%w%-]+)%=(.+)" --Format: --property(-)name(=value)
+    if property and value then
+        if not checkFlags( property, false, value ) then
+            error("Argument invalid. Argument accepting flag for type '"..args[ i ].."' not found.")
+        end
+    else
+        local property = args[ i ]:match "^%-%-([%w%-]+)$"
+        if property then
+            if not checkFlags( property, true, value ) then
+                error("Argument invalid. Argument rejecting flag for type '"..args[ i ].."' not found.")
+            end
+        else
+            error("Argument format invalid ("..tostring( args[ i ] ).."). Should be format '--property=value'")
+        end
+    end
+end
 
+if showHelp then return end
 local function exception( errorMessage )
     error( "Failed to manage Titanium installation: " .. errorMessage, 0 )
 end
 
-if not ( MODE and PATH ) then
-    exception( "Missing mode and path arguments. See `"..filename.." help`" )
+if not PATH then
+    exception( "Missing path argument. See `"..filename.." --help`" )
+elseif MODE == "update" and TAG then
+    exception "Installer set to 'update', however a tag was specified. Cannot update program to specific tag."
 end
 
 local function posOut( x, y, text, fg, bg )
@@ -291,7 +323,7 @@ if MODE == "install" then
     posOut( WIDTH - 6, 1, "Install", 256 )
 
     if not TAG and SILENT then
-        exception( "No tag specified. Cannot display tag selector when silenced. See `"..filename.." help`" )
+        exception( "No tag specified. Cannot display tag selector when silenced. See `"..filename.." --help`" )
     end
 
     if TAG and TAG:lower() == "latest" then
@@ -302,5 +334,5 @@ if MODE == "install" then
 elseif MODE == "update" then
     update()
 else
-    exception("Unknown manager mode '"..MODE.."'. See `"..filename.." help`")
+    exception("Unknown manager mode '"..MODE.."'. See `"..filename.." --help`")
 end

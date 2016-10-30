@@ -64,7 +64,7 @@ function decode(cb)cb=removeWhite(cb)t=parseValue(cb)return t end
 function decodeFromFile(cb)local db=assert(fs.open(cb,"r"))
 local _c=decode(db.readAll())db.close()return _c end]]
 
-local JSON = setmetatable( {}, { __index = _G } )
+local JSON, TAGS = setmetatable( {}, { __index = _G } )
 select( 1, load( JSON_API, "JSON_API", "t", JSON ) )()
 
 local WIDTH, HEIGHT = term.getSize()
@@ -117,7 +117,7 @@ local function posOut( x, y, text, fg, bg )
     if fg then term.setTextColour( fg ) end
     if bg then term.setBackgroundColour( bg ) term.clearLine() end
 
-    print( text )
+    write( text )
 end
 
 local function centreOut( y, text, ... )
@@ -163,21 +163,32 @@ local function promptVersion( x, y )
     return tag
 end
 
-local function getTags()
+local function getTags( y )
+    clr()
+    centreOut( 7, {
+        "Please wait while we fetch",
+        "the available Titanium releases",
+    }, colours.cyan, 1 )
+
+    centreOut( 11, "Fetching Tag Information", 256, 1 )
+
     local h = http.get "http://harryfelton.web44.net/titanium/serve-build.php?list"
     if not h then exception "Failed to fetch tag information. Please try again later" end
 
-    local tags = JSON.decode( h.readAll() )
+    TAGS = JSON.decode( h.readAll() )
     h.close()
 
-    return tags
+    clr()
 end
 
 local function selectTag( y )
-    centreOut( y, "Fetching Tag Information", 256, 1 )
-    local tags = getTags()
+    centreOut( y - 4, {
+        "To install Titanium, select",
+        "the version you wish to download",
+        "and hit enter."
+    }, colours.cyan, 1 )
 
-    local offset, height, changed, vh = 1, #tags, true, HEIGHT - y + 1
+    local offset, height, changed, vh = 1, #TAGS, true, HEIGHT - y + 1
     while true do
         local old = offset
         if changed then
@@ -187,9 +198,9 @@ local function selectTag( y )
                 local offsetI = i + drawOffset
                 if offsetI > 0 and offsetI < vh then
                     if offset == i then
-                        centreOut( offsetI + y - 1, "\16"..tags[ i ].."\17", colours.cyan, 1 )
+                        centreOut( offsetI + y - 1, "\16"..TAGS[ i ].."\17", colours.cyan, 1 )
                     else
-                        centreOut( offsetI + y - 1, tags[ i ], 256, 1 )
+                        centreOut( offsetI + y - 1, TAGS[ i ], 256, 1 )
                     end
                 end
             end
@@ -205,27 +216,16 @@ local function selectTag( y )
             offset = offset - 1
             if offset < 1 then offset = height end
         elseif event[ 2 ] == keys.enter then
-            return tags[ offset ]
+            return TAGS[ offset ]
         end
 
         changed = old ~= offset
     end
 end
 
-local function finished()
-    if SILENT then return end
-
-    clr()
-    posOut( WIDTH - 9, 1, "Up-to-date", 256 )
-    centreOut( 7, { "Your Titanium installation is", "up-to-date" }, colours.cyan, 1 )
-    centreOut( 10, "Click anywhere to exit", 256 )
-
-    os.pullEvent "mouse_click"
-end
-
 local function install( tag )
     clr()
-    posOut( WIDTH - 13, 1, "Fetching build", 256 )
+    posOut( WIDTH - 9, 1, "Installing", 256 )
 
     centreOut( 7, { "Please wait while we gather", "build information about", "tag '"..tag.."'" }, colours.cyan, 1 )
     centreOut( 11, "This might take a while", 256, 1 )
@@ -251,48 +251,54 @@ local function install( tag )
     f.write( tag )
     f.close()
 
-    finished()
+    if not SILENT then
+        clr()
+        posOut( WIDTH - 7, 1, "Complete", 256 )
+
+        centreOut( 7, { "Your Titanium installation is", "now running at '"..tag.."'" }, colours.cyan, 1 )
+        centreOut( 10, "Click anywhere to exit", 256 )
+
+        os.pullEvent "mouse_click"
+    end
 end
 
 local function update()
-    clr()
-    posOut( WIDTH - 12, 1, "Fetching tags", 256 )
-
-    centreOut( 7, { "Please wait while we determine", "the latest version of Titanium" }, colours.cyan, 1 )
-    centreOut( 11, "This shouldn't take long", 256, 1 )
-
-    local tags = getTags()
-
     if not fs.exists( VERSION_PATH ) or not fs.exists( PATH ) then
-        install( tags[ 1 ] )
+        install( TAGS[ 1 ] )
     else
         local h = fs.open( VERSION_PATH, "r" )
         local version = h.readAll()
         h.close()
 
-        if version == tags[ 1 ] then
-            finished()
+        if version == TAGS[ 1 ] then
+            if not SILENT then
+                clr()
+                posOut( WIDTH - 9, 1, "Up-to-date", 256 )
+
+                centreOut( 7, { "Your Titanium installation is", "already up-to-date" }, colours.cyan, 1 )
+                centreOut( 10, "Click anywhere to exit", 256 )
+
+                os.pullEvent "mouse_click"
+            end
         else
-            install( tags[ 1 ] )
+            install( TAGS[ 1 ] )
         end
     end
 end
 
-clr()
-
+getTags()
 if MODE == "install" then
     posOut( WIDTH - 6, 1, "Install", 256 )
-    centreOut( 5, {
-        "To install Titanium, select",
-        "the version you wish to download",
-        "and hit enter."
-    }, colours.cyan, 1 )
 
     if not TAG and SILENT then
         exception( "No tag specified. Cannot display tag selector when silenced. See `"..filename.." help`" )
     end
 
-    install( TAG or selectTag( 10 ) )
+    if TAG and TAG:lower() == "latest" then
+        return update()
+    end
+
+    install( TAG or selectTag( 11 ) )
 elseif MODE == "update" then
     update()
 else

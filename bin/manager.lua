@@ -325,11 +325,7 @@ if MODE == "install" then
         exception( "No tag specified. Cannot display tag selector when silenced. See `"..filename.." --help`" )
     end
 
-    if TAG and TAG:lower() == "latest" then
-        return update()
-    end
-
-    install( TAG or selectTag( 11 ) )
+    install( ( TAG and TAG:lower() == "latest" and TAGS[ 1 ] ) or selectTag( 11 ) )
 elseif MODE == "update" then
     update()
 else

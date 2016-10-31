@@ -67,7 +67,7 @@ local JSON, TAGS = setmetatable( {}, { __index = _G } )
 select( 1, load( JSON_API, "JSON_API", "t", JSON ) )()
 
 local WIDTH, HEIGHT = term.getSize()
-local MODE, PATH, VERSION_PATH, TAG, SILENT, FORCE, FLAGS = "install", "titanium.lua", ".titanium-version"
+local MODE, PATH, VERSION_PATH, TAG, SILENT, FORCE, MINIFY, FLAGS = "install", "titanium.lua", ".titanium-version"
 FLAGS = {
     {"path", function( val ) PATH = val end, true, "The path that Titanium will be installed to."},
     {"tag", function( val ) TAG = val end, true, "The target tag. If it is 'latest', the latest version of Titanium will be downloaded, otherwise that release will be downloaded if available."},
@@ -75,6 +75,7 @@ FLAGS = {
     {"update", function() MODE = "update" end, false, "If provided, the Titanium installation will be updated if the version file provided differs from the latest release."},
     {"silent", function() SILENT = true end, false, "If set, no graphical output will be displayed unless an exception occurs."},
     {"force", function() FORCE = true end, false, "If set, updates or installations will proceed regardless of the current version."},
+    {"minify", function() MINIFY = true end, false, "If set, the minified build of Titanium for the release selected will be downloaded (if available)."},
     {"help", function()
         local isColour = term.isColour and type( term.isColour ) ~= "function" or ( type( term.isColour ) == "function" and term.isColour() )
         local function colPrint( col, text ) term.setTextColour( col ); write( text ) end
@@ -283,26 +284,35 @@ local function install( tag, update )
     clr()
     posOut( WIDTH - 9, 1, "Installing", 256 )
 
-    centreOut( 7, { "Please wait while we gather", "build information about", "tag '"..tag.."'" }, colours.cyan, 1 )
-    centreOut( 11, "This might take a while", 256, 1 )
-
     if not update and not checkVersion( tag ) and not FORCE then
         return alreadyUpdated( tag )
     end
 
-    local h = http.get( "http://harryfelton.web44.net/titanium/serve-build.php?tag="..tag )
+    centreOut( 7, { "Downloading "..( MINIFY and "minified " or "" ) .. "build files for", "for tag '"..tag.."'" }, colours.cyan, 1 )
+    centreOut( 11, "This might take a while", 256, 1 )
+
+    local h = http.get( "http://harryfelton.web44.net/titanium/serve-build.php?tag=".. tag .. ( MINIFY and "&minify" or "" ) )
     if not h then exception("Failed to fetch build information for tag '"..tag.."'") end
+
+    centreOut( 7, { "Decoding build information", "for tag '"..tag.."'" }, colours.cyan, 1 )
+    centreOut( 11, "Just a moment", 256, 1 )
 
     local builds = JSON.decode( h.readAll() )
     h.close()
 
-    if builds.message then
+    if not builds then
+        exception "Failed to decode build data"
+    elseif builds.message then
         if builds.code == 1 or builds.code == 3 then
             exception("Invalid tag '"..tag.."': " .. builds.message)
         else exception("Unknown error: " .. builds.message) end
     end
 
-    local build = MINIFY and builds["titanium.min.lua"] or builds["titanium.lua"]
+    local build = builds["build"]
+    if not build then
+        exception("Failed to fetch build, no build attached to response for tag '"..tag.."'")
+    end
+
     local f = fs.open( PATH, "w" )
     f.write( build )
     f.close()
@@ -316,7 +326,7 @@ local function install( tag, update )
         posOut( WIDTH - 7, 1, "Complete", 256 )
 
         centreOut( 7, { "Your Titanium installation is", "now running at '"..tag.."'" }, colours.cyan, 1 )
-        centreOut( 10, "Click anywhere to exit", 256 )
+        centreOut( 11, "Click anywhere to exit", 256 )
 
         os.pullEvent "mouse_click"
     end

@@ -221,7 +221,7 @@ local function selectTag( y )
         "and hit enter."
     }, colours.cyan, 1 )
 
-    local offset, height, changed, vh = 1, #TAGS, true, HEIGHT - y + 1
+    local offset, height, changed, vh = 1, #TAGS, true, HEIGHT - y
     while true do
         local old = offset
         if changed then
@@ -236,6 +236,12 @@ local function selectTag( y )
                         centreOut( offsetI + y - 1, TAGS[ i ], 256, 1 )
                     end
                 end
+            end
+
+            if height > vh then
+                if offset ~= height then
+                    centreOut( vh + y, "\31 More (".. height - vh + drawOffset + 1 ..") \31", 128, 1 )
+                else centreOut( vh + y, "", 128, 1 ) end
             end
 
             changed = false

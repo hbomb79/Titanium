@@ -19,7 +19,8 @@ local SETTINGS, FLAGS = {
         VERSION = "latest",
         UPDATE_CHECK = false,
         VERSION_PATH = ".titanium-version",
-        MANAGER_PATH = "manager.lua"
+        MANAGER_PATH = "manager.lua",
+        MINIFY = false
     },
     SOURCE = {
         CLASSES = {},
@@ -71,7 +72,8 @@ FLAGS = {
     {"titanium-version", false, function( tag ) SETTINGS.TITANIUM.VERSION = tag end, true, "When installing, this release will be downloaded rather than the latest release"},
     {"titanium-update-check", false, function() SETTINGS.TITANIUM.UPDATE_CHECK = true end, false, "Run an update check when the package is executed if Titanium is already downloaded at the target location"},
     {"titanium-version-path", false, function( path ) SETTINGS.TITANIUM.VERSION_PATH = path end, true, "This path will be used to keep track of the version of Titanium this package is using"},
-    {"titanium-manager-path", false, function( path ) SETTINGS.TITANIUM.MANAGER_PATH = path ~= "false" and path or false end, true, "This path will be used to store the Titanium manager"},
+    {"titanium-manager-path", false, function( path ) SETTINGS.TITANIUM.MANAGER_PATH = path end, true, "This path will be used to store the Titanium manager"},
+    {"titanium-minify", false, function() SETTINGS.TITANIUM.MINIFY = true end, false, "Minified Titanium builds will be downloaded if available for the release targeted"},
 
     -- VFS Flags
     {"vfs-disable", false, function() SETTINGS.VFS.ENABLE = false end, false, "Disables the virtual file system"},
@@ -554,7 +556,7 @@ end
 local ok, err = loadfile( managerPath )
 if not ok then return error("Failed to load Titanium Manager '"..tostring( err ).."'") end
 
-ok( "--path=" .. tiPath, "--silent", "--version-path=" .. versionPath, "]] .. ( SETTINGS.TITANIUM.UPDATE_CHECK and "--update" or "--tag=" .. VERSION ) .. [[" )
+ok( "--path=" .. tiPath, "--silent", "--version-path=" .. versionPath, "]] .. ( SETTINGS.TITANIUM.UPDATE_CHECK and "--update" or "--tag=" .. VERSION ) .. [[" ]]..(SETTINGS.TITANIUM.MINIFY and ', "--minify"' or '')..[[ )
 
 
 if not VFS_ENV.Titanium then VFS_ENV.dofile( tiPath ) end
@@ -565,10 +567,6 @@ output = output .. [[
 local ti = VFS_ENV.Titanium
 if not ti then
     return error "Failed to execute Titanium package. Titanium is not loaded. Please load Titanium before executing this package, or repackage this application using the --titanium flag."
-end
-
-if ti then
-    tic = ti.getClasses()
 end
 ]]
 

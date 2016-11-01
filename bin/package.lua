@@ -15,12 +15,17 @@ local SETTINGS, FLAGS = {
     },
     TITANIUM = {
         INSTALL = false,
-        DISABLE_CHECK = false
+        DISABLE_CHECK = false,
+        VERSION = "latest",
+        UPDATE_CHECK = false,
+        VERSION_PATH = ".titanium-version",
+        MANAGER_PATH = "manager.lua"
     },
     SOURCE = {
         CLASSES = {},
         EXCLUDE = {},
-        LOCATION = "src"
+        LOCATION = "src",
+        PRE = false
     },
     VFS = {
         ENABLE = true,
@@ -51,6 +56,7 @@ FLAGS = {
     {"output", "o", function( location ) SETTINGS.OUTPUT_LOCATION = location end, true, "The output path of the package"},
     {"init", "i", function( path ) SETTINGS.INIT_FILE = path end, true, "This file will be run when the package is executed"},
     {"minify", "m", function() SETTINGS.MINIFY_SOURCE = true end, false, "Files ending with the `.ti` or `.lua` extension will be minified"},
+    {"pre-init", false, function( path ) SETTINGS.SOURCE.PRE = path end, true, "This file will be executed just before loading Titanium. Therefore, this file can used to load Titanium instead of using built-in features"},
 
     -- Path Exclusion
     {"exclude-class-source", "exclude-cs", function( path ) addFromExplore( path, SETTINGS.SOURCE.EXCLUDE ) end, true, "Files inside this path will not be loaded as a class file"},
@@ -62,6 +68,10 @@ FLAGS = {
     -- Titanium flags
     {"titanium", "ti", function( path ) SETTINGS.TITANIUM.INSTALL = path end, true, "Automatically download titanium to the path specified and load it if Titanium isn't already loaded"},
     {"titanium-disable-check", "tid", function() SETTINGS.TITANIUM.DISABLE_CHECK = true end, false, "Supresses the error that will occur when packaging class files without -ti. Allows Titanium to be loaded externally"},
+    {"titanium-version", false, function( tag ) SETTINGS.TITANIUM.VERSION = tag end, true, "When installing, this release will be downloaded rather than the latest release"},
+    {"titanium-update-check", false, function() SETTINGS.TITANIUM.UPDATE_CHECK = true end, false, "Run an update check when the package is executed if Titanium is already downloaded at the target location"},
+    {"titanium-version-path", false, function( path ) SETTINGS.TITANIUM.VERSION_PATH = path end, true, "This path will be used to keep track of the version of Titanium this package is using"},
+    {"titanium-manager-path", false, function( path ) SETTINGS.TITANIUM.MANAGER_PATH = path ~= "false" and path or false end, true, "This path will be used to store the Titanium manager"},
 
     -- VFS Flags
     {"vfs-disable", false, function() SETTINGS.VFS.ENABLE = false end, false, "Disables the virtual file system"},
@@ -265,6 +275,10 @@ for i = 1, #args do
 end
 
 if showHelp then return end
+
+if SETTINGS.TITANIUM.VERSION ~= "latest" and SETTINGS.TITANIUM.UPDATE_CHECK then
+    printError "Warning: You have specified a version of Titanium to install (--titanium-version), but have also told us to update Titanium to the most recent version (--titanium-update-check)"
+end
 
 --[[ Main ]]--
 local GLOBAL_EXCLUDE, EXTRACT_EXCLUDE, CLASS_EXCLUDE, VFS_EXCLUDE = SETTINGS.GLOBAL_EXCLUDE, SETTINGS.EXTRACT.EXCLUDE, SETTINGS.SOURCE.EXCLUDE, SETTINGS.VFS.EXCLUDE
@@ -491,20 +505,38 @@ end
 ]]
 end
 
+if SETTINGS.SOURCE.PRE then
+    --TODO
+end
+
 local titanium = SETTINGS.TITANIUM.INSTALL
 if titanium then
+    local VERSION = SETTINGS.TITANIUM.VERSION
     output = output .. [[
-local tiPath = fs.combine( exportDirectory, "]] .. titanium .. [[")
-if not fs.exists( tiPath ) then
-    local h = http.get "https://gist.githubusercontent.com/hbomb79/28de5f20b2053ed42cec855c778910d1/raw/titanium.min.lua"
-    if h then
-        local f = fs.open( tiPath, "w" )
-        f.write( h.readAll() )
-        f.close()
+local tiPath = fs.combine( exportDirectory, "]] .. titanium .. [[" )
+local managerPath, versionPath = fs.combine( exportDirectory, "]] .. SETTINGS.TITANIUM.MANAGER_PATH .. [["), fs.combine( exportDirectory, "]]..SETTINGS.TITANIUM.VERSION_PATH..[[" )
 
-        h.close()
-    else error "Failed to download Titanium" end
+-- Download the manager
+if not fs.exists( managerPath ) then
+    print "Fetching Titanium Manager"
+
+    if not http then return error "HTTP API required" end
+    local h = http.get "https://gitlab.com/hbomb79/Titanium/raw/titanium-local/bin/manager.lua"
+    if not h then
+        return error "Failed to download Titanium Manager"
+    end
+
+    local f = fs.open( managerPath, "w" )
+    f.write( h.readAll() )
+    h.close()
+    f.close()
 end
+
+local ok, err = loadfile( managerPath )
+if not ok then return error("Failed to load Titanium Manager '"..tostring( err ).."'") end
+
+ok( "--path=" .. tiPath, "--silent", "--version-path=" .. versionPath, "]] .. ( SETTINGS.TITANIUM.UPDATE_CHECK and "--update" or "--tag=" .. VERSION ) .. [[" )
+
 
 if not VFS_ENV.Titanium then VFS_ENV.dofile( tiPath ) end
 ]]

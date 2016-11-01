@@ -505,8 +505,27 @@ end
 ]]
 end
 
+function runFile( path )
+    if useVFS and vfs_assets[ path ] then
+        output = output .. [[
+
+local fn, err = VFS_ENV.loadfile "]]..path..[["
+if fn then fn()
+else return error( "Failed to run file from bundle vfs: "..tostring( err ) ) end
+]]
+    elseif extract_assets[ path ] then
+        if useVFS then
+            output = output .. "VFS_ENV.dofile '"..path.."'\n"
+        else
+            output = output .. "dofile( fs.combine( exportDirectory, '"..path.."' ) )"
+        end
+    else
+        error("File '"..path.."' cannot be run. Not found inside application bundle. " .. ( not SETTINGS.VFS.ENABLE and not next( extract_assets ) and "This maybe caused by the VFS and extract being disabled. Re-enable the VFS or extract the files needed using --extract" or "" ))
+    end
+end
+
 if SETTINGS.SOURCE.PRE then
-    --TODO
+    runFile( SETTINGS.SOURCE.PRE )
 end
 
 local titanium = SETTINGS.TITANIUM.INSTALL
@@ -591,22 +610,7 @@ end
 
 local init = SETTINGS.INIT_FILE
 if init then
-    if useVFS and vfs_assets[ init ] then
-        output = output .. [[
-
-local fn, err = VFS_ENV.loadfile "]]..init..[["
-if fn then fn()
-else return error( "Failed to run file from bundle vfs: "..tostring( err ) ) end
-]]
-    elseif extract_assets[ init ] then
-        if useVFS then
-            output = output .. "VFS_ENV.dofile '"..init.."'\n"
-        else
-            output = output .. "dofile( fs.combine( exportDirectory, '"..init.."' ) )"
-        end
-    else
-        error("Init file '"..init.."' is invalid. Not found inside application bundle. " .. ( not SETTINGS.VFS.ENABLE and not next( extract_assets ) and "This maybe caused by the VFS and extract being disabled. Re-enable the VFS or extract the files needed using --extract" or "" ))
-    end
+    runFile( init )
 else
     error("Failed to compile project. No init file specified (--init/-i)=path")
 end

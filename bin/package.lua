@@ -555,12 +555,15 @@ end
 
 local ok, err = loadfile( managerPath )
 if not ok then return error("Failed to load Titanium Manager '"..tostring( err ).."'") end
-
-ok( "--path=" .. tiPath, "--silent", "--version-path=" .. versionPath, "]] .. ( SETTINGS.TITANIUM.UPDATE_CHECK and "--update" or "--tag=" .. VERSION ) .. [[" ]]..(SETTINGS.TITANIUM.MINIFY and ', "--minify"' or '')..[[ )
-
-
-if not VFS_ENV.Titanium then VFS_ENV.dofile( tiPath ) end
 ]]
+
+    if SETTINGS.TITANIUM.UPDATE_CHECK then
+        output = output .. 'ok( "--path=" .. tiPath, "--silent", "--version-path=" .. versionPath, "--update" '..(SETTINGS.TITANIUM.MINIFY and ', "--minify"' or '').. ' )\n'
+    else
+        output = output .. 'if not ( fs.exists( tiPath ) and fs.exists( versionPath ) ) then ok( "--path=" .. tiPath, "--silent", "--version-path=" .. versionPath, "--tag='..SETTINGS.TITANIUM.VERSION..'" '..(SETTINGS.TITANIUM.MINIFY and ', "--minify"' or '').. ' ) end\n'
+    end
+
+    output = output .. "if not VFS_ENV.Titanium then VFS_ENV.dofile( tiPath ) end\n"
 end
 
 output = output .. [[

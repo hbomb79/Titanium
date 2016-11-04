@@ -341,7 +341,8 @@ local env = type( getfenv ) == "function" and getfenv() or _ENV or _G
 ]] .. ( SETTINGS.VFS.PRESERVE_PROXY and "" or "if env.TI_VFS_RAW then env = env.TI_VFS_RAW end" ) .. [[
 
 local RAW = setmetatable({
-    fs = setmetatable( {}, { __index = _G["fs"] } )
+    fs = setmetatable( {}, { __index = _G["fs"] } ),
+    os = setmetatable( {}, { __index = _G["os"] } )
 }, { __index = env })
 
 local VFS_ENV = setmetatable({},{__index = function( _, key )
@@ -378,6 +379,38 @@ function VFS_ENV.loadfile(file, env)
 end
 if type( setfenv ) == "function" then setfenv( VFS_ENV.loadfile, VFS_ENV ) end
 
+local tAPIsLoading = {}
+function VFS_ENV.os.loadAPI( _sPath )
+    local _ENV, sName = VFS_ENV, fs.getName( _sPath )
+    if tAPIsLoading[sName] == true then
+        printError( "API "..sName.." is already being loaded" )
+        return false
+    end
+    tAPIsLoading[sName] = true
+
+    local tEnv = setmetatable( {}, { __index = VFS_ENV } )
+    local fnAPI, err = loadfile( _sPath, tEnv )
+    if fnAPI then
+        local ok, err = pcall( fnAPI )
+        if not ok then
+            printError( err )
+            tAPIsLoading[sName] = nil
+            return false
+        end
+    else
+        printError( err )
+        tAPIsLoading[sName] = nil
+        return false
+    end
+
+    local tAPI = {}
+    for k,v in pairs( tEnv ) do if k ~= "_ENV" then tAPI[k] =  v end end
+
+    VFS_ENV[sName], tAPIsLoading[sName] = tAPI, nil
+    return true
+end
+
+VFS_ENV.os.loadAPI "/rom/apis/io"
 function VFS_ENV.dofile(file)
 	local _ENV = VFS_ENV
 	local fn, e = loadfile(file, VFS_ENV)

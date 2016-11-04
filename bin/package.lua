@@ -17,10 +17,9 @@ local SETTINGS, FLAGS = {
         INSTALL = false,
         DISABLE_CHECK = false,
         VERSION = "latest",
-        UPDATE_CHECK = false,
-        VERSION_PATH = ".titanium-version",
-        MANAGER_PATH = "manager.lua",
-        MINIFY = false
+        MANAGER_PATH = "/tpm",
+        MINIFY = false,
+        SILENT = false
     },
     SOURCE = {
         CLASSES = {},
@@ -68,12 +67,11 @@ FLAGS = {
 
     -- Titanium flags
     {"titanium", "ti", function( path ) SETTINGS.TITANIUM.INSTALL = path end, true, "Automatically download titanium to the path specified and load it if Titanium isn't already loaded"},
-    {"titanium-disable-check", "tid", function() SETTINGS.TITANIUM.DISABLE_CHECK = true end, false, "Supresses the error that will occur when packaging class files without -ti. Allows Titanium to be loaded externally"},
-    {"titanium-version", false, function( tag ) SETTINGS.TITANIUM.VERSION = tag end, true, "When installing, this release will be downloaded rather than the latest release"},
-    {"titanium-update-check", false, function() SETTINGS.TITANIUM.UPDATE_CHECK = true end, false, "Run an update check when the package is executed if Titanium is already downloaded at the target location"},
-    {"titanium-version-path", false, function( path ) SETTINGS.TITANIUM.VERSION_PATH = path end, true, "This path will be used to keep track of the version of Titanium this package is using"},
-    {"titanium-manager-path", false, function( path ) SETTINGS.TITANIUM.MANAGER_PATH = path end, true, "This path will be used to store the Titanium manager"},
+    {"titanium-version", false, function( tag ) SETTINGS.TITANIUM.VERSION = tag end, true, "When installing, this release will be downloaded rather than the latest release. Defaults to the latest release"},
+    {"titanium-manager-path", false, function( path ) SETTINGS.TITANIUM.MANAGER_PATH = path end, true, "This path will be used to store the Titanium Package Manager (TPM). Defaults to '/tpm'"},
     {"titanium-minify", false, function() SETTINGS.TITANIUM.MINIFY = true end, false, "Minified Titanium builds will be downloaded if available for the release targeted"},
+    {"titanium-silent", false, function() SETTINGS.TITANIUM.SILENT = true end, false, "Silently installs Titanium, hiding all output from TPM"},
+    {"titanium-disable-check", "tid", function() SETTINGS.TITANIUM.DISABLE_CHECK = true end, false, "Supresses the error that will occur when packaging class files without -ti. Allows Titanium to be loaded externally"},
 
     -- VFS Flags
     {"vfs-disable", false, function() SETTINGS.VFS.ENABLE = false end, false, "Disables the virtual file system"},
@@ -535,17 +533,12 @@ if titanium then
     local VERSION = SETTINGS.TITANIUM.VERSION
     output = output .. [[
 local tiPath = fs.combine( exportDirectory, "]] .. titanium .. [[" )
-local managerPath, versionPath = fs.combine( exportDirectory, "]] .. SETTINGS.TITANIUM.MANAGER_PATH .. [["), fs.combine( exportDirectory, "]]..SETTINGS.TITANIUM.VERSION_PATH..[[" )
+local managerPath = fs.combine( exportDirectory, "]] .. SETTINGS.TITANIUM.MANAGER_PATH .. [[")
 
--- Download the manager
 if not fs.exists( managerPath ) then
-    print "Fetching Titanium Manager"
-
     if not http then return error "HTTP API required" end
-    local h = http.get "https://gitlab.com/hbomb79/Titanium/raw/titanium-local/bin/manager.lua"
-    if not h then
-        return error "Failed to download Titanium Manager"
-    end
+    local h = http.get "https://gitlab.com/hbomb79/Titanium-Package-Manager/raw/master/tpm"
+    if not h then return error "Failed to download TPM" end
 
     local f = fs.open( managerPath, "w" )
     f.write( h.readAll() )
@@ -554,14 +547,11 @@ if not fs.exists( managerPath ) then
 end
 
 local ok, err = loadfile( managerPath )
-if not ok then return error("Failed to load Titanium Manager '"..tostring( err ).."'") end
-]]
+if not ok then return error("Failed to load TPM '"..tostring( err ).."'") end
 
-    if SETTINGS.TITANIUM.UPDATE_CHECK then
-        output = output .. 'ok( "--path=" .. tiPath, "--silent", "--version-path=" .. versionPath, "--update" '..(SETTINGS.TITANIUM.MINIFY and ', "--minify"' or '').. ' )\n'
-    else
-        output = output .. 'if not ( fs.exists( tiPath ) and fs.exists( versionPath ) ) then ok( "--path=" .. tiPath, "--silent", "--version-path=" .. versionPath, "--tag='..SETTINGS.TITANIUM.VERSION..'" '..(SETTINGS.TITANIUM.MINIFY and ', "--minify"' or '').. ' ) end\n'
-    end
+ok "fetch"
+ok( "--dest", tiPath, "--disposable", "--depend", shell.getRunningProgram(), "install", "Titanium:]]..VERSION..[["]] .. ( SETTINGS.TITANIUM.SILENT and ', "--silent"' or "" ) .. [[ )
+]]
 
     output = output .. "if not VFS_ENV.Titanium then VFS_ENV.dofile( tiPath ) end\n"
 end

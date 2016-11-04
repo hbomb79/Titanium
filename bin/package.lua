@@ -437,9 +437,13 @@ function VFS.isReadOnly( path )
     return fs.isReadOnly( fs.combine( exportDirectory, path ) )
 end
 
+function VFS.getSize( path )
+    return vfsAssets[ path ] and #vfsAssets[ path ] or fs.getSize( path )
+end
+
 function VFS.list( target )
     target = fs.combine( "", target )
-    local list = fs.list( target ) or {}
+    local list = fs.isDir( target ) and fs.list( target ) or {}
 
     local function addResult( res )
         for i = 1, #list do if list[ i ] == res then return end end

@@ -205,7 +205,7 @@ local function getTags( y )
 
     centreOut( 11, "Fetching Tag Information", 256, 1 )
 
-    local h = http.get "http://harryfelton.web44.net/titanium/serve-build.php?list"
+    local h = http.get "http://harryfelton.web44.net/tpm/list-tags.php?repo=Titanium"
     if not h then exception "Failed to fetch tag information. Please try again later" end
 
     TAGS = JSON.decode( h.readAll() )
@@ -297,7 +297,7 @@ local function install( tag, update )
     centreOut( 7, { "Downloading "..( MINIFY and "minified " or "" ) .. "build files for", "for tag '"..tag.."'" }, colours.cyan, 1 )
     centreOut( 11, "This might take a while", 256, 1 )
 
-    local h = http.get( "http://harryfelton.web44.net/titanium/serve-build.php?tag=".. tag .. ( MINIFY and "&minify" or "" ) )
+    local h = http.get( "http://harryfelton.web44.net/tpm/serve-build.php?repo=Titanium&tag=".. tag .. ( MINIFY and "&minify" or "" ) )
     if not h then exception("Failed to fetch build information for tag '"..tag.."'") end
 
     centreOut( 7, { "Decoding build information", "for tag '"..tag.."'" }, colours.cyan, 1 )

@@ -15,16 +15,23 @@ local SETTINGS, FLAGS = {
     },
     TITANIUM = {
         INSTALL = false,
-        DISABLE_CHECK = false
+        DISABLE_CHECK = false,
+        VERSION = "latest",
+        UPDATE_CHECK = false,
+        VERSION_PATH = ".titanium-version",
+        MANAGER_PATH = "manager.lua",
+        MINIFY = false
     },
     SOURCE = {
         CLASSES = {},
         EXCLUDE = {},
-        LOCATION = "src"
+        LOCATION = "src",
+        PRE = false
     },
     VFS = {
         ENABLE = true,
-        RESTRICT = false,
+        EXPOSE_GLOBAL = false,
+        PRESERVE_PROXY = false,
         EXCLUDE = {}
     },
 
@@ -50,6 +57,7 @@ FLAGS = {
     {"output", "o", function( location ) SETTINGS.OUTPUT_LOCATION = location end, true, "The output path of the package"},
     {"init", "i", function( path ) SETTINGS.INIT_FILE = path end, true, "This file will be run when the package is executed"},
     {"minify", "m", function() SETTINGS.MINIFY_SOURCE = true end, false, "Files ending with the `.ti` or `.lua` extension will be minified"},
+    {"pre-init", false, function( path ) SETTINGS.SOURCE.PRE = path end, true, "This file will be executed just before loading Titanium. Therefore, this file can used to load Titanium instead of using built-in features"},
 
     -- Path Exclusion
     {"exclude-class-source", "exclude-cs", function( path ) addFromExplore( path, SETTINGS.SOURCE.EXCLUDE ) end, true, "Files inside this path will not be loaded as a class file"},
@@ -61,10 +69,16 @@ FLAGS = {
     -- Titanium flags
     {"titanium", "ti", function( path ) SETTINGS.TITANIUM.INSTALL = path end, true, "Automatically download titanium to the path specified and load it if Titanium isn't already loaded"},
     {"titanium-disable-check", "tid", function() SETTINGS.TITANIUM.DISABLE_CHECK = true end, false, "Supresses the error that will occur when packaging class files without -ti. Allows Titanium to be loaded externally"},
+    {"titanium-version", false, function( tag ) SETTINGS.TITANIUM.VERSION = tag end, true, "When installing, this release will be downloaded rather than the latest release"},
+    {"titanium-update-check", false, function() SETTINGS.TITANIUM.UPDATE_CHECK = true end, false, "Run an update check when the package is executed if Titanium is already downloaded at the target location"},
+    {"titanium-version-path", false, function( path ) SETTINGS.TITANIUM.VERSION_PATH = path end, true, "This path will be used to keep track of the version of Titanium this package is using"},
+    {"titanium-manager-path", false, function( path ) SETTINGS.TITANIUM.MANAGER_PATH = path end, true, "This path will be used to store the Titanium manager"},
+    {"titanium-minify", false, function() SETTINGS.TITANIUM.MINIFY = true end, false, "Minified Titanium builds will be downloaded if available for the release targeted"},
 
     -- VFS Flags
     {"vfs-disable", false, function() SETTINGS.VFS.ENABLE = false end, false, "Disables the virtual file system"},
-    {"vfs-restrict", false, function() SETTINGS.VFS.RESTRICT = true end, false, "The packages environment _G and _ENV variables will refer to the sandbox environment"},
+    {"vfs-expose-global", false, function() SETTINGS.VFS.EXPOSE_GLOBAL = true end, false, "The package will allow setting in the raw environment (the environment the package was called in)"},
+    {"vfs-preserve-proxy", false, function() SETTINGS.VFS.PRESERVE_PROXY = true end, false, "If this package is run inside another Titanium package, the sandbox environment of that package will be used - instead of using the other packages raw environment"},
 
     -- Advanced flags
     {"pickle-source", false, function( path ) SETTINGS.PICKLE_LOCATION = path end, true, "The path given will be executed when the builder is run outside of ComputerCraft and will be used to serialize tables"},
@@ -264,6 +278,10 @@ end
 
 if showHelp then return end
 
+if SETTINGS.TITANIUM.VERSION ~= "latest" and SETTINGS.TITANIUM.UPDATE_CHECK then
+    printError "Warning: You have specified a version of Titanium to install (--titanium-version), but have also told us to update Titanium to the most recent version (--titanium-update-check)"
+end
+
 --[[ Main ]]--
 local GLOBAL_EXCLUDE, EXTRACT_EXCLUDE, CLASS_EXCLUDE, VFS_EXCLUDE = SETTINGS.GLOBAL_EXCLUDE, SETTINGS.EXTRACT.EXCLUDE, SETTINGS.SOURCE.EXCLUDE, SETTINGS.VFS.EXCLUDE
 local vfs_assets, vfs_dirs, extract_assets, class_assets = {}, {}, {}, {}
@@ -321,11 +339,21 @@ end
 local useVFS = SETTINGS.VFS.ENABLE and next( vfs_assets )
 if useVFS then
     output = output .. "local vfsAssets = " .. serialise( vfs_assets ) .. [[
+local env = type( getfenv ) == "function" and getfenv() or _ENV or _G
+]] .. ( SETTINGS.VFS.PRESERVE_PROXY and "" or "if env.TI_VFS_RAW then env = env.TI_VFS_RAW end" ) .. [[
 
-local VFS_ENV = setmetatable({
-    fs = setmetatable({}, { __index = _G["fs"] })
-},{__index = _ENV or getfenv()})
-]] .. ( SETTINGS.VFS.RESTRICT and "VFS_ENV._G = VFS_ENV\nVFS_ENV._ENV = VFS_ENV\n" or "" ) .. [[
+local RAW = setmetatable({
+    fs = setmetatable( {}, { __index = _G["fs"] } )
+}, { __index = env })
+
+local VFS_ENV = setmetatable({},{__index = function( _, key )
+    if key == "TI_VFS_RAW" then return RAW end
+
+    return RAW[ key ]
+end})
+
+VFS_ENV._G = ]]..( SETTINGS.VFS.EXPOSE_GLOBAL and "env\n" or "VFS_ENV\n" )..[[
+VFS_ENV._ENV = ]]..( SETTINGS.VFS.EXPOSE_GLOBAL and "env\n" or "VFS_ENV\n" )..[[
 
 local VFS_DIRS = ]] .. serialise( vfs_dirs ) .. [[
 
@@ -479,27 +507,68 @@ end
 ]]
 end
 
-local titanium = SETTINGS.TITANIUM.INSTALL
-if titanium then
-    output = output .. [[
-local tiPath = fs.combine( exportDirectory, "]] .. titanium .. [[")
-if not fs.exists( tiPath ) then
-    local h = http.get "https://gist.githubusercontent.com/hbomb79/28de5f20b2053ed42cec855c778910d1/raw/titanium.min.lua"
-    if h then
-        local f = fs.open( tiPath, "w" )
-        f.write( h.readAll() )
-        f.close()
+function runFile( path )
+    if useVFS and vfs_assets[ path ] then
+        output = output .. [[
 
-        h.close()
-    else error "Failed to download Titanium" end
+local fn, err = VFS_ENV.loadfile "]]..path..[["
+if fn then fn()
+else return error( "Failed to run file from bundle vfs: "..tostring( err ) ) end
+]]
+    elseif extract_assets[ path ] then
+        if useVFS then
+            output = output .. "VFS_ENV.dofile '"..path.."'\n"
+        else
+            output = output .. "dofile( fs.combine( exportDirectory, '"..path.."' ) )"
+        end
+    else
+        error("File '"..path.."' cannot be run. Not found inside application bundle. " .. ( not SETTINGS.VFS.ENABLE and not next( extract_assets ) and "This maybe caused by the VFS and extract being disabled. Re-enable the VFS or extract the files needed using --extract" or "" ))
+    end
 end
 
-if not _G.Titanium then dofile( tiPath ) end
+if SETTINGS.SOURCE.PRE then
+    runFile( SETTINGS.SOURCE.PRE )
+end
+
+local titanium = SETTINGS.TITANIUM.INSTALL
+if titanium then
+    local VERSION = SETTINGS.TITANIUM.VERSION
+    output = output .. [[
+local tiPath = fs.combine( exportDirectory, "]] .. titanium .. [[" )
+local managerPath, versionPath = fs.combine( exportDirectory, "]] .. SETTINGS.TITANIUM.MANAGER_PATH .. [["), fs.combine( exportDirectory, "]]..SETTINGS.TITANIUM.VERSION_PATH..[[" )
+
+-- Download the manager
+if not fs.exists( managerPath ) then
+    print "Fetching Titanium Manager"
+
+    if not http then return error "HTTP API required" end
+    local h = http.get "https://gitlab.com/hbomb79/Titanium/raw/titanium-local/bin/manager.lua"
+    if not h then
+        return error "Failed to download Titanium Manager"
+    end
+
+    local f = fs.open( managerPath, "w" )
+    f.write( h.readAll() )
+    h.close()
+    f.close()
+end
+
+local ok, err = loadfile( managerPath )
+if not ok then return error("Failed to load Titanium Manager '"..tostring( err ).."'") end
 ]]
+
+    if SETTINGS.TITANIUM.UPDATE_CHECK then
+        output = output .. 'ok( "--path=" .. tiPath, "--silent", "--version-path=" .. versionPath, "--update" '..(SETTINGS.TITANIUM.MINIFY and ', "--minify"' or '').. ' )\n'
+    else
+        output = output .. 'if not ( fs.exists( tiPath ) and fs.exists( versionPath ) ) then ok( "--path=" .. tiPath, "--silent", "--version-path=" .. versionPath, "--tag='..SETTINGS.TITANIUM.VERSION..'" '..(SETTINGS.TITANIUM.MINIFY and ', "--minify"' or '').. ' ) end\n'
+    end
+
+    output = output .. "if not VFS_ENV.Titanium then VFS_ENV.dofile( tiPath ) end\n"
 end
 
 output = output .. [[
-if not _G.Titanium then
+local ti = VFS_ENV.Titanium
+if not ti then
     return error "Failed to execute Titanium package. Titanium is not loaded. Please load Titanium before executing this package, or repackage this application using the --titanium flag."
 end
 ]]
@@ -512,14 +581,14 @@ local function loadClass( name, source )
     if loaded[ name ] then return end
 
     local className = name:gsub( "%..*", "" )
-    if not Titanium.getClass( className ) then
+    if not ti.getClass( className ) then
         local output, err = ( VFS_ENV or _G ).loadstring( source, name )
         if not output or err then return error( "Failed to load Lua chunk. File '"..name.."' has a syntax error: "..tostring( err ), 0 ) end
 
         local ok, err = pcall( output )
         if not ok or err then return error( "Failed to execute Lua chunk. File '"..name.."' crashed: "..tostring( err ), 0 ) end
 
-        local class = Titanium.getClass( className )
+        local class = ti.getClass( className )
         if class then
             if not class:isCompiled() then class:compile() end
             print( name )
@@ -530,7 +599,7 @@ local function loadClass( name, source )
     end
 end
 
-Titanium.setClassLoader(function( c )
+ti.setClassLoader(function( c )
     local name = classSource[ c .. ".lua" ] and c .. ".lua" or c .. ".ti"
     loadClass( name, classSource[ name ] )
 end)
@@ -542,28 +611,7 @@ end
 
 local init = SETTINGS.INIT_FILE
 if init then
-    output = output .. ( useVFS and "\nTitanium.VFS = VFS_ENV\n" or "\nTitanium.VFS = nil\n" )
-
-    if useVFS and vfs_assets[ init ] then
-        output = output .. [[
-
-local fn, err = VFS_ENV.loadfile "]]..init..[["
-if fn then fn()
-else return error( "Failed to run file from bundle vfs: "..tostring( err ) ) end
-]]
-    elseif extract_assets[ init ] then
-        if useVFS then
-            output = output .. "VFS_ENV.dofile '"..init.."'\n"
-        else
-            output = output .. "dofile( fs.combine( exportDirectory, '"..init.."' ) )"
-        end
-    else
-        error("Init file '"..init.."' is invalid. Not found inside application bundle. " .. ( not SETTINGS.VFS.ENABLE and not next( extract_assets ) and "This maybe caused by the VFS and extract being disabled. Re-enable the VFS or extract the files needed using --extract" or "" ))
-    end
-
-    if useVFS then
-        output = output .. "\nTitanium.VFS = nil\n"
-    end
+    runFile( init )
 else
     error("Failed to compile project. No init file specified (--init/-i)=path")
 end

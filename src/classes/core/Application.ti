@@ -4,10 +4,6 @@
 --]]
 
 class Application extends Component mixin MThemeManager mixin MKeyHandler mixin MCallbackManager mixin MAnimationManager mixin MNodeContainer {
-    static = {
-        defaultContext = _G
-    };
-
     width = 51;
     height = 19;
 
@@ -26,7 +22,7 @@ class Application extends Component mixin MThemeManager mixin MKeyHandler mixin 
 ]]
 function Application:__init__( ... )
     self:resolve( ... )
-    self.canvas, self.context = TermCanvas( self ), Titanium.VFS or Application.static.defaultContext
+    self.canvas = TermCanvas( self )
 
     self:setMetaMethod("add", function( a, b )
         local t = a ~= self and a or b

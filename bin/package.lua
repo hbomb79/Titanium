@@ -379,6 +379,30 @@ function VFS_ENV.loadfile(file, env)
 end
 if type( setfenv ) == "function" then setfenv( VFS_ENV.loadfile, VFS_ENV ) end
 
+function VFS_ENV.os.run( _tEnv, _sPath, ... )
+	local _ENV = VFS_ENV
+    local tArgs, tEnv = { ... }, _tEnv
+
+    setmetatable( tEnv, { __index = VFS_ENV } )
+    local fnFile, err = loadfile( _sPath, tEnv )
+    if fnFile then
+        local ok, err = pcall( function()
+            fnFile( table.unpack( tArgs ) )
+        end )
+        if not ok then
+            if err and err ~= "" then
+                printError( err )
+            end
+            return false
+        end
+        return true
+    end
+    if err and err ~= "" then
+        printError( err )
+    end
+    return false
+end
+
 local tAPIsLoading = {}
 function VFS_ENV.os.loadAPI( _sPath )
     local _ENV, sName = VFS_ENV, fs.getName( _sPath )

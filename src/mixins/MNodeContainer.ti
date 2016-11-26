@@ -229,13 +229,10 @@ function MNodeContainer:redrawArea( x, y, width, height, xOffset, yOffset )
     if not self.canvas then return end
     self.canvas:clearArea( x, y, width, height )
 
-    xOffset = xOffset or 0
-    yOffset = yOffset or 0
-
     local nodes, node, nodeX, nodeY = self.nodes
     for i = 1, #nodes do
         node = nodes[ i ]
-        nodeX, nodeY = node.X + xOffset, node.Y + yOffset
+        nodeX, nodeY = node.X + ( xOffset or 0 ), node.Y + ( yOffset or 0 )
 
         if not ( nodeX + node.width - 1 < x or nodeX > x + width or nodeY + node.height - 1 < y or nodeY > y + height ) then
             node.needsRedraw = true

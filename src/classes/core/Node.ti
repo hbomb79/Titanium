@@ -62,6 +62,12 @@ function Node:setParentEnabled( enabled )
     self.changed = true
 end
 
+function Node:setNeedsRedraw( needsRedraw )
+    self.needsRedraw = needsRedraw
+
+    if needsRedraw and self.parent then self.parent.needsRedraw = needsRedraw end
+end
+
 --[[
     @instance
     @desc Sets the enabled property of the node to 'enabled'. Sets node's 'changed' to true.

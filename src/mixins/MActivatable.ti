@@ -29,7 +29,7 @@ function MActivatable:setActive( active )
     if raw.active == active then return end
 
     raw.active = active
-    self.changed = true
+    self:queueAreaReset()
 end
 
 configureConstructor {

@@ -130,34 +130,6 @@ end
 
 --[[
     @instance
-    @desc Appends nodes loaded via TML to the Applications nodes.
-    @param <string - path>
-]]
-function Application:importFromTML( path )
-    TML.fromFile( self, path )
-    self.changed = true
-end
-
---[[
-    @instance
-    @desc Removes all nodes from the Application and inserts those loaded via TML
-    @param <string - path>
-]]
-function Application:replaceWithTML( path )
-    local nodes, node = self.nodes
-    for i = #nodes, 1, -1 do
-        node = nodes[ i ]
-        node.parent = nil
-        node.application = nil
-
-        table.remove( nodes, i )
-    end
-
-    self:importFromTML( path )
-end
-
---[[
-    @instance
     @desc Begins the program loop
 ]]
 function Application:start( preserve )

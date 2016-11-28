@@ -51,7 +51,7 @@ end
     @param <MouseEvent - event>, <boolean - handled>, <boolean - within>
 ]]
 function Input:onMouseUp( event, handled, within )
-    if not within or handled and self.focused then
+    if ( not within or handled ) and self.focused then
         self:unfocus()
     elseif within and not handled and self.active then
         if self.focused then

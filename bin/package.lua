@@ -663,8 +663,6 @@ end
 local init = SETTINGS.INIT_FILE
 if init then
     runFile( init )
-else
-    error("Failed to compile project. No init file specified (--init/-i)=path")
 end
 
 local handle = io.open( SETTINGS.OUTPUT_LOCATION, "w" )

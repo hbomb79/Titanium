@@ -31,6 +31,8 @@ local SETTINGS, FLAGS = {
         ENABLE = true,
         EXPOSE_GLOBAL = false,
         PRESERVE_PROXY = false,
+        ALLOW_RAW_FS_ACCESS = false,
+        ALLOW_FS_REDIRECTION = false,
         EXCLUDE = {}
     },
 
@@ -77,6 +79,8 @@ FLAGS = {
     {"vfs-disable", false, function() SETTINGS.VFS.ENABLE = false end, false, "Disables the virtual file system"},
     {"vfs-expose-global", false, function() SETTINGS.VFS.EXPOSE_GLOBAL = true end, false, "The package will allow setting in the raw environment (the environment the package was called in)"},
     {"vfs-preserve-proxy", false, function() SETTINGS.VFS.PRESERVE_PROXY = true end, false, "If this package is run inside another Titanium package, the sandbox environment of that package will be used - instead of using the other packages raw environment"},
+    {"vfs-allow-raw-fs-access", false, function() SETTINGS.VFS.ALLOW_RAW_FS_ACCESS = true end, false, "Allows access of the raw FS from inside the package via TI_VFS_RAW. Without this flag, the VFS will be returned instead"},
+    {"vfs-allow-fs-redirection", false, function() SETTINGS.VFS.ALLOW_FS_REDIRECTION = true end, false, "Exposes the setVFSFallback function, which can be used to set the file system the VFS will use as it's fallback (defaults to the raw FS). If true is NOT passed as the second argument, no further redirections can be set, blocking further use of the function"},
 
     -- Advanced flags
     {"pickle-source", false, function( path ) SETTINGS.PICKLE_LOCATION = path end, true, "The path given will be executed when the builder is run outside of ComputerCraft and will be used to serialize tables"},
@@ -340,13 +344,16 @@ if useVFS then
 local env = type( getfenv ) == "function" and getfenv() or _ENV or _G
 ]] .. ( SETTINGS.VFS.PRESERVE_PROXY and "" or "if env.TI_VFS_RAW then env = env.TI_VFS_RAW end" ) .. [[
 
+local fallbackFS = env.fs
 local RAW = setmetatable({
-    fs = setmetatable( {}, { __index = _G["fs"] } ),
+    fs = ]]..( SETTINGS.VFS.ALLOW_RAW_FS_ACCESS and "fallbackFS" or "setmetatable( {}, { __index = _G[\"fs\"] })" )..[[,
     os = setmetatable( {}, { __index = _G["os"] } )
 }, { __index = env })
 
+local VFS = ]]..( SETTINGS.VFS.ALLOW_RAW_FS_ACCESS and "setmetatable( {}, { __index = RAW.fs } )" or "RAW[\"fs\"]" )..[[
+
 local VFS_ENV = setmetatable({},{__index = function( _, key )
-    if key == "TI_VFS_RAW" then return RAW end
+    if key == "TI_VFS_RAW" then return RAW ]]..( SETTINGS.VFS.ALLOW_RAW_FS_ACCESS and "elseif key == \"fs\" then return VFS end" or "end" )..[[
 
     return RAW[ key ]
 end})
@@ -357,6 +364,22 @@ VFS_ENV._ENV = ]]..( SETTINGS.VFS.EXPOSE_GLOBAL and "env\n" or "VFS_ENV\n" )..[[
 local VFS_DIRS = ]] .. serialise( vfs_dirs ) .. [[
 
 local matches = { ["^"] = "%^", ["$"] = "%$", ["("] = "%(", [")"] = "%)", ["%"] = "%%", ["*"] = "[^/]*", ["."] = "%.", ["["] = "%[", ["]"] = "%]", ["+"] = "%+", ["-"] = "%-" }
+
+]] .. ( SETTINGS.VFS.ALLOW_FS_REDIRECTION and [[
+local redirected
+function VFS_ENV.setVFSFallback( tblFs, allowFurtherRedirect )
+    if redirected then
+        return error "VFS fallback already redirected"
+    end
+    redirected = not allowFurtherRedirect
+
+    if type( tblFs ) ~= "table" then
+        return error("Failed to set VFS fallback. FS given '"..tostring( tblFs ).."' is invalid, table expected")
+    end
+
+    fallbackFS = tblFs
+end
+]] or "") .. [[
 
 function VFS_ENV.load(src, name, mode, env)
 	return load( src, name or '(load)', mode, env or VFS_ENV )
@@ -444,7 +467,6 @@ function VFS_ENV.dofile(file)
 end
 if type( setfenv ) == "function" then setfenv( VFS_ENV.dofile, VFS_ENV ) end
 
-local VFS = VFS_ENV.fs
 function VFS.open( path, mode )
     path = fs.combine( "", path )
     if vfsAssets[ path ] then
@@ -484,23 +506,23 @@ function VFS.open( path, mode )
         handle.close = function() content = "" end
 
         return handle
-    else return fs.open( fs.combine( exportDirectory, path ), mode ) end
+    else return fallbackFS.open( fs.combine( exportDirectory, path ), mode ) end
 end
 
 function VFS.isReadOnly( path )
     path = fs.combine( "", path )
     if vfsAssets[ path ] then return true end
 
-    return fs.isReadOnly( fs.combine( exportDirectory, path ) )
+    return fallbackFS.isReadOnly( fs.combine( exportDirectory, path ) )
 end
 
 function VFS.getSize( path )
-    return vfsAssets[ path ] and #vfsAssets[ path ] or fs.getSize( path )
+    return vfsAssets[ path ] and #vfsAssets[ path ] or fallbackFS.getSize( path )
 end
 
 function VFS.list( target )
     target = fs.combine( "", target )
-    local list = fs.isDir( target ) and fs.list( target ) or {}
+    local list = fallbackFS.isDir( target ) and fallbackFS.list( target ) or {}
 
     local function addResult( res )
         for i = 1, #list do if list[ i ] == res then return end end
@@ -522,7 +544,7 @@ end
 
 function VFS.find( target )
     target = fs.combine( "", target )
-    local list = fs.find( target ) or {}
+    local list = fallbackFS.find( target ) or {}
 
     target = ("^(%s)(.*)$"):format( target:gsub( ".", matches ) )
     for path in pairs( vfsAssets ) do
@@ -540,14 +562,14 @@ end
 
 function VFS.isDir( path )
     path = fs.combine( "", path )
-    return VFS_DIRS[ path ] or fs.isDir( fs.combine( exportDirectory, path ) )
+    return VFS_DIRS[ path ] or fallbackFS.isDir( fs.combine( exportDirectory, path ) )
 end
 
 function VFS.exists( path )
     path = fs.combine( "", path )
     if vfsAssets[ path ] or VFS_DIRS[ path ] then return true end
 
-    return fs.exists( fs.combine( exportDirectory, path ) )
+    return fallbackFS.exists( fs.combine( exportDirectory, path ) )
 end
 ]]
 end

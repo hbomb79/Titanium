@@ -2,6 +2,7 @@
     The Input class provides the user with the ability to insert a single line of text.
 ]]
 
+local stringRep, stringSub = string.rep, string.sub
 class Input extends Node mixin MActivatable mixin MFocusable {
     position = 0;
     scroll = 0;
@@ -19,6 +20,7 @@ class Input extends Node mixin MActivatable mixin MFocusable {
     allowChar = true;
 
     limit = 0;
+    mask = "";
 }
 
 --[[
@@ -84,13 +86,13 @@ function Input:onChar( event, handled )
         local start, stop = math.min( selection, position ), math.max( selection, position )
         start = start > stop and start - 1 or start
 
-        self.value, self.selection = value:sub( 1, start ) .. event.char .. value:sub( stop + ( start < stop and 1 or 2 ) ), false
+        self.value, self.selection = stringSub( value, 1, start ) .. event.char .. stringSub( value, stop + ( start < stop and 1 or 2 ) ), false
         self.position = start + 1
         self.changed = true
     else
         if self.limit > 0 and #value >= self.limit then return end
 
-        self.value = value:sub( 1, position ) .. event.char .. value:sub( position + 1 )
+        self.value = stringSub( value, 1, position ) .. event.char .. stringSub( value, position + 1 )
         self.position = self.position + 1
     end
 
@@ -121,8 +123,9 @@ function Input:onKeyDown( event, handled )
             self:executeCallbacks( "trigger", self.value, self.selection and self:getSelectedValue() )
         elseif selection then
             if key == "delete" or key == "backspace" then
-                self.value = value:sub( 1, start ) .. value:sub( stop + 1 )
+                self.value = stringSub( value, 1, start ) .. stringSub( value, stop )
                 self.position = start
+                self.selection = false
             elseif not isPressed and ( key == "left" or key == "right" ) then
                 self.position = key == "left" and start + 1 or key == "right" and stop - 2
                 self.selection = false
@@ -142,16 +145,16 @@ function Input:onKeyDown( event, handled )
             elseif key == "end" then
                 set( isPressed and valueLen - cSelection or valueLen - position )
             elseif key == "backspace" and isPressed then
-                self.value, self.position = self.value:sub( stop + 1 ), 0
+                self.value, self.position = stringSub( self.value, stop + 1 ), 0
             end
         end
 
         if not isPressed then
             if key == "backspace" and start >= 0 and not selection then
-                self.value = value:sub( 1, start ) .. value:sub( stop + 1 )
+                self.value = stringSub( value, 1, start ) .. stringSub( value, stop + 1 )
                 self.position = start
             elseif key == "delete" and not selection then
-                self.value, self.changed = value:sub( 1, stop ) .. value:sub( stop + 2 ), true
+                self.value, self.changed = stringSub( value, 1, stop ) .. stringSub( value, stop + 2 ), true
             end
         end
     end
@@ -176,21 +179,21 @@ function Input:draw( force )
 
         canvas:clear( bg )
 
-        local position, width, value, selection = self.position, self.width, self.value, self.selection
-        if self.focused or not self.placeholder or #value > 0 then
+        local position, width, value, selection, placeholder = self.position, self.width, self.mask ~= "" and stringRep( self.mask, #self.value ) or self.value, self.selection, self.placeholder
+        if self.focused or not placeholder or #value > 0 then
             if self.selection then
                 local start, stop = selection < position and selection or position, selection > position and selection + 1 or position + 1
                 if start < stop then stop = stop - 1 end
 
                 local startPos = -self.scroll + 1
 
-                canvas:drawTextLine( startPos, 1, value:sub( 1, start + 1 ), tc, bg )
-                canvas:drawTextLine( startPos + start, 1, value:sub( start + 1, stop ), self.focused and self.selectedColour or tc, self.focused and self.selectedBackgroundColour or bg )
-                canvas:drawTextLine( startPos + stop, 1, value:sub( stop + 1 ), tc, bg )
+                canvas:drawTextLine( startPos, 1, stringSub( value, 1, start + 1 ), tc, bg )
+                canvas:drawTextLine( startPos + start, 1, stringSub( value, start + 1, stop ), self.focused and self.selectedColour or tc, self.focused and self.selectedBackgroundColour or bg )
+                canvas:drawTextLine( startPos + stop, 1, stringSub( value, stop + 1 ), tc, bg )
             else
-                canvas:drawTextLine( -self.scroll + 1, 1, self.value, tc, bg )
+                canvas:drawTextLine( -self.scroll + 1, 1, value, tc, bg )
             end
-        else canvas:drawTextLine( 1, 1, self.placeholder:sub( 1, self.width ), self.placeholderColour, bg ) end
+        else canvas:drawTextLine( 1, 1, stringSub( placeholder, 1, self.width ), self.placeholderColour, bg ) end
 
         raw.changed = false
     end
@@ -234,7 +237,7 @@ end
 ]]
 function Input:getSelectedValue()
     local selection, position = self.selection, self.position
-    return self.value:sub( ( selection < position and selection or position ) + 1, ( selection > position and selection or position ) )
+    return stringSub( self.value, ( selection < position and selection or position ) + 1, ( selection > position and selection or position ) )
 end
 
 --[[
@@ -265,6 +268,6 @@ end
 
 configureConstructor({
     orderedArguments = { "X", "Y", "width" },
-    argumentTypes = { value = "string", position = "number", selection = "number", placeholder = "string", placeholderColour = "colour", selectedColour = "colour", selectedBackgroundColour = "colour", limit = "number" },
+    argumentTypes = { value = "string", position = "number", selection = "number", placeholder = "string", placeholderColour = "colour", selectedColour = "colour", selectedBackgroundColour = "colour", limit = "number", mask = "string" },
     useProxy = { "toggled" }
 }, true)

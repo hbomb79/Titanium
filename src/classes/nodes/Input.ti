@@ -61,6 +61,17 @@ end
 
 --[[
     @instance
+    @desc If a mouse drag occurs while the input is focused, the selection will be moved to the mouse drag location, creating a selection between the cursor position and the drag position
+    @param <MouseEvent - event>, <boolean - handled>, <boolean - within>
+]]
+function Input:onMouseDrag( event, handled, within )
+    if not self.focused or handled then return end
+    self.selection = math.min( #self.value, event.X - self.X + self.scroll )
+    event.handled = true
+end
+
+--[[
+    @instance
     @desc If the mouse up missed the input or the event was already handled, active and false are set to false.
           If within and not handled and input is active focused is set to true. Active is set to false on all conditions.
     @param <MouseEvent - event>, <boolean - handled>, <boolean - within>

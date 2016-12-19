@@ -108,6 +108,7 @@ end
 ]]
 function XMLParser.static.convertArgType( argumentValue, desiredType )
     local vType = type( argumentValue )
+    argumentValue = vType == "number" and math.ceil( argumentValue ) or argumentValue
 
     if not desiredType or not argumentValue or vType == desiredType then
         return argumentValue
@@ -116,7 +117,7 @@ function XMLParser.static.convertArgType( argumentValue, desiredType )
     if desiredType == "string" then
         return tostring( argumentValue )
     elseif desiredType == "number" then
-        return tonumber( argumentValue ) or error( "Failed to cast argument to number. Value: "..tostring( argumentValue ).." is not a valid number" )
+        return tonumber( argumentValue ) and math.ceil( tonumber( argumentValue ) ) or error( "Failed to cast argument to number. Value: "..tostring( argumentValue ).." is not a valid number" )
     elseif desiredType == "boolean" then
         if argumentValue == "true" then return true
         elseif argumentValue == "false" then return false

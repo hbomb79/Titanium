@@ -84,6 +84,8 @@ function Input:onChar( event, handled )
         local start, stop = math.min( selection, position ), math.max( selection, position )
         start = start > stop and start - 1 or start
 
+        self.value, self.selection = value:sub( 1, start ) .. event.char .. value:sub( stop + ( start < stop and 1 or 2 ) ), false
+        self.position = start + 1
         self.changed = true
     else
         if self.limit > 0 and #value >= self.limit then return end
@@ -119,7 +121,8 @@ function Input:onKeyDown( event, handled )
             self:executeCallbacks( "trigger", self.value, self.selection and self:getSelectedValue() )
         elseif selection then
             if key == "delete" or key == "backspace" then
-                self.value, self.position = value:sub( 1, start ) .. value:sub( stop + 1 ), start
+                self.value = value:sub( 1, start ) .. value:sub( stop + 1 )
+                self.position = start
             elseif not isPressed and ( key == "left" or key == "right" ) then
                 self.position = key == "left" and start + 1 or key == "right" and stop - 2
                 self.selection = false

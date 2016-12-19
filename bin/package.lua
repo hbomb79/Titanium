@@ -70,8 +70,8 @@ FLAGS = {
     {"block-extract-override", false, function() SETTINGS.EXTRACT.ALLOW_OVERRIDE = false end, false, "Disallows the package to be extracted to a certain path at execution time"},
 
     -- Titanium flags
-    {"titanium", "ti", function( path ) SETTINGS.TITANIUM.INSTALL = path end, true, "Automatically download titanium to the path specified and load it if Titanium isn't already loaded"},
-    {"titanium-version", false, function( tag ) SETTINGS.TITANIUM.VERSION = tag end, true, "When installing, this release will be downloaded rather than the latest release. Defaults to the latest release"},
+    {"titanium", "ti", function() SETTINGS.TITANIUM.INSTALL = true end, false, "Automatically downloads the latest version of Titanium via TPM. Version can be set using --titanium-version"},
+    {"titanium-version", false, function( tag ) SETTINGS.TITANIUM.VERSION = tag end, true, "When installing (--titanium), this release will be downloaded rather than the latest release"},
     {"titanium-manager-path", false, function( path ) SETTINGS.TITANIUM.MANAGER_PATH = path end, true, "This path will be used to store the Titanium Package Manager (TPM). Defaults to '/tpm'"},
     {"titanium-minify", false, function() SETTINGS.TITANIUM.MINIFY = true end, false, "Minified Titanium builds will be downloaded if available for the release targeted"},
     {"titanium-silent", false, function() SETTINGS.TITANIUM.SILENT = true end, false, "Silently installs Titanium, hiding all output from TPM"},
@@ -619,7 +619,6 @@ local titanium = SETTINGS.TITANIUM.INSTALL
 if titanium then
     local VERSION = SETTINGS.TITANIUM.VERSION
     output = output .. [[
-local tiPath = fs.combine( exportDirectory, "]] .. titanium .. [[" )
 local managerPath = fs.combine( exportDirectory, "]] .. SETTINGS.TITANIUM.MANAGER_PATH .. [[")
 
 if not fs.exists( managerPath ) then
@@ -637,10 +636,10 @@ local ok, err = loadfile( managerPath )
 if not ok then return error("Failed to load TPM '"..tostring( err ).."'") end
 
 ok "fetch"
-ok( "--dest", tiPath, "--disposable", "--depend", shell.getRunningProgram(), "install", "Titanium:]]..VERSION..[["]] .. ( SETTINGS.TITANIUM.SILENT and ', "--silent"' or "" ) .. [[ )
+ok( "--disposable", "--depend", shell.getRunningProgram(), "install", "Titanium:]]..VERSION..[["]] .. ( SETTINGS.TITANIUM.SILENT and ', "--silent"' or "" ) .. [[ )
 ]]
 
-    output = output .. "if not VFS_ENV.Titanium then VFS_ENV.dofile( tiPath ) end\n"
+    output = output .. "if not VFS_ENV.Titanium then VFS_ENV.dofile( \"/.tpm/packages/Titanium/" .. VERSION .. "\" ) end\n"
 end
 
 output = output .. [[

@@ -126,7 +126,7 @@ function Input:onKeyDown( event, handled )
         local cSelection = self.selection or self.position
         local function set( offset )
             if isPressed then self.selection = cSelection + offset
-            else self.position = self.position + offset end
+            else self.position = self.position + offset; self.selection = false end
         end
 
         if key == "left" then set( -1 )

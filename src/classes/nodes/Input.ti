@@ -179,7 +179,7 @@ function Input:draw( force )
                 local startPos = -self.scroll + 1
 
                 canvas:drawTextLine( startPos, 1, value:sub( 1, start + 1 ), tc, bg )
-                canvas:drawTextLine( startPos + start, 1, value:sub( start + 1, stop + 1 ), tc, self.focused and self.selectedBackgroundColour or bg )
+                canvas:drawTextLine( startPos + start, 1, value:sub( start + 1, stop ), self.focused and self.selectedColour or tc, self.focused and self.selectedBackgroundColour or bg )
                 canvas:drawTextLine( startPos + stop, 1, value:sub( stop + 1 ), tc, bg )
             else
                 canvas:drawTextLine( -self.scroll + 1, 1, self.value, tc, bg )

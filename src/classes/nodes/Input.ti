@@ -41,6 +41,17 @@ end
 ]]
 function Input:onMouseClick( event, handled, within )
     if within and not handled then
+        if self.focused then
+            local application, pos, width, scroll = self.application, self.position, self.width, self.scroll
+            local clickedPos = math.min( #self.value, event.X - self.X + self.scroll )
+
+            if application:isPressed( keys.leftShift ) or application:isPressed( keys.rightShift ) then
+                if clickedPos ~= pos then
+                    self.selection = clickedPos
+                else self.selection = false end
+            else self.position, self.selection = clickedPos, false end
+        end
+
         self.active, event.handled = true, true
     else
         self.active = false
@@ -57,17 +68,8 @@ end
 function Input:onMouseUp( event, handled, within )
     if ( not within or handled ) and self.focused then
         self:unfocus()
-    elseif within and not handled and self.active then
-        if self.focused then
-            local application, pos, width, scroll = self.application, self.position, self.width, self.scroll
-            local clickedPos = math.min( #self.value, event.X - self.X + self.scroll )
-
-            if application:isPressed( keys.leftShift ) or application:isPressed( keys.rightShift ) then
-                if clickedPos ~= pos then
-                    self.selection = clickedPos
-                else self.selection = false end
-            else self.position, self.selection = clickedPos, false end
-        else self:focus() end
+    elseif within and not handled and self.active and not self.focused then
+        self:focus()
     end
 
     self.active = false

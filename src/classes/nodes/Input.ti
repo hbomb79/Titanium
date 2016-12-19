@@ -80,7 +80,9 @@ function Input:onChar( event, handled )
     local value, position, selection = self.value, self.position, self.selection
     if selection then
         local start, stop = math.min( selection, position ), math.max( selection, position )
-        self.value, self.selection, self.position = value:sub( 1, start ) .. event.char .. value:sub( stop + 2 ), false, start + 1
+        start = start > stop and start - 1 or start
+
+        self.value, self.selection, self.position = value:sub( 1, start ) .. event.char .. value:sub( stop + ( start < stop and 1 or 2 ) ), false, start + 1
         self.changed = true
     else
         self.value = value:sub( 1, position ) .. event.char .. value:sub( position + 1 )
@@ -115,8 +117,8 @@ function Input:onKeyDown( event, handled )
         elseif selection then
             if key == "delete" or key == "backspace" then
                 self.value, self.position = value:sub( 1, start ) .. value:sub( stop + 1 ), start
-            elseif not isPressed then
-                self.position = key == "left" and start or key == "right" and stop - 1 or position
+            elseif not isPressed and ( key == "left" or key == "right" ) then
+                self.position = key == "left" and start + 1 or key == "right" and stop - 2
                 self.selection = false
             end
         end
@@ -144,10 +146,6 @@ function Input:onKeyDown( event, handled )
                 self.position = start
             elseif key == "delete" and not selection then
                 self.value, self.changed = value:sub( 1, stop ) .. value:sub( stop + 2 ), true
-            else
-                if key ~= "left" and key ~= "right" and key ~= "home" and key ~= "end" then
-                    self.selection = false
-                end
             end
         end
     end
@@ -176,6 +174,8 @@ function Input:draw( force )
         if self.focused or not self.placeholder or #value > 0 then
             if self.selection then
                 local start, stop = selection < position and selection or position, selection > position and selection + 1 or position + 1
+                if start < stop then stop = stop - 1 end
+
                 local startPos = -self.scroll + 1
 
                 canvas:drawTextLine( startPos, 1, value:sub( 1, start + 1 ), tc, bg )
@@ -225,7 +225,7 @@ end
 ]]
 function Input:getSelectedValue()
     local selection, position = self.selection, self.position
-    return self.value:sub( ( selection < position and selection or position ) + 1, ( selection > position and selection or position ) + 1 )
+    return self.value:sub( ( selection < position and selection or position ) + 1, ( selection > position and selection or position ) )
 end
 
 --[[

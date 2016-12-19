@@ -25,7 +25,7 @@ class Input extends Node mixin MActivatable mixin MFocusable {
 ]]
 function Input:__init__( ... )
     self:resolve( ... )
-    self:register "width"
+    self:register( "width", "selectedColour", "selectedBackgroundColour" )
 
     self:super()
 end
@@ -255,6 +255,6 @@ end
 
 configureConstructor({
     orderedArguments = { "X", "Y", "width" },
-    argumentTypes = { value = "string", position = "number", selection = "number", placeholder = "string", placeholderColour = "colour" },
+    argumentTypes = { value = "string", position = "number", selection = "number", placeholder = "string", placeholderColour = "colour", selectedColour = "colour", selectedBackgroundColour = "colour" },
     useProxy = { "toggled" }
 }, true)

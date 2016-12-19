@@ -25,7 +25,8 @@ local SETTINGS, FLAGS = {
         CLASSES = {},
         EXCLUDE = {},
         LOCATION = "src",
-        PRE = false
+        PRE = false,
+        POST = false
     },
     VFS = {
         ENABLE = true,
@@ -59,6 +60,7 @@ FLAGS = {
     {"init", "i", function( path ) SETTINGS.INIT_FILE = path end, true, "This file will be run when the package is executed"},
     {"minify", "m", function() SETTINGS.MINIFY_SOURCE = true end, false, "Files ending with the `.ti` or `.lua` extension will be minified"},
     {"pre-init", false, function( path ) SETTINGS.SOURCE.PRE = path end, true, "This file will be executed just before loading Titanium. Therefore, this file can used to load Titanium instead of using built-in features"},
+    {"titanium-init", false, function( path ) SETTINGS.SOURCE.POST = path end, true, "This file will be executed just after loading Titanium, and consequently just before loading custom classes. This provides the oppourtunity to load custom classes/packages before loading this packages classes (ie: dependencies)"},
 
     -- Path Exclusion
     {"exclude-class-source", "exclude-cs", function( path ) addFromExplore( path, SETTINGS.SOURCE.EXCLUDE ) end, true, "Files inside this path will not be loaded as a class file"},
@@ -156,16 +158,18 @@ function explore( path, results )
     if isDir( path ) then
         if type( fs ) == "table" then
             for _, file in pairs( fs.list( path ) ) do
-                local p = path .. "/" .. file
-                if isDir( p ) then
-                    results = explore( p, results )
-                else
-                    results[ #results + 1 ] = p
+                if file ~= ".DS_Store" then
+                    local p = path .. "/" .. file
+                    if isDir( p ) then
+                        results = explore( p, results )
+                    else
+                        results[ #results + 1 ] = p
+                    end
                 end
             end
         else
             for file in lfs.dir( path ) do
-                if file ~= "." and file ~= ".." then
+                if file ~= "." and file ~= ".." and file ~= ".DS_Store" then
                     local p = path .. "/" .. file
 
                     if lfs.attributes( p, "mode" ) == "directory" then
@@ -646,12 +650,17 @@ if not ti then
 end
 ]]
 
+if SETTINGS.SOURCE.POST then
+    runFile( SETTINGS.SOURCE.POST )
+end
+
 if next( class_assets ) then
     output = output .. [[
 
 local loaded = {}
 local function loadClass( name, source )
-    if loaded[ name ] then return end
+    if not source then return error( "Failed to load class '"..name.."'. No source found within class assets" )
+    elseif loaded[ name ] then return end
 
     local className = name:gsub( "%..*", "" )
     if not ti.getClass( className ) then
@@ -664,7 +673,6 @@ local function loadClass( name, source )
         local class = ti.getClass( className )
         if class then
             if not class:isCompiled() then class:compile() end
-            print( name )
             loaded[ name ] = true
         else return error( "File '"..name.."' failed to create class '"..className.."'" ) end
     else

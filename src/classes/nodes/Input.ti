@@ -17,6 +17,8 @@ class Input extends Node mixin MActivatable mixin MFocusable {
     allowMouse = true;
     allowKey = true;
     allowChar = true;
+
+    limit = 0;
 }
 
 --[[
@@ -25,7 +27,7 @@ class Input extends Node mixin MActivatable mixin MFocusable {
 ]]
 function Input:__init__( ... )
     self:resolve( ... )
-    self:register( "width", "selectedColour", "selectedBackgroundColour" )
+    self:register( "width", "selectedColour", "selectedBackgroundColour", "limit" )
 
     self:super()
 end
@@ -82,9 +84,10 @@ function Input:onChar( event, handled )
         local start, stop = math.min( selection, position ), math.max( selection, position )
         start = start > stop and start - 1 or start
 
-        self.value, self.selection, self.position = value:sub( 1, start ) .. event.char .. value:sub( stop + ( start < stop and 1 or 2 ) ), false, start + 1
         self.changed = true
     else
+        if self.limit > 0 and #value >= self.limit then return end
+
         self.value = value:sub( 1, position ) .. event.char .. value:sub( position + 1 )
         self.position = self.position + 1
     end
@@ -196,8 +199,11 @@ end
     @param <number - indicator>
 ]]
 function Input:repositionScroll( indicator )
+    local limit = self.limit
+    local isLimit = limit > 0
+
     if indicator >= self.width and indicator > ( self.scroll + self.width - 1 ) then
-        self.scroll = math.min( indicator - self.width + 1, #self.value - self.width + 1 )
+        self.scroll = math.min( indicator - self.width + 1, #self.value - self.width + 1 ) - ( isLimit and indicator >= limit and 1 or 0 )
     elseif indicator <= self.scroll then
         self.scroll = math.max( self.scroll - ( self.scroll - indicator ), 0 )
     else self.scroll = math.max( math.min( self.scroll, #self.value - self.width + 1 ), 0 ) end
@@ -248,13 +254,14 @@ end
 ]]
 function Input:getCaretInfo()
     local sX, sY = self:getAbsolutePosition()
+    local limit = self.limit
 
-    return not self.selection, sX + ( self.position - self.scroll ), sY, self.focusedColour
+    return not self.selection and ( limit <= 0 or self.position < limit ), sX + ( self.position - self.scroll ), sY, self.focusedColour
 end
 
 
 configureConstructor({
     orderedArguments = { "X", "Y", "width" },
-    argumentTypes = { value = "string", position = "number", selection = "number", placeholder = "string", placeholderColour = "colour", selectedColour = "colour", selectedBackgroundColour = "colour" },
+    argumentTypes = { value = "string", position = "number", selection = "number", placeholder = "string", placeholderColour = "colour", selectedColour = "colour", selectedBackgroundColour = "colour", limit = "number" },
     useProxy = { "toggled" }
 }, true)

@@ -134,6 +134,8 @@ function Dropdown:setSelectedOption( selected )
     self.selectedOption = selected
     self:closeOptionDisplay()
     self:updateOptions()
+
+    self:executeCallbacks( "change", selected )
 end
 
 function Dropdown:handle( eventObj )

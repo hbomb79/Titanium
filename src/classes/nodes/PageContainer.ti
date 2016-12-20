@@ -20,7 +20,11 @@ class PageContainer extends Container {
     @param [boolean - force], [number - offsetX], [number - offsetY]
 ]]
 function PageContainer:draw( force, offsetX, offsetY )
-    return self.super:draw( force, ( offsetX or 0 ) - self.scroll, offsetY )
+    if not self.selectedPage then
+        self.canvas:drawTextLine( 1, 1, "No page selected", 16384, 1 )
+    else
+        return self.super:draw( force, ( offsetX or 0 ) - self.scroll, offsetY )
+    end
 end
 
 --[[

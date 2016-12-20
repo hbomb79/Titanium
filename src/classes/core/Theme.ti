@@ -53,11 +53,12 @@ function Theme.static.parse( source )
 
         if children then
             for c = 1, #children do
-                if not Titanium.getClass( rule.type ) then
+                if not Titanium.getClass( rule.type ) and rule.type ~= "Any" then
                     return error( "Failed to generate theme data. Child target '"..rule.type.."' doesn't exist as a Titanium class" )
                 end
 
-                queue[ #queue + 1 ] = { queryPrefix .. " " .. ( rule.arguments.direct and "> " or "" ) .. rule.type .. getTagDetails( rule ), children[ c ], rule }
+                local type = rule.type
+                queue[ #queue + 1 ] = { queryPrefix .. " " .. ( rule.arguments.direct and "> " or "" ) .. ( type == "Any" and "*" or type ) .. getTagDetails( rule ), children[ c ], rule }
             end
         elseif rule.content then
             local ownerType = entry[ 3 ].type

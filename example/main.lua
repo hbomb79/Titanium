@@ -145,7 +145,7 @@ end)
 -- The 'Shell' or 'Return' button was clicked (depending on the selected page). Swap the page.
 -- When the page swaps, different content will be displayed. This is defined in the TML file using `<Page name="main">` and `<Page name="console">`
 Manager:query "#shell_toggle":on("trigger", function()
-    app.pages:selectPage( app.pages.selectedPage.name == "main" and "console" or "main" )
+    app.pages:selectPage( app.pages.selectedPage.id == "main" and "console" or "main" )
 end)
 
 Manager:registerHotkey("close", "leftCtrl-leftShift-t", Manager.stop) -- Setup a hotkey that makes closing the program quicker

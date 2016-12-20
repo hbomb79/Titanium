@@ -1,5 +1,5 @@
-<PageContainer X=1 Y=1 width=51 height=19 xScrollAllowed=false>
-    <Page name="main">
+<PageContainer X=1 Y=1 width=51 height=19>
+    <Page id="main" xScrollAllowed="false">
         <Label X=2 Y=2 text="Titanium" class="header"/>
         <Label X=2 Y=3 text="Test Application" class="sub"/>
 
@@ -72,7 +72,7 @@
         </Container>
     </Page>
 
-    <Page name="console">
+    <Page id="console" xScrollAllowed="false">
         <Terminal X=2 Y=2 width=49 height=15 id="shell"/>
         <Button id="shell_toggle" text="Return" X=22 Y=18 width=8/>
     </Page>

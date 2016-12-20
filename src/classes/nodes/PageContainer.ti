@@ -1,142 +1,156 @@
-class PageContainer extends ScrollContainer {
-    pages = {};
+--[[
+    The PageContainer serves as a container that shows one 'page' at a time. Preset (or completely custom) animated transitions can be used when
+    a new page is selected.
+]]
+
+class PageContainer extends Container {
+    scroll = 0;
+
+    animationDuration = 0.25;
+    animationEasing = "outQuad";
+    customAnimation = false;
     selectedPage = false;
+
+    pageIndexes = {};
 }
 
 --[[
     @instance
-    @desc Adds the page instance provided to the PageContainers 'pages'
+    @desc Intercepts the draw call, adding the x scroll to the x offset
+    @param [boolean - force], [number - offsetX], [number - offsetY]
+]]
+function PageContainer:draw( force, offsetX, offsetY )
+    return self.super:draw( force, ( offsetX or 0 ) - self.scroll, offsetY )
+end
+
+--[[
+    @instance
+    @desc If a MOUSE event is handled, it's X co-ordinate is adjusted using the scroll offset of the page container.
+    @param <Event Instance - eventObj>
+    @return <boolean - propagate>
+]]
+function PageContainer:handle( eventObj )
+    if not self.super.super:handle( eventObj ) then return end
+
+    local clone
+    if eventObj.main == "MOUSE" then
+        clone = eventObj:clone( self )
+        clone.X = clone.X + self.scroll
+        clone.isWithin = clone.isWithin and eventObj:withinParent( self ) or false
+    end
+
+    self:shipEvent( clone or eventObj )
+    if clone and clone.isWithin and ( self.consumeAll or clone.handled ) then
+        eventObj.handled = true
+    end
+    return true
+end
+
+--[[
+    @instance
+    @desc Selects the new page using the 'pageID'. If a function is given as argument #2 'animationOverride', it will be called instead of the customAnimation set (or the default animation method used).
+          Therefore the animationOverride is given full control of the transition, allowing for easy one-off transition effects.
+
+          If 'customAnimation' is set on the instance, it will be called if no 'animationOverride' is provided, providing a more long term override method.
+
+          If neither are provided, a normal animation will take place, using 'animationDuration' and 'animationEasing' set on the instance as parameters for the animation.
+    @param <string - pageID>, [function - animationOverride]
+]]
+function PageContainer:selectPage( pageID, animationOverride )
+    local page = self:getPage( pageID )
+
+    self.selectedPage = page
+    if type( animationOverride ) == "function" then
+        return animationOverride( self.currentPage, page )
+    elseif self.customAnimation then
+        return self.customAnimation( self.currentPage, page )
+    end
+
+    self:animate( self.__ID .. "_PAGE_CONTAINER_SELECTION", "scroll", ( self:getPagePosition( pageID ) - 1 ) * self.width, self.animationDuration, self.animationEasing )
+end
+
+--[[
+    @instance
+    @desc Returns an integer representing the position of the page. These may change as pages are added and removed from the PageContainer - don't rely on them remaining constant
+    @param <string - pageID>
+    @return <number - position>
+]]
+function PageContainer:getPagePosition( pageID )
+    local indexes = self.pageIndexes
+    for i = 1, #indexes do
+        if indexes[ i ] == pageID then
+            return i
+        end
+    end
+end
+
+--[[
+    @instance
+    @desc Ensures the node being added to the PageContainer is a 'Page' node because no other nodes should be added directly to this node
+    @param <Page Instance - node>
+    @return 'param1 (node)'
+]]
+function PageContainer:addNode( node )
+    if Titanium.typeOf( node, "Page", true ) then
+        local pgInd = self.pageIndexes
+        if self:getPagePosition( node.id ) then
+            return error("Cannot add page '"..tostring( node ).."'. Another page with the same ID already exists inside this PageContainer")
+        end
+
+        pgInd[ #pgInd + 1 ] = node.id
+        node.X = ( #pgInd - 1 ) * self.width + 1
+
+        return self.super:addNode( node )
+    end
+
+    return error("Only 'Page' nodes can be added as direct children of 'PageContainer' nodes, '"..tostring( node ).."' is invalid")
+end
+
+--[[
+    @instance
+    @desc A alias for 'addNode', contextualized for the PageContainer
     @param <Page Instance - page>
-    @return [Page Instance - page]
+    @return 'param1 (page)'
 ]]
 function PageContainer:addPage( page )
-    if not Titanium.typeOf( page, "Page", true ) then return error("Invalid page '"..tostring( page ).."'") end
-
-    self:removePage( page.name )
-
-    if self.application then
-        page.application = self.application
-    end
-    page.parent = self
-
-    table.insert( self.pages, page )
-
-    return page
+    return self:addNode( page )
 end
 
 --[[
     @instance
-    @desc Removes the page (or page with name provided) from the PageContainers pages.
-    @param <Page Instance - page OR string - pageName>
-    @return [Page Instance - removedPage]
+    @desc A alias for 'getNode', contextualized for the PageContainer
+    @param <string - id>, [boolean - recursive]
+    @return [Node Instance - node]
 ]]
-function PageContainer:removePage( page )
-    local searchName = type( page ) == "string" and true or ( Titanium.typeOf( page, "Page", true ) and page or error("Invalid target '"..tostring( page ).."' to remove", 2) )
-    local pages = self.pages
-    for i = 1, #pages do
-        if ( searchName and pages[ i ].name == page ) or ( not searchName and pages[ i ] == page ) then
-            if self.selectedPage == page then
-                self.selectedPage = false
-            end
-
-            page.parent = nil
-            page.application = nil
-            return table.remove( pages, i )
-        end
-    end
+function PageContainer:getPage( ... )
+    return self:getNode( ... )
 end
 
 --[[
     @instance
-    @desc Selects the page with name 'name'. This pages is then used when drawing to the PageContainer canvas.
-    @param <string - name>
-    @return <boolean - success>
+    @desc A alias for 'removeNode', contextualized for the PageContainer
+    @param <Node Instance | string - id>
+    @return <boolean - success>, [node - removedNode]
 ]]
-function PageContainer:selectPage( name )
-    local pages = self.pages
-    for i = 1, #pages do
-        if pages[ i ].name == name then
-            self.selectedPage = pages[ i ]
-
-            return true
-        end
-    end
-
-    self.selectedPage = false
-    return false
-end
-
-function PageContainer:setSelectedPage( page )
-    self.selectedPage = page
-    self.changed = true
-
-    self:cacheContent()
-    self.yScroll = 0
-    self.xScroll = 0
-end
-
-function PageContainer:addNode( node )
-    if not Titanium.typeOf( node, "Page", true ) then
-        return error("PageContainer only supports 'Page' as direct child nodes, '"..tostring( node ).."' is not valid. To add content, add your nodes to a direct child page - not directly to the PageContainer")
-    end
-
-    self:addPage( node )
-
-    return node
+function PageContainer:removePage( ... )
+    return self:removeNode( ... )
 end
 
 --[[
     @instance
-    @desc Allows the ScrollContainer.draw to fetch the nodes for the selected page, rather than using the 'nodes' table
-    @return <table - nodes>
+    @desc Shifts requests to clear the PageContainer area to the left, depending on the scroll position of the container
+    @param <number - x>, <number - y>, <number - width>, <number - height>
 ]]
-function PageContainer:getNodes()
-    if self.selectedPage then
-        return self.selectedPage.nodes
-    end
-
-    return {}
-end
-
-function PageContainer:setApplication( app )
-    self.application = app
-
-    local pages = self.pages
-    for i = 1, #pages do
-        pages[ i ].application = app
-    end
+function PageContainer:redrawArea( x, y, width, height )
+    self.super:redrawArea( x, y, width, height, -self.scroll )
 end
 
 --[[
     @instance
-    @desc Caches all nodes under this container (and child containers) in 'collatedNodes'.
-          This list maybe out of date if 'collate' isn't called before usage. Caching is not automatic.
-    @param [table - collated]
+    @desc Due to the contents of the PageContainer not actually moving (just the scroll), the content of the PageContainer must be manually cleared.
+          To fit this demand, the area of the PageContainer is cleared when the scroll parameter is changed.
 ]]
-function PageContainer:collate( collated )
-    local collated = collated or {}
-
-    local pages, page = self.pages
-    for p = 1, #pages do
-        collated[ #collated + 1 ] = pages[ p ]
-        local nodes, node = pages[ p ].nodes
-        for i = 1, #nodes do
-            node = nodes[ i ]
-            collated[ #collated + 1 ] = node
-
-            local collatedNode = node.collatedNodes
-            if collatedNode then
-                for i = 1, #collatedNode do
-                    collated[ #collated + 1 ] = collatedNode[ i ]
-                end
-            end
-        end
-    end
-
-    self.collatedNodes = collated
+function PageContainer:setScroll( scroll )
+    self.scroll = scroll
+    self:redrawArea( 1, 1, self.width, self.height )
 end
-
-configureConstructor({
-    orderedArguments = { "X", "Y", "width", "height", "pages", "backgroundColour" },
-    argumentTypes = { pages = "table" }
-}, true)

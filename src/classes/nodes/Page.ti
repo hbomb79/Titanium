@@ -1,48 +1,13 @@
-class Page extends MNodeContainer mixin MThemeable
-
-function Page:__init__( name, ... )
-    self.name = type( name ) == "string" and name or error("Invalid name '"..tostring( name ).."'", 2)
-
-    local args, nodes = { ... }, self.nodes
-    for i = 1, #args do
-        if Titanium.typeOf( args[ i ], "Node", true ) then
-            nodes[ #nodes + 1 ] = args[ i ]
-        end
-    end
-end
+class Page extends ScrollContainer
 
 function Page:setParent( parent )
-    if Titanium.typeOf( parent, "PageContainer", true ) then
-        self.parent = parent
-        local nodes = self.nodes
+    self.super:setParent( parent )
 
-        for i = 1, #nodes do
-            nodes[ i ].parent = parent
-        end
-    else
-        return error("Failed to set parent of page to '"..tostring( parent ).."'. Parent MUST be a PageContainer, this is the only place 'Page' instances should reside")
-    end
+    self.width = parent.width
+    self.height = parent.height
 end
 
-function Page:addNode( node )
-    self.super:addNode( node )
-    node.parent = self.parent
-    return node
-end
-
-function Page:setEnabled( enabled )
-    if self.parentEnabled then
-        local nodes = self.nodes
-        for i = 1, #nodes do
-            nodes[ i ].parentEnabled = enabled
-        end
-    end
-end
-
-function Page:onThemeUpdate() end
 configureConstructor {
-    orderedArguments = { "name" },
-    argumentTypes = {
-        name = "string"
-    }
+    orderedArguments = { "id" },
+    requiredArguments = { "id" }
 }

@@ -50,9 +50,9 @@ function Application:focusNode( node )
     node:executeCallbacks( "focus", self )
 end
 
-function Application:unfocusNode()
+function Application:unfocusNode( targetNode )
     local node = self.focusedNode
-    if not node then return end
+    if not node or ( targetNode ~= node ) then return end
 
     self.focusedNode = nil
 

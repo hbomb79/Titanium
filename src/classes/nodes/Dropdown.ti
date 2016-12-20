@@ -73,6 +73,7 @@ end
 
 function Dropdown:updateOptions()
     local cont = self.optionContainer
+    local old = self.application.needsThemeUpdate
     cont:clearNodes()
 
     self:updateDisplayButton()
@@ -93,6 +94,10 @@ function Dropdown:updateOptions()
     else
         cont.height, self.height = count, count + 1
     end
+
+    self.application.needsThemeUpdate = old
+    self:queueUpdate()
+    self:updateProperties()
 
     if #options > 0 then cont.yScroll = math.min( cont.yScroll, count ) end
 end

@@ -16,6 +16,8 @@ function DynamicValue:__init__( ... )
     if reg and reg.argumentTypes then
         self.type = reg.argumentTypes[ self.property ]
     end
+
+    self:solve()
 end
 
 --[[

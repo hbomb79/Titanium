@@ -125,7 +125,6 @@ function TML:parseTree()
             --TODO: Resolve node queries
 
             instance:dynamicallyLinkProperty( property, config:resolveStacks( instance ), config.output )
-            instance.binds[ property ]:solve()
         end
     end
 end

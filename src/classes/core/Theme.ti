@@ -61,24 +61,30 @@ function Theme.static.parse( source )
             end
         elseif rule.content then
             local ownerType = entry[ 3 ].type
+            local dynamic = rule.arguments.dynamic
 
             local ruleTarget, computeType, value = ownerType, false, rule.content
             if ownerType == "Any" then
                 ruleTarget, computeType = "ANY", true
-            else
+            elseif not dynamic then
                 local parentReg = Titanium.getClass( ownerType ).getRegistry()
                 local argumentTypes = parentReg.constructor and parentReg.constructor.argumentTypes or {}
 
                 value = XMLParser.convertArgType( value, argumentTypes[ parentReg.alias[ rule.type ] or rule.type ] )
             end
 
+            if dynamic then
+                value = DynamicEqParser( rule.content )
+            end
+
             if not rawRules[ ruleTarget ] then rawRules[ ruleTarget ] = {} end
             table.insert( rawRules[ ruleTarget ], {
                 query = queryPrefix,
-                computeType = computeType,
+                computeType = not dynamic and computeType or nil,
                 property = rule.type,
                 value = value,
-                important = rule.arguments.important
+                important = rule.arguments.important,
+                isDynamic = dynamic
             })
         else
             return error( "Failed to generate theme data. Invalid theme rule found. No value (XML_CONTENT) has been set for tag '"..rule.type.."'" )

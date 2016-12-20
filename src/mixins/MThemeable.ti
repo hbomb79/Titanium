@@ -15,7 +15,7 @@ abstract class MThemeable {
     classes = {};
     applicableRules = {};
 
-    mainValues = {};
+    mainValues = {}; --TODO: Preserve dynamic values, instead of the dynamic value output so that they can be restored fully
     defaultValues = {};
 }
 
@@ -83,17 +83,18 @@ function MThemeable:fetchPropertyValue( property )
     local newValue = self.mainValues[ property ]
     local requireImportant = newValue ~= nil
 
-    local rules, r = self.applicableRules
+    local rules, r, usedRule = self.applicableRules
     for i = 1, #rules do
         r = rules[ i ]
         if r.property == property and ( not requireImportant or r.important ) then
             newValue = r.value
+            usedRule = r
 
             if r.important then requireImportant = true end
         end
     end
 
-    return newValue
+    return newValue, usedRule
 end
 
 --[[
@@ -106,11 +107,17 @@ function MThemeable:updateProperty( property )
         return error( "Failed to update property '"..tostring( property ).."'. Property not registered" )
     end
 
-
-    local new = self:fetchPropertyValue( property )
+    --TODO: Look into removing old dynamic values when the theme rule is no longer used. Manual dynamicValues need to be distinguished from those created automatically. Ugh.
+    local new, rule = self:fetchPropertyValue( property )
     self.isUpdating = true
     if new then
-        self[ property ] = new
+        if rule and rule.isDynamic then
+            if self.binds[ property ] then self:unlinkProperties( self, property ) end
+
+            self:dynamicallyLinkProperty( property, new:resolveStacks( self ), new.output )
+        else
+            self[ property ] = new
+        end
     elseif self[ property ] ~= self.mainValues[ property ] then --TODO: Check if this elseif is needed, or if simply else will suffice
         --TODO: Investigate the use of this statement to ensure 'false' main values are not being overriden by the default values
         self[ property ] = self.mainValues[ property ] or self.defaultValues[ property ]

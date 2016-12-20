@@ -12,7 +12,8 @@ local function splitXMLTheme( queue, tree )
         local children = tree[ i ].children
         if children then
             for c = 1, #children do
-                queue[ #queue + 1 ] = { tree[ i ].type .. getTagDetails( tree[ i ] ), children[ c ], tree[ i ] }
+                local type = tree[ i ].type
+                queue[ #queue + 1 ] = { ( type == "Any" and "*" or type ) .. getTagDetails( tree[ i ] ), children[ c ], tree[ i ] }
             end
         end
     end
@@ -59,18 +60,24 @@ function Theme.static.parse( source )
                 queue[ #queue + 1 ] = { queryPrefix .. " " .. ( rule.arguments.direct and "> " or "" ) .. rule.type .. getTagDetails( rule ), children[ c ], rule }
             end
         elseif rule.content then
-            local owner = entry[ 3 ]
-            local ownerType = owner.type
+            local ownerType = entry[ 3 ].type
 
-            local parentReg = Titanium.getClass( ownerType ).getRegistry()
-            local argumentTypes = parentReg.constructor and parentReg.constructor.argumentTypes or {}
+            local ruleTarget, computeType, value = ownerType, false, rule.content
+            if ownerType == "Any" then
+                ruleTarget, computeType = "ANY", true
+            else
+                local parentReg = Titanium.getClass( ownerType ).getRegistry()
+                local argumentTypes = parentReg.constructor and parentReg.constructor.argumentTypes or {}
 
+                value = XMLParser.convertArgType( value, argumentTypes[ parentReg.alias[ rule.type ] or rule.type ] )
+            end
 
-            if not rawRules[ ownerType ] then rawRules[ ownerType ] = {} end
-            table.insert( rawRules[ ownerType ], {
+            if not rawRules[ ruleTarget ] then rawRules[ ruleTarget ] = {} end
+            table.insert( rawRules[ ruleTarget ], {
                 query = queryPrefix,
+                computeType = computeType,
                 property = rule.type,
-                value = XMLParser.convertArgType( rule.content, argumentTypes[ parentReg.alias[ rule.type ] or rule.type ] ),
+                value = value,
                 important = rule.arguments.important
             })
         else

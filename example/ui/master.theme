@@ -1,3 +1,7 @@
+<Any class="sub">
+    <backgroundColour important>red</backgroundColour>
+</Any>
+
 <Label class="sub">
     <colour>lightGrey</colour>
 </Label>

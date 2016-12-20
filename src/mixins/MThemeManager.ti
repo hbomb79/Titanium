@@ -2,6 +2,17 @@
     The MThemeManager mixin should be used by classes that want to manage objects which are themeable, the main example being the 'Application' class.
 ]]
 
+local function deepCopy( source )
+    if type( source ) == "table" then
+        local copy = {}
+        for key, value in next, source, nil do copy[ deepCopy( key ) ] = deepCopy( value ) end
+
+        return copy
+    end
+
+    return source
+end
+
 abstract class MThemeManager {
     themes = {}
 }
@@ -78,14 +89,31 @@ end
     @param <table - rules>
 ]]
 function MThemeManager:cacheApplicableRules( rules )
-    local rule
+    local cachedRegistry, cachedTypes, rule, compute = {}, {}
 
     for i = 1, #rules do
         rule = rules[ i ]
+        compute = rule.computeType
 
         self:query( rule.query ):each(function( item )
             local applicable = item.applicableRules
-            applicable[ #applicable + 1 ] = rule
+            if compute then
+                local itemType = item.__type
+                if not cachedRegistry[ itemType ] then
+                    cachedRegistry[ itemType ] = Titanium.getClass( itemType ).getRegistry()
+                end
+
+                local reg = cachedRegistry[ itemType ]
+                if not cachedTypes[ itemType ] then
+                    cachedTypes[ itemType ] = reg.constructor and reg.constructor.argumentTypes or {}
+                end
+
+                local ruleClone = deepCopy( rule )
+                ruleClone.value = XMLParser.convertArgType( ruleClone.value, cachedTypes[ itemType ][ reg.alias[ rule.property ] or rule.property ] )
+                applicable[ #applicable + 1 ] = ruleClone
+            else
+                applicable[ #applicable + 1 ] = rule
+            end
         end)
     end
 end

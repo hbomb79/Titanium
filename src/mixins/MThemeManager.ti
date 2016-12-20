@@ -129,6 +129,9 @@ function MThemeManager:cacheApplicableRulesForType( type, manualReset )
 
     for i = 1, #themes do
         self:cacheApplicableRules( themes[ i ].rules[ type ] or {} )
+
+        local ANY = themes[ i ].rules.ANY
+        if ANY then self:cacheApplicableRules( ANY ) end
     end
 end
 

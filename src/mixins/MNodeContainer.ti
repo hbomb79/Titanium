@@ -32,9 +32,11 @@ function MNodeContainer:addNode( node )
     node.parent = self
     if Titanium.typeOf( self, "Application", true ) then
         node.application = self
+        self.needsThemeUpdate = true
     else
         if Titanium.typeOf( self.application, "Application", true ) then
             node.application = self.application
+            self.application.needsThemeUpdate = true
         end
     end
 

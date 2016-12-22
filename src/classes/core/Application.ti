@@ -38,6 +38,12 @@ function Application:__init__( ... )
     end)
 end
 
+--[[
+    @instance
+    @desc Focuses the node provided application wide. The node will control the application caret and will have it's 'focused' property set to true
+          Also, the 'focus' callback will be called on the application, passing the node focused.
+    @param <Node Instance - node>
+]]
 function Application:focusNode( node )
     if not Titanium.typeOf( node, "Node", true ) then
         return error "Failed to update application focused node. Invalid node object passed."
@@ -51,6 +57,14 @@ function Application:focusNode( node )
     node:executeCallbacks( "focus", self )
 end
 
+--[[
+    @instance
+    @desc If called with no arguments, the currently focused node will be unfocused, and the 'unfocus' callback will be executed
+
+          If called with the targetNode argument, the currently focused node will only be unfocused if it *is* that node. If the focused node
+          is NOT the targetNode, the function will return. If it is, it will be unfocused and the 'unfocus' callback executed.
+    @param [Node Instance - targetNode]
+]]
 function Application:unfocusNode( targetNode )
     local node = self.focusedNode
     if not node or ( targetNode ~= node ) then return end

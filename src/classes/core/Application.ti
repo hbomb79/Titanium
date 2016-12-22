@@ -9,6 +9,7 @@ class Application extends Component mixin MThemeManager mixin MKeyHandler mixin 
 
     threads = {};
     nodes = {};
+    timers = {};
 
     running = false;
     terminatable = false;
@@ -130,6 +131,44 @@ end
 
 --[[
     @instance
+    @desc Queues the execution of 'fn' after 'time' seconds.
+    @param <function - fn>, <number - time>, [boolean - repeating], [string - name]
+    @return <number - timerID>
+]]
+function Application:schedule( fn, time, repeating, name )
+    local timers = self.timers
+    if name then
+        self:unschedule( name )
+    end
+
+    local ID = os.startTimer( time ) --TODO: Use timer util to re-use timer IDs
+    self.timers[ ID ] = { fn, time, repeating, name }
+
+    return ID
+end
+
+--[[
+    @instance
+    @desc Unschedules the execution of a function using the name attached. If no name was assigned when scheduling, the timer cannot be cancelled using this method.
+    @param <string - name>
+    @return <boolean - success>
+]]
+function Application:unschedule( name )
+    local timers = self.timers
+    for timerID, timerDetails in next, timers do
+        if timerDetails[ 4 ] == name then
+            os.cancelTimer( timerID )
+            timers[ timerID ] = nil
+
+            return true
+        end
+    end
+
+    return false
+end
+
+--[[
+    @instance
     @desc Begins the program loop
 ]]
 function Application:start( preserve )
@@ -143,8 +182,19 @@ function Application:start( preserve )
         local event = { coroutine.yield() }
         local eName = event[ 1 ]
 
-        if eName == "timer" and event[ 2 ] == self.timer then
-            self:updateAnimations()
+        if eName == "timer" then
+            local timerID = event[ 2 ]
+            if timerID == self.timer then
+                self:updateAnimations()
+            elseif self.timers[ timerID ] then
+                local timerDetails = self.timers[ timerID ]
+                if timerDetails[ 3 ] then
+                    self:schedule( unpack( timerDetails ) )
+                end
+
+                self.timers[ timerID ] = nil
+                timerDetails[ 1 ]( self, timerID )
+            end
         elseif eName == "terminate" and self.terminatable then
             printError "Application Terminated"
             self:stop()

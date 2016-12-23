@@ -185,11 +185,7 @@ end
     @instance
     @desc Begins the program loop
 ]]
-function Application:start( preserve )
-    if not preserve then
-        Titanium.VFS = nil
-    end
-
+function Application:start()
     self.running = true
     while self.running do
         self:draw()

@@ -70,7 +70,7 @@ end
 
 function Terminal:emulate( fn )
     if type( fn ) ~= "function" then
-        return error("Failed to emulate function. '"..tostring( fn ).." is not valid'")
+        return error("Failed to emulate function. '"..tostring( fn ).."' is not valid")
     end
 
     local old = term.redirect( self.redirect )
@@ -78,7 +78,7 @@ function Terminal:emulate( fn )
     term.redirect( old )
 
     if not ok then
-        return error("Failed to emulate function. Error: "..tostring( err ), 3)
+        return error("Failed to emulate function. Reason: "..tostring( err ), 3)
     end
 end
 

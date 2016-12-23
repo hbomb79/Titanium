@@ -4,6 +4,13 @@ local function isThreadRunning( obj )
     return obj.thread.running
 end
 
+--[[
+    The terminal class is a node designed to emulate term programs. For example, the CraftOS shell can be run inside of this
+    node, with full functionality.
+
+    This could potentially be used to embed Titanium applications, however a more sophisticated approach is in the works.
+]]
+
 class Terminal extends Node mixin MFocusable {
     static = {
         focusedEvents = {
@@ -17,6 +24,12 @@ class Terminal extends Node mixin MFocusable {
     displayThreadStatus = true;
 }
 
+
+--[[
+    @instance
+    @desc Creates a terminal instance and creating a custom redirect canvas (the program being run inside the terminal requires a term redirect)
+    @param [number - X], [number - Y], [number - width], [number - height], [function - chunk]
+]]
 function Terminal:__init__( ... )
     self:resolve( ... )
     self:super()
@@ -25,6 +38,14 @@ function Terminal:__init__( ... )
     self.redirect = self.canvas:getTerminalRedirect()
 end
 
+--[[
+    @instance
+    @desc 'Wraps' the chunk (self.chunk - function) by creating a Thread instance with the chunk as its function (coroutine).
+          The embedded program is then started by resuming the coroutine with 'titanium_terminal_start'.
+
+          A chunk must be set on the terminal node for this function to succeed. This function is automatically executed
+          when a chunk is set (self.chunk = fChunk, or self:setChunk( fChunk ) ).
+]]
 function Terminal:wrapChunk()
     if type( self.chunk ) ~= "function" then
         return error "Cannot wrap chunk. No chunk function set."
@@ -36,6 +57,18 @@ function Terminal:wrapChunk()
     self:resume( GenericEvent "titanium_terminal_start" )
 end
 
+--[[
+    @instance
+    @desc Resumes the terminal with the given event. If the event is a mouse event its co-ordinates should have been adjusted to accomodate the terminal location
+          This is done automatically if the event is delivered via 'self:handle'.
+
+          The terminal (thread) is then resumed with this event. If the thread crashes, the 'exception' callback is executed with the thread. Access the exception using
+          'thread.exception'.
+
+          If the thread finished (gracefully), the 'finish' callback will be executed, with the thread AND a boolean (true), to indicate graceful finish
+          If the thread did not finish gracefully, the above will occur, however the boolean will be false as opposed to true.
+    @param <Event Instance - event>
+]]
 function Terminal:resume( event )
     if not isThreadRunning( self ) then return end
 
@@ -68,6 +101,11 @@ function Terminal:resume( event )
     self.changed = true
 end
 
+--[[
+    @instance
+    @desc Allows a custom function to be executed with the terminals redirect being used, with error catching.
+    @param <function - fn>
+]]
 function Terminal:emulate( fn )
     if type( fn ) ~= "function" then
         return error("Failed to emulate function. '"..tostring( fn ).."' is not valid")
@@ -82,16 +120,31 @@ function Terminal:emulate( fn )
     end
 end
 
+--[[
+    @setter
+    @desc Sets the chunk on the instance, and wraps the chunk using 'wrapChunk'.
+    @param <function - chunk>
+]]
 function Terminal:setChunk( chunk )
     self.chunk = chunk
     self:wrapChunk()
 end
 
+--[[
+    @instance
+    @desc Provides the information required by the nodes application to draw the application caret.
+    @return <boolean - caretEnabled>, <number - caretX>, <number - caretY>, <colour - caretColour>
+]]
 function Terminal:getCaretInfo()
     local c = self.canvas
     return isThreadRunning( self ) and c.tCursor, c.tX + self.X - 1, c.tY + self.Y - 1, c.tColour
 end
 
+--[[
+    @instance
+    @desc If a MouseEvent is received, it's position is adjusted to become relative to this node before being passed to the terminal thread.
+    @param <Event Instance - eventObj>
+]]
 function Terminal:handle( eventObj )
     if eventObj.handled or not isThreadRunning( self ) then return end
 
@@ -104,7 +157,12 @@ function Terminal:handle( eventObj )
     self:resume( eventObj )
 end
 
-function Terminal:draw( force ) end
+--[[
+    @instance
+    @desc The terminal node has no need to draw any custom graphics to it's canvas - the running thread does all the drawing.
+          The parent node automatically draws the node canvas to it's own, so there is no need to run any draw code here.
+]]
+function Terminal:draw() end
 
 configureConstructor({
     orderedArguments = { "X", "Y", "width", "height", "chunk" },

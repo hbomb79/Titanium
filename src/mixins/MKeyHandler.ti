@@ -10,7 +10,6 @@ abstract class MKeyHandler {
 
     keys = {};
     hotkeys = {};
-    cooldown = false;
 }
 
 --[[

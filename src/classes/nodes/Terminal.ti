@@ -59,10 +59,10 @@ function Terminal:resume( event )
                 self:emulate(function() print "Finished" end)
             end
 
-            self:executeCallbacks("graceful_finish", thread)
+            self:executeCallbacks("finish", thread, true)
         end
 
-        self:executeCallbacks("finish", thread)
+        self:executeCallbacks("finish", thread, false)
     end
 
     self.changed = true

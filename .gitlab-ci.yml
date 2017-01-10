@@ -20,8 +20,15 @@ before_script:
 build:
   stage: build
   script:
+    # TEST LINE
+    - apt-get -y install ruby curl
     - echo "Running development build. Not building minified"
     - luajit ./bin/construct.lua --source src --output titanium.lua
+    # TEST LINES
+    - echo "Searching for documentation"
+    - ruby bin/commentParse.rb
+    - echo "Publishing documentation"
+    - curl --data "data=`base64 rubyout`&key=$DEPLOY_DOCUMENTATION_KEY&tag=TESTBUILD" http://harryfelton.web44.net/titanium/deliverDocs.php
   environment: production
   artifacts:
     name: "devel_${CI_BUILD_NAME}_${CI_BUILD_REF_NAME}"
@@ -33,9 +40,14 @@ build:
 build-release:
   stage: build
   script:
+    #- apt-get -y install ruby curl
     - echo "Running release build. Building minified"
     - luajit ./bin/construct.lua --source src --output titanium.lua
     - luajit ./bin/construct.lua --source src --output titanium.min.lua --minify
+    #- echo "Searching for documentation"
+    #- ruby bin/commentParse.rb
+    #- echo "Publishing documentation"
+    #- curl --data "data=`base64 rubyout`&key=$DEPLOY_DOCUMENTATION_KEY&tag=$CI_BUILD_TAG" http://harryfelton.web44.net/titanium/deliverDocs.php
   environment: release
   artifacts:
     name: "release_${CI_BUILD_REF_NAME}"

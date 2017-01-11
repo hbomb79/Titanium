@@ -94,6 +94,7 @@ if files.empty?
     raise "Cannot generate documentation. No files found while exploring 'src'. Bailing out!"
 end
 
+puts "<<Discovering functions>>\n\n"
 foundFunctions = {}
 categories = {
     "core" => "core",
@@ -112,7 +113,7 @@ files.each do |path|
     filename = getFileName( path )
 
     if foundFunctions[ filename ].nil?
-        foundFunctions[ filename ] = { "functionComments" => {}, "path" => path, "category" => ( categories[ getFileName( File.expand_path( "..", path ) ) ] || categories[ getFileName( File.expand_path( "../..", path ) ) ] || "unknown" ) }
+        foundFunctions[ filename ] = { "functionComments" => {}, "path" => path, "mixins" => [], "category" => ( categories[ getFileName( File.expand_path( "..", path ) ) ] || categories[ getFileName( File.expand_path( "../..", path ) ) ] || "unknown" ) }
     end
 
     docMatch = content.match(/.*\-*?\[\[(.*?)\-*?\]\].+class #{filename}/m)
@@ -124,6 +125,37 @@ files.each do |path|
         foundFunctions[ filename ][ "comment" ] = docMatch.captures[ 0 ]
     end
 
+    ##
+    # Search the class declaration for 'extends <Class>', 'mixin <class>', and the 'abstract' keyword.
+    # Firstly, is the class abstract. To determine, it will have 'abstract' before the 'class' keyword
+    abstract = content.match(/abstract\s*class\s*["']?#{filename}["']?/)
+    if !abstract.nil?
+        puts "Class #{filename} is abstract"
+        foundFunctions[ filename ][ "abstract" ] = true
+    else
+        puts "Failed to find 'abstract' keyword - class #{filename} is not abstract"
+    end
+
+    # Next, what class does it extend
+    extension = content.match(/class\s*["']?#{filename}["']?.*extends\s*['"]?(\w*)['"]?/)
+    if !extension.nil?
+        puts "Found class extension for #{filename}. Extends #{extension.captures[ 0 ]}"
+        foundFunctions[ filename ][ "extends" ] = extension.captures[ 0 ]
+    else
+        puts "Failed to find class extension for #{filename}"
+    end
+
+    # Now, find all the mixins of this class.
+    declaration = content.match(/class\s*["']?#{filename}["']?(.*)$/)
+    if !declaration.nil?
+        mixins = foundFunctions[ filename ][ "mixins" ]
+        decl = declaration.captures[ 0 ]
+        decl.scan (/mixin\s*(\w*)\s*/) {|w| mixins.push( w[0] ) }
+
+        if mixins.length > 0
+            puts("Found mixin#{mixins.length > 1 ? "s" : ""} #{mixins.join( ", " )} for #{filename}")
+        end
+    end
 
     # To find all functions (and their comment), we wil use regex. This regex uses two captures,
     # the first being the comment, and the second being the function definition (containing the)
@@ -133,7 +165,7 @@ files.each do |path|
         matched = content.match(/.+\-{2,}\[\[(.*)\-*\]\]\s*?(function #{filename}:\w+\(.*?\))/m)
         if matched.nil?
             # No match found, bail out - we are done with this file
-            puts "File #{filename} parsed - no more matches found"
+            puts "File #{filename} parsed - no more matches found\n\n"
             break
         else
             # Alright, our regex matched. Our first capture (array[0]) contains
@@ -154,6 +186,7 @@ files.each do |path|
     end
 end
 
+
 # We have parsed all source files for documented functions, now we must parse the comments
 # into valuable information. For example, finding all the parameters or return values.
 #
@@ -161,6 +194,8 @@ end
 # using '@', the line will be parsed to gather information.
 
 outDocs = {}
+functionTotal = 0
+puts "\n<<Parsing discovered functions>>\n\n"
 foundFunctions.each do |filename, info|
     # We are now iterating over the information we found from each file, which is
     # the file comment, and each function/comment combination.
@@ -169,6 +204,9 @@ foundFunctions.each do |filename, info|
     outDocs[ filename ] = {
         "category" => info["category"],
         "path" => info["path"],
+        "abstract" => info["abstract"] || false,
+        "mixins" => info["mixins"],
+        "extends" => info["extends"],
         "parameters" => {
             "static" => {},
             "instance" => {}
@@ -242,8 +280,6 @@ foundFunctions.each do |filename, info|
             functionDescription = functionDescription.captures[ 0 ]
         end
 
-        puts "Found function #{functionName}: #{functionDescription}"
-
         # What parameters does it accept?
         # Function comments can define multiple sets of parameters. To handle this, we will use
         # iteration. The same applies to @return lines, so we'll handle those here too.
@@ -283,6 +319,7 @@ foundFunctions.each do |filename, info|
                                     
 
                                 # The brackets match, this variable can be pushed
+                                puts("Found argument #{parts.captures[2]} (type #{parts.captures[ 1 ]}#{parts.captures[0] == "[" ? ", optional" : ""}) for #{filename}:#{functionName}")
                                 store["arguments"].push({
                                     "name" => parts.captures[ 2 ],
                                     "type" => parts.captures[ 1 ],
@@ -315,8 +352,11 @@ foundFunctions.each do |filename, info|
             "isSetter" => type == "setter",
             "isGetter" => type == "getter"
         })
+
+        puts "Done parsing function #{functionName}\n"
+        functionTotal+=1
     end
 end
 
-# Temporary
+puts "\n\n<<Success - Parsed #{functionTotal} functions over #{outDocs.length} files>>"
 File.write("rubyout", JSON.generate( outDocs ) )

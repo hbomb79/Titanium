@@ -227,7 +227,7 @@ foundFunctions.each do |filename, info|
             # Example @instance running - boolean, nil (def. false) - A description
             # Another: @static easing - table (def. false) - A description
 
-            matched = line.match(/@(instance|static)\s+(\w+)\s*\-\s*([\w\s,]+)\s*\(def.\s*(\w+)\)\s*\-\s*(.*)/)
+            matched = line.match(/@(instance|static)\s+(\w+)\s*\-\s*([\w\s,]+)\s*\(def.\s*(.*?)\)\s*\-\s*(.*)/)
             if !matched.nil?
                 # A correctly formatted property comment was found, handle the captured information
                 captures = matched.captures

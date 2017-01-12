@@ -1,4 +1,18 @@
 --[[
+    @static eventMatrix - table (def. {}) - Contains the event -> function name matrix. If an event name is found in the keys, the value is used as the function to call on the instance (otherwise, 'onEvent' is called)
+    @static anyMatrix - table (def. {}) - Only used when 'useAnyCallbacks' is true. If a key matching the 'main' key of the event instance is found, it's value is called (ie: MOUSE -> onMouse)
+
+    @instance enabled - boolean (def. true) - When 'true', node may receive events
+    @instance parentEnabled - boolean (def. true) - When 'true', the parent of this node is enabled
+    @instance visible - boolean (def. true) - When 'true', node is drawn to parent canvas
+    @instance allowMouse - boolean (def. false) - If 'false', mouse events shipped to this node are ignored
+    @instance allowKey - boolean (def. false) - If 'false', key events shipped to this node are ignored
+    @instance allowChar - boolean (def. false) - If 'false', key events that have a character (ie: 'a', 'b' and 'c', but not 'delete') shipped to this node are ignored
+    @instance useAnyCallbacks - boolean (def. false) - If 'true', events shipped to this node are handled through the static 'anyMatrix'
+    @instance disabledColour - colour (def. 128) - When the node is disabled (enabled 'false'), this colour should be used to draw the foreground
+    @instance disabledBackgroundColour - colour (def. 256) - When the node is disabled (enabled 'false'), this colour should be used to draw the background
+    @instance needsRedraw - boolean (def. true) - If true, the contents of the nodes canvas will be blit onto the parents canvas without redrawing the nodes canvas contents, unlike 'changed', which does both
+
     A Node is an object which makes up the applications graphical user interface (GUI).
 
     Objects such as labels, buttons and text inputs are nodes.

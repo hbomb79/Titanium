@@ -308,7 +308,7 @@ foundFunctions.each do |filename, info|
                             # Get the opening and closing bracket
                             # Get the first and second segment
 
-                            parts = var.match(/\s*([<\[])\s*(\w+)[\s\-]+(\w+)\s*([>\]])/)
+                            parts = var.match(/\s*([<\[])\s*(.*?)\s*\-\s*(.*?)\s*([>\]])/)
                             if !parts.nil?
                                 opening, closing = parts.captures[ 0 ], parts.captures[ -1 ]
                                 if ( opening == "<" and closing != ">" ) or ( opening == "[" and closing != "]" )

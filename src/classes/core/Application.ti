@@ -1,6 +1,17 @@
 --[[
-    An Application object is the entry point to a Titanium Application.
-    The program loop, nodes, threads and animations are handled by the Application object.
+    @instance width - number (def. 51) - The applications width, defines the width of the canvas.
+    @instance height - number (def. 19) - The applications width, defines the height of the canvas.
+    @instance threads - table (def. {}) - The threads currently stored on the Application. Includes stopped threads (due to finish, or exception).
+    @instance timers - table (def. {}) - The currently running timers. Timers that have finished are removed from the table. Repeating timers are simply re-queued via :schedule.
+    @instance running - boolean (def. false) - The current state of the application loop. If false, the application loop will stop.
+    @instance terminatable - boolean (def. false) - If true, the application will exit (running = false) when the 'terminate' event is caught inside the event loop.
+    @instance focusedNode - Node (def. nil) - If present, contains the currently focused node. This node is used to determine the application caret information using :getCaretInfo.
+
+    An Application object is the entry point to a Titanium Application. The Application derives a lot of it's functionality from
+    it's mixins. However, application-wide node focusing, threads, timers, animations and the event loop are all handled by this class.
+
+    This is why it is considered the heart of a Titanium project - without it, the project would simply not run due to the lack of a yielding
+    event-loop.
 --]]
 
 class Application extends Component mixin MThemeManager mixin MKeyHandler mixin MCallbackManager mixin MAnimationManager mixin MNodeContainer {
@@ -8,7 +19,6 @@ class Application extends Component mixin MThemeManager mixin MKeyHandler mixin 
     height = 19;
 
     threads = {};
-    nodes = {};
     timers = {};
 
     running = false;
@@ -96,7 +106,8 @@ end
 --[[
     @instance
     @desc Removes the thread named 'name'*
-    @param <Instance 'Thread'/string name - target>
+    @param <Thread Instance - target> - Used when removing the thread provided
+    @param <string - target> - Used when removing the thread using the name provided
     @return <boolean - success>, [node - removedThread**]
 
     *Note: In order for the thread to be removed its 'id' field must match the 'id' parameter.

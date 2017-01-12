@@ -1,3 +1,20 @@
+--[[
+    @instance running - boolean (def. false) - Indicates whether or not the thread is running. When false, calls to :handle will be rejected.
+    @instance func - function (def. false) - The function to wrap inside of a coroutine.
+    @instance co - coroutine (def. false) - The coroutine object automatically created by the Thread instance when it is started
+    @instance filter - string (def. false) - If set, only events that match will be handled. If titanium events are enabled, the :is() function will be used.
+    @instance exception - string (def. false) - If the thread crashes, coroutine.resume will catch the error and it will be stored inside of this property.
+    @instance titaniumEvents - boolean (def. false) - If 'true', events passed to this thread will NOT be converted to CC events and will remain event instances
+
+    The Thread object is a simple class used to wrap a function (chunk) in a coroutine.
+
+    This object can then be added to Application instances, via :addThread, and removed using the :removeThread
+    counterpart. This allows for easy 'multitasking', much like the ComputerCraft parallel API.
+
+    When resuming a thread, a titanium event should be passed via ':filterHandle'. Failing to do so will cause unexpected side-effects for threads
+    that don't use 'titaniumEvents'. As a rule, ':handle' shouldn't be called manually.
+]]
+
 class Thread {
     running = false;
 
@@ -10,21 +27,41 @@ class Thread {
     titaniumEvents = false;
 }
 
+--[[
+    @instance
+    @desc Constructs the instance and starts the thread by invoking ':start'
+    @param <function - func>, [boolean - titaniumEvents], [string - id]
+]]
 function Thread:__init__( ... )
     self:resolve( ... )
     self:start()
 end
 
+--[[
+    @instance
+    @desc Starts the thread by setting 'running' to true, resetting 'filter' and wrapping 'func' in a coroutine
+]]
 function Thread:start()
     self.co = coroutine.create( self.func )
     self.running = true
     self.filter = false
 end
 
+--[[
+    @instance
+    @desc Stops the thread by setting 'running' to false, preventing events from being handled
+]]
 function Thread:stop()
     self.running = false
 end
 
+--[[
+    @instance
+    @desc The preferred way of delivering events to a thread. Processes the given event, passing relevant information to ':handle' depending on the value of 'titaniumEvents'.
+
+          If 'titaniumEvents' is true, the event will be passed as is. If 'false', the event data will be unpacked before being sent.
+    @param <Event Instance - eventObj>
+]]
 function Thread:filterHandle( eventObj )
     if self.titaniumEvents then
         self:handle( eventObj )
@@ -33,6 +70,13 @@ function Thread:filterHandle( eventObj )
     end
 end
 
+--[[
+    @instance
+    @desc The raw handle method, shouldn't be called manually. Passes the given argument(s) to the coroutine. The first argument is assumed to be the event
+          itself (either the CC event name, or the event instance) and is used to determine if the event matches the filter (if set).
+    @param <Event Instance - eventObj> - Expected arguments when 'titaniumEvents' is true
+    @param <string - eventName>, <eventDetails - ...> - Expected arguments when 'titaniumEvents' is false
+]]
 function Thread:handle( ... )
     if not self.running then return false end
 

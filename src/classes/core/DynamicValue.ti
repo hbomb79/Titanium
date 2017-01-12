@@ -1,3 +1,19 @@
+--[[
+    @instance propertyValues - table (def. {}) - The values of all watched properties, passed to the equation when solving the dynamic value equation
+    @instance properties - table (def. {}) - The properties being watched by this DynamicValue
+    @instance target - Instance (def. nil) - The Titanium instance that the DynamicValue belongs to. When re-solved, the 'property' is updated on this target to become the new value of the equation
+    @instance property - string (def. nil) - The property that the DynamicValue is responsible for updating on 'target'
+    @instance equation - string (def. nil) - The Lua equation that will be solved to find the value for 'property' on 'target'
+
+    A dynamic value object is used by MPropertyManager (primarily) to link properties to an equation.
+
+    When instantiated, the DynamicValue object automatically creates watch instructions on the properties provided via 'properties'.
+    Anytime one of the watched properties changes, the DynamicValue is updated and the equation provided is re-solved, with the new
+    property values provided.
+
+    This allows for equations dependent on other instances to become dynamic, changing with their target instances.
+]]
+
 class DynamicValue {
     propertyValues = {};
     properties = {};

@@ -8,7 +8,7 @@ abstract class MThemeManager {
 
 --[[
     @instance
-    @desc Adds the given theme into this objects `themes` table
+    @desc Adds the given theme into this objects `themes` table and re-groups the themes
     @param <Theme Instance - theme>
 ]]
 function MThemeManager:addTheme( theme )
@@ -21,6 +21,8 @@ end
 --[[
     @instance
     @desc Removes the given theme from this objects `themes` table. Returns true if a theme was removed, false otherwise.
+
+          Re-groups the themes afterwards
     @param <Instance 'Theme'/string name - target>
     @return <boolean - success>
 ]]
@@ -46,6 +48,12 @@ function MThemeManager:importTheme( name, location )
     self:addTheme( Theme.fromFile( name, location ) )
 end
 
+--[[
+    @instance
+    @desc Merges all the themes together into one theme, and groups properties by query to avoid running identical queries multiple times.
+
+          Saves grouped rules to 'rules', and calls :dispatchThemeRules
+]]
 function MThemeManager:groupRules()
     local themes, outputRules = self.themes, {}
     for i = 1, #themes do
@@ -70,7 +78,7 @@ end
 
 --[[
     @instance
-    @desc Calls :dispatchThemes on the child nodes, meaning they will re-fetch their rules from the manager after clearing any current ones.
+    @desc Calls :retrieveThemes on the child nodes, meaning they will re-fetch their rules from the manager after clearing any current ones.
 ]]
 function MThemeManager:dispatchThemeRules()
     local nodes = self.collatedNodes

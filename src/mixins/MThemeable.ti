@@ -142,6 +142,13 @@ function MThemeable:unhook()
     self.hooked = false
 end
 
+--[[
+    @instance
+    @desc Returns the value for the property given. The value is found by checking themes for property values (taking into account 'important' rules). If no rule is found in the themes, the
+          value from 'mainValues' is returned instead.
+    @param <string - property>
+    @return <any - value>, <table - rule>
+]]
 function MThemeable:fetchPropertyValue( property )
     local newValue = self.mainValues[ property ]
     local requireImportant = newValue ~= nil
@@ -173,7 +180,7 @@ function MThemeable:updateProperty( property )
     --TODO: Look into removing old dynamic values when the theme rule is no longer used. Manual dynamicValues need to be distinguished from those created automatically. Ugh.
     local new, rule = self:fetchPropertyValue( property )
     self.isUpdating = true
-    if new then
+    if new ~= nil then
         if rule and rule.isDynamic then
             if self.binds[ property ] then self:unlinkProperties( self, property ) end
 
@@ -181,9 +188,8 @@ function MThemeable:updateProperty( property )
         else
             self[ property ] = new
         end
-    elseif self[ property ] ~= self.mainValues[ property ] then --TODO: Check if this elseif is needed, or if simply else will suffice
-        --TODO: Investigate the use of this statement to ensure 'false' main values are not being overriden by the default values
-        self[ property ] = self.mainValues[ property ] or self.defaultValues[ property ]
+    else
+        self[ property ] = self.defaultValues[ property ]
     end
 
     self.isUpdating = false

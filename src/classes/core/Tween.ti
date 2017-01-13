@@ -84,7 +84,7 @@ function Tween:reset()
 end
 
 --[[
-    @instance
+    @setter
     @desc Sets the current 'clock'. If the clock is a boundary number, it is adjusted to match the boundary - otherwise it is set as is. Once set, 'performEasing' is called and the state of the Tween (finished or not) is returned
     @param <number - clock>
     @return <boolean - finished>

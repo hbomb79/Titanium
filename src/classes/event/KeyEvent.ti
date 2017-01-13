@@ -1,3 +1,11 @@
+--[[
+    @instance main - string (def. "KEY") - The main type of the event, should remain unchanged
+    @instance sub - string (def. false) - The sub type of the event. If the key has been released (key_up), sub will be "UP", otherwise it will be "DOWN"
+    @instance keyCode - number (def. false) - The keycode that represents the key pressed
+    @instance keyName - string (def. false) - The name that represents the key pressed (keys.getName)
+    @instance held - boolean (def. nil) - If true, the event was fired as a result of the key being held
+]]
+
 class KeyEvent extends Event {
     main = "KEY";
 

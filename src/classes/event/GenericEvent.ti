@@ -1,4 +1,6 @@
 --[[
+    @instance main - string (def. nil) - The uppercase version of the event name.
+
     The GenericEvent class is spawned when an event that Titanium doesn't understand is caught in the Application event loop.
 
     If you wish to spawn another sort of class when a certain event is caught, consider using `Event.static.bindEvent`.

@@ -23,8 +23,9 @@ function Event:is( event )
 end
 
 --[[
-    @instance
+    @setter
     @desc Sets the 'handled' parameter to true. This indicates the event has been used and should not be used.
+    @param <boolean - handled>
 ]]
 function Event:setHandled( handled )
     self.raw.handled = handled

@@ -1,8 +1,17 @@
+--[[
+    @instance main - string (def. "CHAR") - The main type of the event, should remain unchanged
+    @instance char - string (def. false) - The character that has been pressed
+]]
 class CharEvent extends Event {
     main = "CHAR";
     char = false;
 }
 
+--[[
+    @constructor
+    @desc Constructs the instance, adding the event name and the character to 'data'
+    @param <string - name>, <string - char>
+]]
 function CharEvent:__init__( name, char )
     self.name = name
     self.char = char

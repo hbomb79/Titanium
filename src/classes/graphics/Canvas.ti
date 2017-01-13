@@ -1,4 +1,14 @@
 --[[
+    @instance buffer - table (def. {}) - A one-dimensional table containing all the pixels inside the canvas. Pixel format: { char, fg, bg }
+    @instance last - table (def. {}) - A copy of buffer that is used to determine if the line has changed. If a pixel in the buffer doesn't match the same pixel in 'last', the line is redrawn
+    @instance width - number (def. 51) - The width of the canvas. Determines how many pixels pass before the next line starts
+    @instance height - number (def. 19) - The height of the canvas
+    @instance backgroundColour - colour, boolean, nil (def. 32768) - The background colour of the canvas. This is only used for pixels that do not have their own bg colour. If false/nil, the bg is left blank for the next parent to resolve. If '0', the background colour of the pixel under it is used (transparent)
+    @instance colour - colour, boolean, nil (def. 32768) - The foreground colour of the canvas. This is only used for pixels that do not have their own fg colour. If false/nil, the fg is left blank for the next parent to resolve. If '0', the colour of the pixel under it is used (transparent)
+    @instance backgroundTextColour - colour, nil (def. nil) - Only used when the pixels character is nil/false. If the pixel has no character, the character of the pixel under it is used (transparent). In this case, the foreground used to draw the pixel character is this property if set. If this property is not set, the foreground colour of the pixel under it is used instead
+    @instance backgroundChar - string, nil (def. nil) - The default character used for each pixel when the canvas is cleared and NOT transparent. If nil, no character is used (transparent)
+    @instance transparent - boolean, nil (def. nil) - When true, acts very similar to using backgroundChar 'nil' with the difference that the backgroundColour of cleared pixels is '0' (transparent)
+
     The Canvas object is used by all components. It facilitates the drawing of pixels which are stored in its buffer.
 
     The Canvas object is abstract. If you need a canvas for your object 'NodeCanvas' and 'TermCanvas' are provided with Titanium and may suite your needs.
@@ -78,7 +88,7 @@ function Canvas:clearArea( aX, aY, aWidth, aHeight, colour )
 end
 
 --[[
-    @instance
+    @setter
     @desc Updates the transparency setting of the canvas and then clears the canvas to apply this setting
     @param <number - colour>
 ]]
@@ -88,7 +98,7 @@ function Canvas:setTransparent( transparent )
 end
 
 --[[
-    @instance
+    @setter
     @desc Updates the colour of the canvas and then clears the canvas
     @param <number - colour>
 ]]
@@ -98,7 +108,7 @@ function Canvas:setColour( colour )
 end
 
 --[[
-    @instance
+    @setter
     @desc Updates the background colour of the canvas and then clears the canvas
     @param <number - backgroundColour>
 ]]
@@ -108,7 +118,7 @@ function Canvas:setBackgroundColour( backgroundColour )
 end
 
 --[[
-    @instance
+    @setter
     @desc Updates the background character to be used when clearing the canvas. Clears the canvas to apply the change
     @param <string/false/nil - char>
 ]]
@@ -117,11 +127,19 @@ function Canvas:setBackgroundChar( char )
     self:clear()
 end
 
+--[[
+    @setter
+    @desc Updates the canvas width, and then clears the canvas to apply the change
+]]
 function Canvas:setWidth( width )
 	self.width = width
 	self:clear()
 end
 
+--[[
+    @setter
+    @desc Updates the canvas height, and then clears the canvas to apply the change
+]]
 function Canvas:setHeight( height )
 	self.height = height
 	self:clear()
@@ -129,7 +147,7 @@ end
 
 --[[
     @instance
-    @desc Draws the canvas to the target 'canvas' using the X and Y offsets. Pixels that are marked transparent are not drawn.
+    @desc Draws the canvas to the target 'canvas' using the X and Y offsets. Pixel character, foreground and background colours are resolved according to their property values.
     @param <Canvas - canvas>, [number - offsetX], [number - offsetY]
 ]]
 function Canvas:drawTo( canvas, offsetX, offsetY )

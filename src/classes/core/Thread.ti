@@ -103,6 +103,19 @@ function Thread:handle( ... )
     end
 end
 
+--[[
+    @setter
+    @desc Updates 'running' property and invokes the 'finish' callback. If the thread crashed, the exception is passed to the callback too.
+    @param <boolean - running>
+]]
+function Thread:setRunning( running )
+    self.running = running
+
+    if not running then
+        self:executeCallbacks( "finish", self.exception )
+    end
+end
+
 configureConstructor {
     orderedArguments = { "func", "titaniumEvents", "id" },
     requiredArguments = { "func" }

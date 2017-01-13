@@ -1,7 +1,15 @@
 local string_sub, string_upper = string.sub, string.upper
 
+--[[
+    @instance main - string (def. "MOUSE") - The main type of the event, should remain unchanged
+    @instance sub - string (def. nil) - The sub type of the event (ie: mouse_up -> UP, mouse_scroll -> SCROLL, etc..)
+    @instance X - number (def. nil) - The X co-ordinate where the mouse event occurred
+    @instance Y - number (def. nil) - The Y co-ordinate where the mouse event occurred
+    @instance button - number (def. nil) - The code of the mouse button clicked (or, if mouse scroll the direction of scroll)
+    @instance isWithin - boolean (def. true) - If false, the mouse event has occurred outside of a parent.
+]]
+
 class MouseEvent extends Event {
-    inBounds = false;
     main = "MOUSE";
 
     isWithin = true;
@@ -59,7 +67,7 @@ function MouseEvent:clone( parent )
     clone.isWithin = self.isWithin
     clone.setHandled = function( clone, handled )
         clone.handled = handled
-        self.handled = handled --TODO: Make sure 'self' refers to the object which 'clone' was invoked on, not the clone.
+        self.handled = handled
     end
 
     return clone

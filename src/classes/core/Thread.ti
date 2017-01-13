@@ -15,7 +15,7 @@
     that don't use 'titaniumEvents'. As a rule, ':handle' shouldn't be called manually.
 ]]
 
-class Thread {
+class Thread mixin MCallbackManager {
     running = false;
 
     func = false;

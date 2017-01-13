@@ -197,6 +197,7 @@ end
     @desc Begins the program loop
 ]]
 function Application:start()
+    self:restartAnimationTimer()
     self.running = true
     while self.running do
         self:draw()

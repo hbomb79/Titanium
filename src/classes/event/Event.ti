@@ -1,3 +1,11 @@
+--[[
+    @static matrix - table (def. {}) - A table of eventName -> eventClass conversions (ie: mouse_click -> MouseEvent). Add custom events here to have them spawn a selected class.
+
+    @instance name - string (def. nil) - The name of the event
+    @instance data - table (def. nil) - A table containing all details of the event
+    @instance handled - boolean (def. false) - If true, the event has been used and should be ignored by other nodes unless they want to act on used events
+]]
+
 abstract class Event {
     static = {
         matrix = {}
@@ -16,7 +24,7 @@ end
 
 --[[
     @instance
-    @desc Sets the 'handled' paramater to true. This indicates the event has been used and should not be used.
+    @desc Sets the 'handled' parameter to true. This indicates the event has been used and should not be used.
 ]]
 function Event:setHandled( handled )
     self.raw.handled = handled
@@ -25,7 +33,7 @@ end
 --[[
     @static
     @desc Instantiates an event object if an entry for that event type is present inside the event matrix.
-    @param <string - eventName>, [vararg - eventData]
+    @param <string - eventName>, [... - eventData]
     @return <Instance*>
 
     *Note: The type of instance is variable. If an entry is present inside the matrix that class will be

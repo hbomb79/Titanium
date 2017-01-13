@@ -71,11 +71,21 @@ function Node:__postInit__()
     self:hook()
 end
 
-function Node:setParentEnabled( enabled )
-    self.parentEnabled = enabled
+--[[
+    @setter
+    @desc Sets 'parentEnabled' and sets 'changed' to true
+    @param <boolean - parentEnabled>
+]]
+function Node:setParentEnabled( parentEnabled )
+    self.parentEnabled = parentEnabled
     self.changed = true
 end
 
+--[[
+    @setter
+    @desc Sets 'needsRedraw'. If the node now needs a redraw, it's parent (if any) will also have it's 'needsRedraw' property set to true
+    @param <boolean - needsRedraw>
+]]
 function Node:setNeedsRedraw( needsRedraw )
     self.needsRedraw = needsRedraw
 
@@ -83,7 +93,7 @@ function Node:setNeedsRedraw( needsRedraw )
 end
 
 --[[
-    @instance
+    @setter
     @desc Sets the enabled property of the node to 'enabled'. Sets node's 'changed' to true.
     @param <boolean - enabled>
 ]]
@@ -93,7 +103,9 @@ function Node:setEnabled( enabled )
 end
 
 --[[
-    TODO
+    @getter
+    @desc Returns 'enabled', unless the parent is not enabled, in which case 'false' is returned
+    @return <boolean - enabled>
 ]]
 function Node:getEnabled()
     if not self.parentEnabled then
@@ -104,7 +116,10 @@ function Node:getEnabled()
 end
 
 --[[
-    TODO
+    @setter
+    @desc Sets 'parent' and sets the nodes 'changed' to true. If the node has a parent (ie: didn't set parent to false) the 'parentEnabled' property will be updated to match the parents 'enabled'
+    @param <MNodeContainer Instance - parent> - If a parent exists, this line is used
+    @param <boolean - parent> - If no parent exists, this line is used (false)
 ]]
 function Node:setParent( parent )
     self.parent = parent
@@ -116,7 +131,7 @@ function Node:setParent( parent )
 end
 
 --[[
-    @instance
+    @setter
     @desc Sets the node to visible/invisible depending on 'visible' paramater
     @param <boolean - visible>
 ]]
@@ -129,7 +144,7 @@ function Node:setVisible( visible )
 end
 
 --[[
-    @instance
+    @setter
     @desc Sets the changed state of this node to 'changed'. If 'changed' then the parents of this node will also have changed set to true.
     @param <boolean - changed>
 ]]
@@ -200,6 +215,12 @@ function Node:getAbsolutePosition()
     else return self.X, self.Y end
 end
 
+--[[
+    @instance
+    @desc A shortcut method to quickly create a Tween instance and add it to the applications animations
+    @return <Tween Instance - animation> - If an application is set, the animation created is returned
+    @return <boolean - false> - If no application is set, false is returned
+]]
 function Node:animate( ... )
     if not self.application then return end
 

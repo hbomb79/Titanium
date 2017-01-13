@@ -7,6 +7,69 @@
     This mixin no longer handles property links as this functionality has been replaced by a more robust system 'MPropertyManager'.
 ]]
 
+local function doesLevelMatch( target, criteria, noAttr )
+    if ( ( criteria.type and target.__type == criteria.type ) or criteria.type == "*" or not criteria.type ) and noAttr then
+        return true
+    end
+
+    if ( criteria.type and target.__type ~= criteria.type and criteria.type ~= "*" ) or ( criteria.id and target.id ~= criteria.id ) or ( criteria.classes and not target:hasClass( criteria.classes ) ) then
+        return false
+    end
+
+    return true
+end
+
+local function doParentsMatch( parents, level, criteria, noAttr )
+    for i = level, #parents do
+        local parent = parents[ i ]
+        if doesLevelMatch( parent, criteria, noAttr ) then
+            return true, i
+        end
+    end
+
+    return false
+end
+
+local function doesMatchQuery( node, queryString, noAttr )
+    -- Get a parsed version of the query
+    local query = QueryParser( queryString ).query[ 1 ]
+
+    -- Collate the nodes parents once here
+    local last, levels = node, {}
+    while true do
+        local p = last.parent
+        if p then
+            levels[ #levels + 1 ] = p
+            last = p
+        else break end
+    end
+
+
+    -- If the last part of the query (the node part) does not match the node, return false
+    if not doesLevelMatch( node, query[ #query ], noAttr ) then
+        return false
+    end
+
+
+    -- Work backwards from the end of the query (-1), to the beginning.
+    local parentLevel = 1
+    for i = #query - 1, 1, -1 do
+        local part = query[ i ]
+        if part.direct then
+            if doesLevelMatch( levels[ parentLevel ], part, noAttr ) then
+                parentLevel = parentLevel + 1
+            else return false end
+        else
+            local success, levels = doParentsMatch( levels, parentLevel, part, noAttr )
+            if success then
+                parentLevel = parentLevel + levels
+            else return false end
+        end
+    end
+
+    return true
+end
+
 abstract class MThemeable {
     isUpdating = false;
     hooked = false;
@@ -126,8 +189,69 @@ function MThemeable:updateProperty( property )
     self.isUpdating = false
 end
 
-function MThemeable:queueUpdate()
-    self.needsRuleUpdate = true
+--[[
+    @instance
+    @desc Stores rules that can be applied to this node (excluding class and ids) in 'applicableRules'. These rules are then filtered by id and classes into 'applicableRules'.
+
+          If 'preserveOld', the old rules will NOT be cleared.
+    @param [boolean - preserveOld]
+]]
+function MThemeable:retrieveThemes( preserveOld )
+    if not preserveOld then self.rules = {} end
+    if not self.application then return false end
+
+    local types, aliases
+
+    local selfRules, targetRules = self.rules, self.application.rules
+
+    if not targetRules then return end
+    for _, value in pairs { targetRules.ANY, targetRules[ self.__type ] } do
+        local q = 1
+        for query, properties in pairs( value ) do
+            if doesMatchQuery( self, query, true ) then
+                if not selfRules[ query ] then selfRules[ query ] = {} end
+                local rules, prop = selfRules[ query ]
+                for i = 1, #properties do
+                    prop = properties[ i ]
+
+                    if prop.computeType then
+                        if not aliases then
+                            local reg = Titanium.getClass( self.__type ).getRegistry()
+                            aliases = reg.alias
+
+                            local constructor = reg.constructor
+                            if constructor then
+                                types = constructor.argumentTypes or {}
+                            else types = {} end
+                        end
+
+                        rules[ #rules + 1 ] = { property = prop.property, important = prop.important, value = XMLParser.convertArgType( prop.value, types[ aliases[ prop.property ] or prop.property ] ) }
+                    else
+                        rules[ #rules + 1 ] = prop
+                    end
+                end
+            end
+        end
+    end
+
+    self:filterThemes()
+end
+
+--[[
+    @instance
+    @desc Checks each owned rule, only applying the rules that have queries that match exactly (owned rules are not dependent on classes/ids, where as applicableRules are)
+]]
+function MThemeable:filterThemes()
+    local aRules = {}
+    for query, properties in pairs( self.rules ) do
+        if doesMatchQuery( self, query ) then
+            -- The query is an exact match, add the properties to 'applicableRules', where the node will fetch it's properties
+            for i = 1, #properties do aRules[ #aRules + 1 ] = properties[ i ] end
+        end
+    end
+
+    self.applicableRules = aRules
+    self:updateProperties()
 end
 
 --[[
@@ -135,12 +259,9 @@ end
     @desc Updates each registered property
 ]]
 function MThemeable:updateProperties()
-    if self.needsRuleUpdate and self.application then
-        self.needsRuleUpdate = false
-        self.application:cacheApplicableRulesForType( self.__type )
+    for property in pairs( self.properties ) do
+        self:updateProperty( property )
     end
-
-    for property in pairs( self.properties ) do self:updateProperty( property ) end
 end
 
 --[[
@@ -150,8 +271,7 @@ end
 ]]
 function MThemeable:addClass( class )
     self.classes[ class ] = true
-    self:queueUpdate()
-    self:updateProperties()
+    self:filterThemes()
 end
 
 --[[
@@ -161,8 +281,7 @@ end
 ]]
 function MThemeable:removeClass( class )
     self.classes[ class ] = nil
-    self:queueUpdate()
-    self:updateProperties()
+    self:filterThemes()
 end
 
 --[[
@@ -172,8 +291,7 @@ end
 ]]
 function MThemeable:setClass( class, has )
     self.classes[ class ] = has and true or nil
-    self:queueUpdate()
-    self:updateProperties()
+    self:filterThemes()
 end
 
 --[[
@@ -198,8 +316,4 @@ function MThemeable:hasClass( t )
     else
         return error("Invalid target '"..tostring( t ).."' for class check")
     end
-end
-
-function MThemeable:onThemeUpdate()
-    self:updateProperties()
 end

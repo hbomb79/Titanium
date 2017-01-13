@@ -234,11 +234,6 @@ end
 function Application:draw( force )
     if not self.changed and not force then return end
 
-    if self.needsThemeUpdate then
-        self:update()
-        self.needsThemeUpdate = false
-    end
-
     local canvas = self.canvas
     local nodes, node = self.nodes
 

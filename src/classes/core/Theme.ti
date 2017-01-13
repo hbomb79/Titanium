@@ -82,8 +82,8 @@ function Theme.static.parse( source )
             end
 
             if not rawRules[ ruleTarget ] then rawRules[ ruleTarget ] = {} end
-            table.insert( rawRules[ ruleTarget ], {
-                query = queryPrefix,
+            if not rawRules[ ruleTarget ][ queryPrefix ] then rawRules[ ruleTarget ][ queryPrefix ] = {} end
+            table.insert( rawRules[ ruleTarget ][ queryPrefix ], {
                 computeType = not dynamic and computeType or nil,
                 property = rule.type,
                 value = value,

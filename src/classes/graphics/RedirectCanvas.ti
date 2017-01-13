@@ -1,4 +1,10 @@
 --[[
+    @instance tX - number (def. 1) - The X position of the terminal redirect, controlled from inside the redirect itself
+    @instance tY - number (def. 1) - The Y position of the terminal redirect, controlled from inside the redirect itself
+    @instance tColour - number (def. 1) - The current colour of the terminal redirect, controlled from inside the redirect itself
+    @instance tBackgroundColour - number (def. 32768) - The current background colour of the terminal redirect, controlled from inside the redirect itself
+    @instance tCursor - boolean (def. false) - The current cursor state of the terminal redirect (true for blinking, false for hidden), controlled from inside the redirect itself
+
     The RedirectCanvas is a class to be used by nodes that wish to redirect the term object. This canvas provides a terminal redirect and keeps track
     of the terminals properties set inside the wrapped program (via the term methods).
 
@@ -145,7 +151,7 @@ end
           This is to prevent the program running via the term redirect isn't cleared away. Call this function with 'force' and all pixels will be
           replaced (the terminal redirect uses this method).
 
-          Alternatively, self.getTerminalRedirect.clear() will also clear the canvas entirely
+          Alternatively, self:getTerminalRedirect().clear() will also clear the canvas entirely
     @param [number - col], [boolean - force]
 ]]
 function RedirectCanvas:clear( col, force )

@@ -1,3 +1,14 @@
+local stringLen, stringSub = string.len, string.sub
+local isColour = term.isColour()
+
+local function testColour( col )
+    if not isColour and ( col ~= 1 or col ~= 32768 or col ~= 256 or col ~= 128 ) then
+        error "Colour not supported"
+    end
+
+    return true
+end
+
 --[[
     @instance tX - number (def. 1) - The X position of the terminal redirect, controlled from inside the redirect itself
     @instance tY - number (def. 1) - The Y position of the terminal redirect, controlled from inside the redirect itself
@@ -12,24 +23,21 @@
     through Titaniums canvas system.
 --]]
 
-local stringLen, stringSub = string.len, string.sub
-local isColour = term.isColour()
-
-local function testColour( col )
-    if not isColour and ( col ~= 1 or col ~= 32768 or col ~= 256 or col ~= 128 ) then
-        error "Colour not supported"
-    end
-
-    return true
-end
-
 class RedirectCanvas extends NodeCanvas
 
+--[[
+    @constructor
+    @desc Resets the terminal redirect, before running the super constructor
+]]
 function RedirectCanvas:__init__( ... )
     self:resetTerm()
     self:super( ... )
 end
 
+--[[
+    @instance
+    @desc Resets the terminal redirect by setting tX, tY, tColour, tBackgroundColour, and tCursor back to default before clearing the canvas
+]]
 function RedirectCanvas:resetTerm()
     self.tX, self.tY, self.tColour, self.tBackgroundColour, self.tCursor = 1, 1, 1, 32768, false;
     self:clear( 32768, true )

@@ -73,7 +73,6 @@ end
 
 function Dropdown:updateOptions()
     local cont = self.optionContainer
-    local old = self.application.needsThemeUpdate
     cont:clearNodes()
 
     self:updateDisplayButton()
@@ -95,11 +94,16 @@ function Dropdown:updateOptions()
         cont.height, self.height = count, count + 1
     end
 
-    self.application.needsThemeUpdate = old
-    self:queueUpdate()
-    self:updateProperties()
-
+    self.optionsChanged = false
     if #options > 0 then cont.yScroll = math.min( cont.yScroll, count ) end
+end
+
+function Dropdown:draw( ... )
+    if self.optionsChanged then
+        self:updateOptions()
+    end
+
+    self.super:draw( ... )
 end
 
 function Dropdown:getSelectedValue()
@@ -116,7 +120,7 @@ function Dropdown:addOption( option, value )
     self:removeOption( option )
     table.insert( self.options, { option, value } )
 
-    self:updateOptions()
+    self.optionsChanged = true
 end
 
 function Dropdown:removeOption( option )
@@ -127,7 +131,7 @@ function Dropdown:removeOption( option )
         end
     end
 
-    self:updateOptions()
+    self.optionsChanged = true
 end
 
 function Dropdown:setPrompt( prompt )
@@ -138,7 +142,7 @@ end
 function Dropdown:setSelectedOption( selected )
     self.selectedOption = selected
     self:closeOptionDisplay()
-    self:updateOptions()
+    self.optionsChanged = true
 
     self:executeCallbacks( "change", selected )
 end

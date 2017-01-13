@@ -71,7 +71,7 @@ function Button:draw( force )
 end
 
 --[[
-    @instance
+    @setter
     @desc Sets the text of the button and then wraps the new text for display.
     @param <string - text>
 ]]
@@ -84,7 +84,7 @@ function Button:setText( text )
 end
 
 --[[
-    @instance
+    @setter
     @desc Sets the width of the button and then re-wraps the text to fit in the dimensions.
     @param <number - width>
 ]]

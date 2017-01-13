@@ -1,4 +1,7 @@
 --[[
+    @instance name - string (def. false) - The name of the theme. A name should always be set on the instance, and is a required constructor argument
+    @instance rules - table (def. {}) - The rules of this theme, generated via Theme.static.parse.
+
     The Theme class is a basic class designed to hold styling rules.
 
     Themes are added to objects using the MThemeManager mixin (or a custom implementation). These themes then dictate the appearance of objects that utilize 'MThemeable'.
@@ -29,7 +32,7 @@ class Theme {
 
 --[[
     @constructor
-    @desc Constructs the Theme by setting the name.
+    @desc Constructs the Theme by setting the name and, if 'source' is provided, parsing it and storing the result in 'rules'
     @param <string - name>, [string - source]
 ]]
 function Theme:__init__( name, source )

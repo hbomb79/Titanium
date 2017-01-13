@@ -1,3 +1,22 @@
+--[[
+    @static easing - table (def. {}) - If a string is provided as the easing during instantiation, instead of a function, the easing function is searched for inside this table
+
+    @instance object - Instance (def. false) - The Titanium instance on which the target property will be animated
+    @instance property - string (def. false) - The target property that will be animated on the object
+    @instance initial - number (def. false) - The initial value of the property. Automatically set during instantiation
+    @instance final - number (def. false) - The target value for the property
+    @instance duration - number (def. 0) - The amount of time the animation will take to animate the property from 'initial' to 'final'
+    @instance clock - number (def. 0) - How far through the animation the instance is
+    @instance easing - function (def. nil) - The easing function to be used during the animation
+
+    The Tween class is Titaniums animation class (tween meaning inbetween values (from -> to)). However, Tween should not be used
+    to create animations, using :animate (on supporting instances, like any child class of 'Node') is preffered.
+
+    When animating, an easing can be set. If this easing is a string, it is searched for in 'Tween.static.easing'. All easing functions
+    shipped with Titanium are automatically imported via the Titanium starting script (src/scripts/Titanium.lua). Custom easing
+    functions can be created using the static function Tween.static.addEasing, or by manually adding them to the static 'easing' table.
+]]
+
 class Tween {
     static = {
         easing = {}

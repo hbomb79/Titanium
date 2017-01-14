@@ -51,6 +51,7 @@ function Canvas:__init__( owner )
     end
     self.raw.backgroundTextColour = owner.raw.backgroundTextColour
     self.raw.backgroundColour = owner.raw.backgroundColour
+    self.raw.transparent = owner.raw.transparent
 
     self:clear()
 end

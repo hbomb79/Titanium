@@ -228,6 +228,11 @@ end
     @param <number - x>, <number - y>, <number - width>, <number - height>
 ]]
 function MNodeContainer:redrawArea( x, y, width, height, xOffset, yOffset )
+    y = y > 0 and y or 1
+    x = x > 0 and x or 1
+    if y + height > self.height then height = self.height - y end
+    if x + width > self.width then width = self.width - x end
+
     if not self.canvas then return end
     self.canvas:clearArea( x, y, width, height )
 

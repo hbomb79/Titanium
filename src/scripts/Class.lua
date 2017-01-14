@@ -319,7 +319,7 @@ local function compileCurrent()
             local target
             for i = 1, #constructorTargets do
                 target = constructorTargets[ i ]
-                cConstructor[ target ] = mergeValues( cConstructor[ target ], constructor[ target ] )
+                cConstructor[ target ] = mergeValues( cConstructor[ target ], constructor and constructor[ target ] )
             end
         end
     end
@@ -656,7 +656,7 @@ function class( name )
         allMixins = {},
         alias = {},
 
-        constructor = false,
+        constructor = {},
         super = false,
 
         compiled = false,

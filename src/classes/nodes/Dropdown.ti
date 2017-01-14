@@ -72,22 +72,47 @@ function Dropdown:updateDisplayButton()
 end
 
 function Dropdown:updateOptions()
-    local cont = self.optionContainer
-    cont:clearNodes()
+    local options, buttons = self.options, self.optionContainer.nodes
+    local selected = self.selectedOption
 
-    self:updateDisplayButton()
-
-    local options = self.options
+    local buttonI = 1
     for i = 1, #options do
-        local option = options[ i ][ 1 ]
-        if options[ i ] ~= self.selectedOption then
-            cont:addNode(Button( option, 1, #cont.nodes + 1, self.width ):on("trigger", function( this )
-                self.selectedOption = options[ i ]
-            end):linkProperties( self, "colour", "activeColour", "disabledColour", "backgroundColour", "activeBackgroundColour", "disabledBackgroundColour", "horizontalAlign" ))
+        if not selected or options[ i ] ~= selected then
+            local button = buttons[ buttonI ]
+            if button then
+                button.text = options[ i ][ 1 ]
+                button:off("trigger", "dropdownTrigger"):on("trigger", function()
+                    self.selectedOption = options[ i ]
+                end, "dropdownTrigger")
+            end
+
+            buttonI = buttonI + 1
         end
     end
+end
 
-    local count = #cont.nodes
+function Dropdown:checkOptions()
+    local cont, options = self.optionContainer, self.options
+    local nodes = cont.nodes
+    local count = #nodes
+    self:updateDisplayButton()
+
+    local rOptionCount = #options - ( self.selectedOption and 1 or 0 )
+    if count > rOptionCount then
+        repeat
+            cont:removeNode( nodes[ #nodes ] )
+        until #nodes == rOptionCount
+    elseif count < rOptionCount then
+        repeat
+            cont:addNode(Button( "ERR", 1, #nodes + 1, self.width )
+                :linkProperties( self, "colour", "activeColour",
+                "disabledColour", "backgroundColour", "activeBackgroundColour",
+                "disabledBackgroundColour", "horizontalAlign" ))
+        until #nodes == rOptionCount
+    end
+    self:updateOptions()
+
+    count = #nodes
     if self.maxHeight then
         cont.height, self.height = math.min( count, self.maxHeight - 1 ), math.min( count + 1, self.maxHeight )
     else
@@ -99,9 +124,7 @@ function Dropdown:updateOptions()
 end
 
 function Dropdown:draw( ... )
-    if self.optionsChanged then
-        self:updateOptions()
-    end
+    if self.optionsChanged then self:checkOptions() end
 
     self.super:draw( ... )
 end

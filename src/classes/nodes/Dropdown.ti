@@ -1,3 +1,29 @@
+--[[
+    @instance maxHeight - number (def. false) - If set, the dropdown node may not exceed that height (meaning, the space for options to be displayed is maxHeight - 1)
+    @instance prompt - string (def. "Please select") - The default content of the dropdown toggle button. Will change to display selected option when an option is selected
+    @instance horizontalAlign - string (def. "left") - The horizontalAlign of the dropdown. The dropdown contents are linked (:linkProperties), so they will reflect the alignment property
+    @instance openIndicator - string (def. " \31") - A string appended to the toggle button's text when the dropdown is open (options visible)
+    @instance closedIndicator - string (def. " \16") - Identical to 'openIndicator', with the exception that this is visible when the dropdown is closed (options hidden)
+    @instance colour - colour (def. 1) - The colour of the dropdown options (not the toggle button), used when the buttons are not active
+    @instance backgroundColour - colour (def. 8) - The background colour of the dropdown options (not the toggle button), used when the buttons are not active
+    @instance activeColour (def. nil) - The colour of the dropdown options (not the toggle button), used when the buttons are active
+    @instance activeBackgroundColour - colour (def. 512) - The background colour of the dropdown options (not the toggle button), when the buttons are active
+    @instance selectedColour - colour (def. 1) - The colour of the toggle button
+    @instance selectedBackgroundColour - colour (def. 256) - The background colour of the toggle button
+    @instance selectedOption - table (def. false) - The option (format: { displayName, value }) currently selected
+    @instance options - table (def. {}) - All options (format: { displayName, value }) the dropdown has registered - these can be selected (unless already selected)
+
+    The Dropdown node allows for easy multi-choice options inside of user forms. The toggle button will display the currently selected option, or, if none is selected the 'prompt' will be shown instead.
+
+    When one of the options are selected, the 'change' callback will be fired and the newly selected option is provided.
+
+    Upon instantiation, the dropdown will populate itself with buttons inside of it's 'optionContainer'. Each button representing a different option, that can be selected to select the option.
+    The button's "colour", "activeColour", "disabledColour", "backgroundColour", "activeBackgroundColour", "disabledBackgroundColour" and, "horizontalAlign" properties are dynamically linked to the Dropdown instance.
+    Thus, setting any of those properties on the dropdown itself will cause the setting to also be changed on all buttons. Avoid changing properties on the buttons directly, as the values will be overridden.
+
+    Similarily, the toggle button's "horizontalAlign", "disabledColour", "disabledBackgroundColour", "activeColour" and, "activeBackgroundColour" properties are linked to the dropdown instance. The colour, and backgroundColour
+    of the toggle button is controlled via 'selectedColour' and 'selectedBackgroundColour' respectively.
+]]
 class Dropdown extends Container {
     maxHeight = false;
 
@@ -16,8 +42,15 @@ class Dropdown extends Container {
     selectedBackgroundColour = colours.grey;
     selectedOption = false;
     options = {};
+
+    transparent = true;
 }
 
+--[[
+    @constructor
+    @desc Creates the dropdown instance and creates the option display (button) and container (scroll container). The selectable options live inside the optionContainer, and the selected option is displayed using the optionDisplay
+    @param [number - X], [number - Y], [number - width], [number - maxHeight], [string - prompt]
+]]
 function Dropdown:__init__( ... )
     self:super( ... )
 
@@ -25,11 +58,13 @@ function Dropdown:__init__( ... )
     self.optionContainer = self:addNode( ScrollContainer( 1, 2, self.width ):set{ xScrollAllowed = false } )
 
     self:closeOptionDisplay()
-
-    self.transparent = true
-    self.consumeAll = false
+    self.consumeAll = false --TODO: Is this really needed - I think it would almost be better to have it as 'true' (default)
 end
 
+--[[
+    @instance
+    @desc Closes the dropdown by hiding (and disabling) the options container and updates the toggle button (in order to update the open/closed indicator)
+]]
 function Dropdown:closeOptionDisplay()
     local cont = self.optionContainer
     cont.visible, cont.enabled = false, false
@@ -38,6 +73,10 @@ function Dropdown:closeOptionDisplay()
     self:updateDisplayButton()
 end
 
+--[[
+    @instance
+    @desc Opens the dropdown by showing (and enabled) the options container and updates the toggle button (in order to update the open/closed indicator)
+]]
 function Dropdown:openOptionDisplay()
     local cont = self.optionContainer
     cont.visible, cont.enabled = true, true
@@ -46,6 +85,10 @@ function Dropdown:openOptionDisplay()
     self:updateDisplayButton()
 end
 
+--[[
+    @instance
+    @desc If the option container is already visible, it is closed (:closeOptionDisplay), otherwise it is opened (:openOptionDisplay)
+]]
 function Dropdown:toggleOptionDisplay()
     if self.optionContainer.visible then
         self:closeOptionDisplay()
@@ -54,6 +97,11 @@ function Dropdown:toggleOptionDisplay()
     end
 end
 
+--[[
+    @setter
+    @desc If the dropdown is disabled, the dropdowns option container is closed (:closeOptionDisplay)
+    @param <boolean - enabled>
+]]
 function Dropdown:setEnabled( enabled )
     self.super:setEnabled( enabled )
     if not enabled then
@@ -61,6 +109,10 @@ function Dropdown:setEnabled( enabled )
     end
 end
 
+--[[
+    @instance
+    @desc Updates the toggle buttons text, width, colour and backgroundColour (the colour and backgroundColour are sourced from 'selectedColour' and 'selectedBackgroundColour' respectively)
+]]
 function Dropdown:updateDisplayButton()
     self.optionDisplay.text = ( type( self.selectedOption ) == "table" and self.selectedOption[ 1 ] or self.prompt ) .. ( self.optionContainer.visible and self.openIndicator or self.closedIndicator )
     self.optionDisplay.width = #self.optionDisplay.text
@@ -71,6 +123,10 @@ function Dropdown:updateDisplayButton()
     }
 end
 
+--[[
+    @instance
+    @desc Updates the options by changing the text of each button, to match the order of the options.
+]]
 function Dropdown:updateOptions()
     local options, buttons = self.options, self.optionContainer.nodes
     local selected = self.selectedOption
@@ -91,6 +147,12 @@ function Dropdown:updateOptions()
     end
 end
 
+--[[
+    @instance
+    @desc Creates/removes nodes depending on the amount of options to be displayed (ie: if there are too many nodes, excess are removed).
+
+          Invokes :updateOptions before adjusting the dropdown height with respect to 'maxHeight' (if set), and the 'yScroll'
+]]
 function Dropdown:checkOptions()
     local cont, options = self.optionContainer, self.options
     local nodes = cont.nodes
@@ -123,18 +185,33 @@ function Dropdown:checkOptions()
     if #options > 0 then cont.yScroll = math.min( cont.yScroll, count ) end
 end
 
+--[[
+    @instance
+    @desc Calls ':checkOptions' if 'optionsChanged', before calling the super 'draw' function
+    @param <... - args> - Arguments passed to the super 'draw' method
+]]
 function Dropdown:draw( ... )
     if self.optionsChanged then self:checkOptions() end
 
     self.super:draw( ... )
 end
 
+--[[
+    @instance
+    @desc Returns the 'value' of the selected option, if an option is selected
+    @return <string - value>
+]]
 function Dropdown:getSelectedValue()
     if type( self.selectedOption ) ~= "table" then return end
 
     return self.selectedOption[ 2 ]
 end
 
+--[[
+    @instance
+    @desc Adds the option provided, with the value given. This option is then selectable.
+    @param <string - option>, <string - value>
+]]
 function Dropdown:addOption( option, value )
     if type( option ) ~= "string" or value == nil then
         return error "Failed to add option to Dropdown node. Expected two arguments: string, val - where val is not nil"
@@ -146,6 +223,10 @@ function Dropdown:addOption( option, value )
     self.optionsChanged = true
 end
 
+--[[
+    @instance
+    @desc Removes the option given if present
+]]
 function Dropdown:removeOption( option )
     local options = self.options
     for i = #options, 1, -1 do
@@ -157,11 +238,21 @@ function Dropdown:removeOption( option )
     self.optionsChanged = true
 end
 
+--[[
+    @setter
+    @desc Updates the optionDisplay text to match the new prompt
+    @param <string - prompt>
+]]
 function Dropdown:setPrompt( prompt )
     self.prompt = prompt
     self.optionDisplay.text = prompt
 end
 
+--[[
+    @setter
+    @desc Closes the option display and invokes the 'change' callback
+    @param <table - option>
+]]
 function Dropdown:setSelectedOption( selected )
     self.selectedOption = selected
     self:closeOptionDisplay()
@@ -170,6 +261,10 @@ function Dropdown:setSelectedOption( selected )
     self:executeCallbacks( "change", selected )
 end
 
+--[[
+    @instance
+    @desc Handles the eventObj given. If the event is a mouse click, and it missed the dropdown, the dropdown is closed (if open)
+]]
 function Dropdown:handle( eventObj )
     if not self.super:handle( eventObj ) then return end
 
@@ -181,6 +276,11 @@ function Dropdown:handle( eventObj )
     return true
 end
 
+--[[
+    @instance
+    @desc Adds the TML object given. If the type is 'Option', the option is registered (using the tag content as the display, and it's 'value' argument as the value)
+    @param <table - TMLObj>
+]]
 function Dropdown:addTMLObject( TMLObj )
     if TMLObj.type == "Option" then
         if TMLObj.content and TMLObj.arguments.value then

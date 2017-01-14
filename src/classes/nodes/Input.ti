@@ -41,6 +41,7 @@ end
 ]]
 function Input:onMouseClick( event, handled, within )
     if within and not handled then
+        if event.button ~= 1 then return end
         if self.focused then
             local application, pos, width, scroll = self.application, self.position, self.width, self.scroll
             local clickedPos = math.min( #self.value, event.X - self.X + self.scroll )

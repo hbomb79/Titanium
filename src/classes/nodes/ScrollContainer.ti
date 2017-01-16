@@ -196,11 +196,11 @@ function ScrollContainer:cacheContentSize()
     self.cache.contentWidth, self.cache.contentHeight = w, h
 end
 
-function ScrollContainer:cacheDisplaySize()
+function ScrollContainer:cacheDisplaySize( single )
     local cache = self.cache
     cache.displayWidth, cache.displayHeight = self.width - ( cache.yScrollActive and 1 or 0 ), self.height - ( cache.xScrollActive and 1 or 0 )
 
-    self:cacheScrollbarSize()
+    if not single then self:cacheScrollbarSize() end
 end
 
 function ScrollContainer:cacheActiveScrollbars()

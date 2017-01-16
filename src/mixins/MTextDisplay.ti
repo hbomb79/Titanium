@@ -33,26 +33,34 @@ end
     @instance
     @desc Generates a table of text lines by wrapping on newlines or when the line gets too long.
 ]]
-function MTextDisplay:wrapText()
-    local text, width, lines = self.text, self.width, {}
+function MTextDisplay:wrapText( width )
+    local text, width, lines = self.text, width or self.width, {}
 
+    local current = 0
     while text and string_len( text ) > 0 do
         local section, pre, post = string_sub( text, 1, width )
+        local starting = current
 
         if string_find( section, "\n" ) then
-            pre, post = string_match( text, "(.-)\n%s*(.*)$" )
+            pre, post = string_match( text, "(.-)\n(.*)$" )
+            current = current + string_len( pre ) + 1 -- the + 1 is to account for the '\n' required for the match
         elseif string_len( text ) <= width then
             pre = text
+            current = current + string_len( text )
         else
             local lastSpace = string_find( section, "%s[%S]*$" )
 
             pre = lastSpace and string_gsub( string_sub( text, 1, lastSpace - 1 ), "%s+$", "" ) or section
             post = lastSpace and string_sub( text, lastSpace + 1 ) or string_sub( text, width + 1 )
+            current = current + string_len( pre ) + 1
         end
 
-        lines[ #lines + 1 ], text = pre, post
+        lines[ #lines + 1 ], text = { pre, starting + 1, current }, post
     end
 
+    if current ~= string_len( self.text ) then
+        return error("Failed to wrap text - information has been lost during wrap (length of input "..string_len( self.text )..", however wrapping only processed "..current..")")
+    end
     self.lineConfig.lines = lines
 end
 
@@ -82,13 +90,14 @@ function MTextDisplay:drawText( bg, tc )
     local canvas, line = self.canvas
     for i = 1, #lines do
         local line, xOffset = lines[ i ], hPadding
+        local lineText = line[ 1 ]
         if hAlign == "centre" then
-            xOffset = math.floor( width / 2 - ( #line / 2 ) + .5 )
+            xOffset = math.floor( width / 2 - ( #lineText / 2 ) + .5 )
         elseif hAlign == "right" then
-            xOffset = width - #line - hPadding + 1
+            xOffset = width - #lineText - hPadding + 1
         end
 
-        canvas:drawTextLine( xOffset + 1, i + yOffset, line, tc, bg )
+        canvas:drawTextLine( xOffset + 1, i + yOffset, lineText, tc, bg )
     end
 end
 

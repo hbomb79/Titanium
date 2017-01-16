@@ -1,0 +1,271 @@
+local string_sub = string.sub
+local function resolvePosition( self, lines, X, Y )
+    local posY = math.min( #lines, Y )
+    local selectedLine = lines[ posY ]
+    return math.min( selectedLine and #selectedLine[ 1 ] or 1, X ), posY
+end
+
+--[[
+    The TextContainer object is a very helpful node when it comes time to display a lot of text.
+
+    The text is automatically wrapped to fit the containers width, and a vertical scrollbar will appear when the content becomes too tall.
+
+    The text can also be selected, using click and drag, and retrieved using :getSelection
+]]
+
+class TextContainer extends ScrollContainer mixin MTextDisplay mixin MFocusable {
+    selectionX = false,
+    selectionY = false,
+
+    positionX = 1,
+    positionY = 1,
+
+    selectedColour = colours.blue,
+    selectedBackgroundColour = colours.lightBlue,
+
+    allowMouse = true
+}
+
+--[[
+    @instance
+    @desc Constructs the instance, and disables horizontal scrolling
+    @param [string - text], [number - x], [number - y], [number - width], [number - height]
+]]
+function TextContainer:__init__( ... )
+    self:resolve( ... )
+
+    self:super()
+    self.xScrollAllowed = false
+end
+
+--[[
+    @instance
+    @desc An overwrite of 'ScrollContainer:cacheContentSize' that sets the content height to the amount of lines, instead of performing a node check.
+]]
+function TextContainer:cacheContentSize()
+    self.cache.contentWidth, self.cache.contentHeight = self.width, self.lineConfig.lines and #self.lineConfig.lines or 0
+end
+
+--[[
+    @instance
+    @desc Calls ScrollContainer:cacheDisplaySize with 'true', allowing the TextContainer to use it's own display calculations, and re-wrap the text
+          to fit correctly (scrollbar)
+]]
+function TextContainer:cacheDisplaySize()
+    self.super:cacheDisplaySize( true )
+
+    self:wrapText( self.cache.displayWidth )
+    self:cacheContentSize()
+    self:cacheScrollbarSize()
+end
+
+--[[
+    @instance
+    @desc Draws the text lines created by 'wrapText' using the selection where apropriate
+]]
+function TextContainer:draw()
+    local selectionX, selectionY = self.selectionX, self.selectionY
+    if selectionX and selectionY then
+        local positionX, positionY = self.positionX, self.positionY
+
+        self:drawLines(
+            self.lineConfig.lines,
+            selectionY < positionY and selectionY or positionY, selectionY < positionY and positionY or selectionY,
+            selectionX < positionX and selectionX or positionX, selectionX < positionX and positionX or selectionX
+        )
+    else self:drawLines( self.lineConfig.lines ) end
+
+    self:drawScrollbars()
+end
+
+--[[
+    @instance
+    @desc Draws the lines (created by wrapText) with respect to the text containers selection and the alignment options (horizontalAlign and verticalAlign)
+    @param <table - lines>, [number - selectionYStart], [number - selectionYStop], [number - selectionXStart], [number - selectionXStop]
+]]
+function TextContainer:drawLines( lines, selectionYStart, selectionYStop, selectionXStart, selectionXStop )
+    local vAlign, hAlign = self.verticalAlign, self.horizontalAlign
+    local width, height = self.width, self.height
+
+    local yOffset = 0
+    if vAlign == "centre" then
+        yOffset = math.floor( ( height / 2 ) - ( #lines / 2 ) + .5 )
+    elseif vAlign == "bottom" then
+        yOffset = height - #lines
+    end
+
+    local tc, bg, sTc, sBg
+    if not self.enabled then
+        tc, bg = self.disabledColour, self.disabledBackgroundColour
+    elseif self.focused then
+        tc, bg = self.focusedColour, self.focusedBackgroundColour
+        sTc, sBg = self.selectedColour, self.selectedBackgroundColour
+    end
+
+    tc, bg = tc or self.colour, bg or self.backgroundColour
+    sTc, sBg = sTc or tc, sBg or bg
+
+    local posX, posY, selX = self.positionX, self.positionY, self.selectionX
+    local isSelection = selectionYStart and selectionXStart
+    local canvas, line = self.canvas
+    for i = self.yScroll + 1, #lines do
+        local Y, line, xOffset = yOffset + i - self.yScroll, lines[ i ][ 1 ], 1
+        if hAlign == "centre" then
+            xOffset = math.floor( width / 2 - ( #line / 2 ) + .5 )
+        elseif hAlign == "right" then
+            xOffset = width - #line + 1
+        end
+
+        if isSelection then
+            if i == selectionYStart and i == selectionYStop then
+                local pre, selected = string_sub( line, 1, selectionXStart - 1 ), string_sub( line, selectionXStart, selectionXStop )
+
+                canvas:drawTextLine( xOffset, Y, pre, tc, bg )
+                canvas:drawTextLine( xOffset + #pre, Y, selected, sTc, sBg )
+                canvas:drawTextLine( xOffset + #pre + #selected, Y, string_sub( line, selectionXStop + 1 ), tc, bg )
+            elseif i == selectionYStart then
+                local start = i == posY and posX or selX
+                local unselected = string_sub( line, 1, start - 1 )
+
+                canvas:drawTextLine( xOffset, Y, unselected, tc, bg )
+                canvas:drawTextLine( xOffset + #unselected, Y, string_sub( line, start ), sTc, sBg )
+            elseif i == selectionYStop then
+                local stop = i == posY and posX or selX
+                local selected, unselected = string_sub( line, 1, stop ), string_sub( line, stop + 1 )
+
+                canvas:drawTextLine( xOffset, Y, selected, sTc, sBg )
+                canvas:drawTextLine( xOffset + #selected, Y, unselected, tc, bg )
+            elseif i > selectionYStart and i < selectionYStop then canvas:drawTextLine( xOffset, Y, line, sTc, sBg )
+            else canvas:drawTextLine( xOffset, Y, line, tc, bg ) end
+        else canvas:drawTextLine( xOffset, Y, line, tc, bg ) end
+
+    end
+end
+
+--[[
+    @instance
+    @desc Uses the starting index of the selected lines to return two numbers indicating the start and stop of the selection respectively.
+
+          The start and stop number are relative to 'self.text', and can be used to retrieve selected text (:getSelection)
+    @return <number - selectionStart>, <number - selectionStop> - When a selection exists, the bounds are returned
+    @return <boolean - false> - When no selection is found, false is returned
+]]
+function TextContainer:getSelectionRange()
+    local lines, selectionY, selectionX, positionY, positionX = self.lineConfig.lines, self.selectionY, self.selectionX, self.positionY, self.positionX
+    if not ( selectionY and positionY ) then return false end
+
+    local forward = selectionY > positionY or ( selectionY == positionY and selectionX > positionX )
+    return
+        lines[ selectionY < positionY and selectionY or positionY ][ 2 ] + ( forward and positionX or selectionX ) - 1,
+        lines[ positionY > selectionY and positionY or selectionY ][ 2 ] + ( forward and selectionX or positionX ) - 1
+end
+
+--[[
+    @instance
+    @desc Uses :getSelectionRange to find the selected text
+    @return <string - selection> - When a selection exists, it is returned
+    @return <boolean - false> - If no selection is found, false is returned
+]]
+function TextContainer:getSelection()
+    if not ( self.selectionY and self.positionY ) then return false end
+    return self.text:sub( self:getSelectionRange() )
+end
+
+--[[
+    @instance
+    @desc Handles a mouse click. If the mouse occured on the vertical scroll bar, the click is sent to the ScrollContainer handle function.
+          Otherwise the selection is removed and the current position is changed.
+    @param <MouseEvent Instance - event>, <boolean - handled>, <boolean - within>
+]]
+function TextContainer:onMouseClick( event, handled, within )
+    if not handled and within then
+        local X = event.X - self.X + 1
+        if X == self.width and self.cache.yScrollActive then
+            self.super:onMouseClick( event, handled, within )
+            return
+        end
+
+        self.selectionX, self.selectionY = false, false
+        self.positionX, self.positionY = resolvePosition( self, self.lineConfig.lines, X + self.xScroll, event.Y - self.Y + 1 + self.yScroll )
+
+        self.changed = true
+        self:focus()
+    else
+        self:unfocus()
+    end
+end
+
+--[[
+    @instance
+    @desc Handles a mouse draw. If the vertical scrollbar is currently selected, the mouse draw is passed to the ScrollContainer and ignored by further calculations
+          Otherwise, the selection is expanded depending on the new selection positions.
+]]
+function TextContainer:onMouseDrag( event, handled, within )
+    if handled or not within then return end
+    local X = event.X - self.X + 1
+    if X == self.width and self.cache.yScrollActive then self.super:onMouseDrag( event, handled, within ) end
+    if self.mouse.selected == "v" or not self.focused then return end
+
+    local sX, sY = resolvePosition( self, self.lineConfig.lines, X + self.xScroll, event.Y - self.Y + 1 + self.yScroll )
+    if sX == self.positionX and sY == self.positionY and false then self.selectionX, self.selectionY = false, false
+    else self.selectionX, self.selectionY = sX, sY end
+
+    self.changed = true
+end
+
+--[[
+    @setter
+    @desc Sets the node to 'changed' when the selectionX is updated
+    @param <number - selectionX>
+]]
+function TextContainer:setSelectionX( selectionX )
+    self.selectionX = selectionX
+    self.changed = true
+end
+
+--[[
+    @setter
+    @desc Sets the node to 'changed' when the selectionY is updated
+    @param <number - selectionY>
+]]
+function TextContainer:setSelectionY( selectionY )
+    self.selectionY = selectionY and math.max( math.min( self.lineConfig.lines and #self.lineConfig.lines or 1, selectionY ), 1 ) or false
+    self.changed = true
+end
+
+--[[
+    @setter
+    @desc Sets the node to 'changed' when the positionY is updated
+    @param <number - positionY>
+]]
+function TextContainer:setPositionY( positionY )
+    self.positionY = positionY and math.max( math.min( self.lineConfig.lines and #self.lineConfig.lines or 1, positionY ), 1 ) or false
+    self.changed = true
+end
+
+--[[
+    @setter
+    @desc Sets the node to 'changed' when the positionX is updated
+    @param <number - positionX>
+]]
+function TextContainer:setPositionX( positionX )
+    self.positionX = positionX
+    self.changed = true
+end
+
+--[[
+    @setter
+    @desc Updates the TextContainer by re-wrapping the text, and re-aligning the scroll bars when new text is set
+]]
+function TextContainer:setText( text )
+    self.text = text
+    self.yScroll = 0
+    self:wrapText( self.cache.displayWidth )
+    self:cacheContent()
+end
+
+
+configureConstructor({
+    orderedArguments = { "text", "X", "Y", "width", "height" },
+    argumentTypes = { text = "string" }
+}, true)

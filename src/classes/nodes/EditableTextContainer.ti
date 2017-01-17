@@ -1,0 +1,116 @@
+local string_sub = string.sub
+
+--[[
+    The EditableTextContainer is a slighty more advanced version of TextContainer, allowing for changes to be made to the displayed text
+]]
+
+class EditableTextContainer extends TextContainer {
+    allowKey = true,
+    allowChar = true
+}
+
+--[[
+    @constructor
+    @desc
+    @param
+]]
+function EditableTextContainer:__init__( ... )
+    self:super( ... )
+end
+
+function EditableTextContainer:insertContent( value, offsetPost, offsetPre )
+    if self.selection then self:removeContent() end
+
+    local text = self.text
+    self.text = string_sub( text, 1, self.position - ( offsetPre or 0 ) ) .. value .. string_sub( text, self.position + ( offsetPost or 1 ) )
+    self.position = self.position + #value
+end
+
+function EditableTextContainer:removeContent( preAmount, postAmount )
+    preAmount = preAmount or 1
+    local text = self.text
+    if self.selection then
+        self.text = string_sub( text, 1, math.min( self.selection, self.position ) - preAmount ) .. string_sub( text, math.max( self.selection, self.position ) + ( postAmount or 1 ) )
+        self.position = self.position - ( #text - #self.text )
+
+        self.selection = false
+    else
+        if self.position == 0 and preAmount > 0 then return end
+
+        self.text = string_sub( text, 1, self.position - preAmount ) .. string_sub( text, self.position + ( postAmount or 1 ) )
+        self.position = self.position - preAmount
+    end
+end
+
+--[[
+    @instance
+    @desc
+    @param
+]]
+function EditableTextContainer:onKeyDown( event, handled )
+    if handled then return end
+    local key = event.keyName
+    local isShift = self.application:isPressed( keys.leftShift ) or self.application:isPressed( keys.rightShift )
+    local isSelection = self.selection ~= false
+    local lines = self.lineConfig.lines
+    local isReverse = isSelection and ( self.selection < self.position )
+
+    local position, old_tX = self.position
+    if key == "up" or key == "down" then
+        if not self.cache.tX then self.cache.tX = self.position - lines[ self.cache.y ][ 2 ] end
+
+        old_tX = self.cache.tX
+    end
+
+    if key == "up" then
+        if self.cache.y == 1 then return end
+
+        local previousLine = lines[ self.cache.y - 1 ]
+        self.position = math.min( previousLine[ 2 ] + self.cache.tX, previousLine[ 3 ] - 1 )
+    elseif key == "down" then
+        if self.cache.y == #lines then return end
+
+        local nextLine = lines[ self.cache.y + 1 ]
+        self.position = math.min( nextLine[ 2 ] + self.cache.tX, nextLine[ 3 ] - 1 )
+    elseif key == "left" then
+        self.position = position - 1
+    elseif key == "right" then
+        self.position = position + 1
+    elseif key == "backspace" then
+        self:removeContent()
+    elseif key == "enter" then
+        self:insertContent "\n"
+    end
+
+    self.cache.tX = old_tX or self.cache.tX
+end
+
+--[[
+    @instance
+    @param
+    @return
+]]
+function EditableTextContainer:onChar( event, handled )
+    if handled then return end
+    self:insertContent( event.char )
+end
+
+function EditableTextContainer:setPosition( ... )
+    self.super:setPosition( ... )
+    self.cache.tX = false
+end
+
+--[[
+    @instance
+    @desc
+    @return
+    @return
+]]
+function EditableTextContainer:getCaretInfo()
+    if not ( self.cache.x and self.cache.y ) then return false end
+    local x, y = self.cache.x - self.xScroll, self.cache.y - self.yScroll
+    -- if x < 0 or x > self.width or y < 1 or y > self.height then return false end
+
+    local sX, sY = self:getAbsolutePosition()
+    return self.focused and not self.selection and true, x + sX, y + sY - 1, colours.lime
+end

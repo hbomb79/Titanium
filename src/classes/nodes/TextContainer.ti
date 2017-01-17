@@ -1,8 +1,10 @@
 local string_sub = string.sub
 local function resolvePosition( self, lines, X, Y )
     local posY = math.min( #lines, Y )
+    if posY == 0 then return 0 end
+
     local selectedLine = lines[ posY ]
-    return math.min( selectedLine and #selectedLine[ 1 ] or 1, X ), posY
+    return math.min( selectedLine[ 3 ], selectedLine[ 2 ] + X - 1 )
 end
 
 --[[
@@ -14,11 +16,8 @@ end
 ]]
 
 class TextContainer extends ScrollContainer mixin MTextDisplay mixin MFocusable {
-    selectionX = false,
-    selectionY = false,
-
-    positionX = 1,
-    positionY = 1,
+    position = 1,
+    selection = false,
 
     selectedColour = colours.blue,
     selectedBackgroundColour = colours.lightBlue,
@@ -64,14 +63,14 @@ end
     @desc Draws the text lines created by 'wrapText' using the selection where apropriate
 ]]
 function TextContainer:draw()
-    local selectionX, selectionY = self.selectionX, self.selectionY
-    if selectionX and selectionY then
-        local positionX, positionY = self.positionX, self.positionY
+    local selection = self.selection
+    if selection then
+        local position = self.position
 
         self:drawLines(
             self.lineConfig.lines,
-            selectionY < positionY and selectionY or positionY, selectionY < positionY and positionY or selectionY,
-            selectionX < positionX and selectionX or positionX, selectionX < positionX and positionX or selectionX
+            selection < position and selection or position,
+            selection < position and position or selection
         )
     else self:drawLines( self.lineConfig.lines ) end
 
@@ -81,9 +80,9 @@ end
 --[[
     @instance
     @desc Draws the lines (created by wrapText) with respect to the text containers selection and the alignment options (horizontalAlign and verticalAlign)
-    @param <table - lines>, [number - selectionYStart], [number - selectionYStop], [number - selectionXStart], [number - selectionXStop]
+    @param <table - lines>, [number - selectionStart], [number - selectionStop]
 ]]
-function TextContainer:drawLines( lines, selectionYStart, selectionYStop, selectionXStart, selectionXStop )
+function TextContainer:drawLines( lines, selectionStart, selectionStop )
     local vAlign, hAlign = self.verticalAlign, self.horizontalAlign
     local width, height = self.width, self.height
 
@@ -105,11 +104,12 @@ function TextContainer:drawLines( lines, selectionYStart, selectionYStop, select
     tc, bg = tc or self.colour, bg or self.backgroundColour
     sTc, sBg = sTc or tc, sBg or bg
 
-    local posX, posY, selX = self.positionX, self.positionY, self.selectionX
-    local isSelection = selectionYStart and selectionXStart
-    local canvas, line = self.canvas
+    local pos, sel, canvas = self.position, self.selection, self.canvas
+    local isSelection = selectionStart and selectionStop
+
     for i = self.yScroll + 1, #lines do
-        local Y, line, xOffset = yOffset + i - self.yScroll, lines[ i ][ 1 ], 1
+        local Y, line, xOffset = yOffset + i - self.yScroll, lines[ i ], 1
+        local lineContent, lineStart, lineEnd = line[ 1 ], line[ 2 ], line[ 3 ]
         if hAlign == "centre" then
             xOffset = math.floor( width / 2 - ( #line / 2 ) + .5 )
         elseif hAlign == "right" then
@@ -117,47 +117,60 @@ function TextContainer:drawLines( lines, selectionYStart, selectionYStop, select
         end
 
         if isSelection then
-            if i == selectionYStart and i == selectionYStop then
-                local pre, selected = string_sub( line, 1, selectionXStart - 1 ), string_sub( line, selectionXStart, selectionXStop )
+            local pre, current, post
+            local lineSelectionStart, lineSelectionStop = selectionStart - lineStart + 1, lineEnd - ( lineEnd - selectionStop ) - lineStart + 1
+            if selectionStart >= lineStart and selectionStop <= lineEnd then
+                -- The selection start and end are within this line. Single line selection
+                -- This line has three segments - unselected (1), selected (2), unselected (3)
 
-                canvas:drawTextLine( xOffset, Y, pre, tc, bg )
-                canvas:drawTextLine( xOffset + #pre, Y, selected, sTc, sBg )
-                canvas:drawTextLine( xOffset + #pre + #selected, Y, string_sub( line, selectionXStop + 1 ), tc, bg )
-            elseif i == selectionYStart then
-                local start = i == posY and posX or selX
-                local unselected = string_sub( line, 1, start - 1 )
+                pre = string_sub( lineContent, 1, lineSelectionStart - 1 )
+                current = string_sub( lineContent, lineSelectionStart, lineSelectionStop )
+                post = string_sub( lineContent, lineSelectionStop + 1 )
+            elseif selectionStart >= lineStart and selectionStart <= lineEnd then
+                -- The selectionStart is here, but not the end. The selection is multiline.
+                -- This line has two segments - unselected (1) and selected (2)
 
-                canvas:drawTextLine( xOffset, Y, unselected, tc, bg )
-                canvas:drawTextLine( xOffset + #unselected, Y, string_sub( line, start ), sTc, sBg )
-            elseif i == selectionYStop then
-                local stop = i == posY and posX or selX
-                local selected, unselected = string_sub( line, 1, stop ), string_sub( line, stop + 1 )
+                pre = string_sub( lineContent, 1, lineSelectionStart - 1 )
+                current = string_sub( lineContent, lineSelectionStart )
+            elseif selectionStop >= lineStart and selectionStop <= lineEnd then
+                -- The selectionStop is here, but not the start. The selection is multiline
+                -- This line has two segments - selected(1) and unselected (2)
+
+                local selected = string_sub( lineContent, 1, lineSelectionStop )
+                local unselected = string_sub( lineContent, lineSelectionStop + 1 )
 
                 canvas:drawTextLine( xOffset, Y, selected, sTc, sBg )
                 canvas:drawTextLine( xOffset + #selected, Y, unselected, tc, bg )
-            elseif i > selectionYStart and i < selectionYStop then canvas:drawTextLine( xOffset, Y, line, sTc, sBg )
-            else canvas:drawTextLine( xOffset, Y, line, tc, bg ) end
-        else canvas:drawTextLine( xOffset, Y, line, tc, bg ) end
+            elseif selectionStart <= lineStart and selectionStop >= lineEnd then
+                -- The selection neither starts, nor ends here - however it IS selected.
+                -- This line has one segment - selected(1)
+
+                pre = ""
+                current = lineContent
+            else
+                -- The selection is out of the bounds of this line - it is unselected
+                -- This line has one segment - unselected(1)
+
+                pre = lineContent
+            end
+
+            if pre then canvas:drawTextLine( xOffset, Y, pre, tc, bg ) end
+            if current then canvas:drawTextLine( xOffset + #pre, Y, current, sTc, sBg ) end
+            if post then canvas:drawTextLine( xOffset + #pre + #current, Y, post, tc, bg ) end
+        else canvas:drawTextLine( xOffset, Y, lineContent, tc, bg ) end
 
     end
 end
 
 --[[
     @instance
-    @desc Uses the starting index of the selected lines to return two numbers indicating the start and stop of the selection respectively.
-
-          The start and stop number are relative to 'self.text', and can be used to retrieve selected text (:getSelection)
+    @desc Returns position and selection, ordered for use in 'string.sub'
     @return <number - selectionStart>, <number - selectionStop> - When a selection exists, the bounds are returned
     @return <boolean - false> - When no selection is found, false is returned
 ]]
 function TextContainer:getSelectionRange()
-    local lines, selectionY, selectionX, positionY, positionX = self.lineConfig.lines, self.selectionY, self.selectionX, self.positionY, self.positionX
-    if not ( selectionY and positionY ) then return false end
-
-    local forward = selectionY > positionY or ( selectionY == positionY and selectionX > positionX )
-    return
-        lines[ selectionY < positionY and selectionY or positionY ][ 2 ] + ( forward and positionX or selectionX ) - 1,
-        lines[ positionY > selectionY and positionY or selectionY ][ 2 ] + ( forward and selectionX or positionX ) - 1
+    local position, selection = self.position, self.selection
+    return position < selection and position or selection, position < selection and selection or position
 end
 
 --[[
@@ -166,8 +179,8 @@ end
     @return <string - selection> - When a selection exists, it is returned
     @return <boolean - false> - If no selection is found, false is returned
 ]]
-function TextContainer:getSelection()
-    if not ( self.selectionY and self.positionY ) then return false end
+function TextContainer:getSelectedText()
+    if not self.selection then return false end
     return self.text:sub( self:getSelectionRange() )
 end
 
@@ -185,8 +198,8 @@ function TextContainer:onMouseClick( event, handled, within )
             return
         end
 
-        self.selectionX, self.selectionY = false, false
-        self.positionX, self.positionY = resolvePosition( self, self.lineConfig.lines, X + self.xScroll, event.Y - self.Y + 1 + self.yScroll )
+        self.selection = false
+        self.position = resolvePosition( self, self.lineConfig.lines, X + self.xScroll, event.Y - self.Y + 1 + self.yScroll )
 
         self.changed = true
         self:focus()
@@ -206,50 +219,28 @@ function TextContainer:onMouseDrag( event, handled, within )
     if X == self.width and self.cache.yScrollActive then self.super:onMouseDrag( event, handled, within ) end
     if self.mouse.selected == "v" or not self.focused then return end
 
-    local sX, sY = resolvePosition( self, self.lineConfig.lines, X + self.xScroll, event.Y - self.Y + 1 + self.yScroll )
-    if sX == self.positionX and sY == self.positionY and false then self.selectionX, self.selectionY = false, false
-    else self.selectionX, self.selectionY = sX, sY end
+    self.selection = resolvePosition( self, self.lineConfig.lines, X + self.xScroll, event.Y - self.Y + 1 + self.yScroll )
 
     self.changed = true
 end
 
 --[[
     @setter
-    @desc Sets the node to 'changed' when the selectionX is updated
-    @param <number - selectionX>
+    @desc Sets the node to 'changed' when the selection is updated
+    @param <number - selection>
 ]]
-function TextContainer:setSelectionX( selectionX )
-    self.selectionX = selectionX
+function TextContainer:setSelection( selection )
+    self.selection = selection and math.max( math.min( #self.text, selection ), 1 ) or false
     self.changed = true
 end
 
 --[[
     @setter
-    @desc Sets the node to 'changed' when the selectionY is updated
-    @param <number - selectionY>
+    @desc Sets the node to 'changed' when the position is updated
+    @param <number - position>
 ]]
-function TextContainer:setSelectionY( selectionY )
-    self.selectionY = selectionY and math.max( math.min( self.lineConfig.lines and #self.lineConfig.lines or 1, selectionY ), 1 ) or false
-    self.changed = true
-end
-
---[[
-    @setter
-    @desc Sets the node to 'changed' when the positionY is updated
-    @param <number - positionY>
-]]
-function TextContainer:setPositionY( positionY )
-    self.positionY = positionY and math.max( math.min( self.lineConfig.lines and #self.lineConfig.lines or 1, positionY ), 1 ) or false
-    self.changed = true
-end
-
---[[
-    @setter
-    @desc Sets the node to 'changed' when the positionX is updated
-    @param <number - positionX>
-]]
-function TextContainer:setPositionX( positionX )
-    self.positionX = positionX
+function TextContainer:setPosition( position )
+    self.position = position and math.max( math.min( #self.text, position ), 1 ) or false
     self.changed = true
 end
 

@@ -4,7 +4,7 @@ local function resolvePosition( self, lines, X, Y )
     if posY == 0 then return 0 end
 
     local selectedLine = lines[ posY ]
-    return math.min( selectedLine[ 3 ], selectedLine[ 2 ] + X - 1 )
+    return math.min( selectedLine[ 3 ] - 1, selectedLine[ 2 ] + X - 1 )
 end
 
 --[[
@@ -107,6 +107,7 @@ function TextContainer:drawLines( lines, selectionStart, selectionStop )
     local pos, sel, canvas = self.position, self.selection, self.canvas
     local isSelection = selectionStart and selectionStop
 
+    local cacheX, cacheY
     for i = self.yScroll + 1, #lines do
         local Y, line, xOffset = yOffset + i - self.yScroll, lines[ i ], 1
         local lineContent, lineStart, lineEnd = line[ 1 ], line[ 2 ], line[ 3 ]
@@ -159,7 +160,18 @@ function TextContainer:drawLines( lines, selectionStart, selectionStop )
             if post then canvas:drawTextLine( xOffset + #pre + #current, Y, post, tc, bg ) end
         else canvas:drawTextLine( xOffset, Y, lineContent, tc, bg ) end
 
+        if pos >= lineStart then
+            if pos == lineEnd then
+                cacheY = i + 1
+                cacheX = 0
+            elseif pos < lineEnd then
+                cacheY = i
+                cacheX = pos - lineStart + 1
+            end
+        end
     end
+
+    self.cache.x, self.cache.y = cacheX or 0, cacheY or 1
 end
 
 --[[
@@ -240,7 +252,7 @@ end
     @param <number - position>
 ]]
 function TextContainer:setPosition( position )
-    self.position = position and math.max( math.min( #self.text, position ), 1 ) or false
+    self.position = position and math.max( math.min( #self.text, position ), 0 ) or false
     self.changed = true
 end
 
@@ -250,9 +262,10 @@ end
 ]]
 function TextContainer:setText( text )
     self.text = text
-    self.yScroll = 0
     self:wrapText( self.cache.displayWidth )
     self:cacheContent()
+
+    self.yScroll = math.min( self.yScroll, self.cache.contentHeight - self.cache.displayHeight )
 end
 
 

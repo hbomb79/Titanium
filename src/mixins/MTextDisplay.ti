@@ -17,6 +17,8 @@ abstract class MTextDisplay {
 
     verticalAlign = "top";
     horizontalAlign = "left";
+
+    includeNewlines = false;
 }
 
 --[[
@@ -35,6 +37,7 @@ end
 ]]
 function MTextDisplay:wrapText( width )
     local text, width, lines = self.text, width or self.width, {}
+    local includeNewlines = self.includeNewlines
 
     local current = 0
     while text and string_len( text ) > 0 do
@@ -42,20 +45,27 @@ function MTextDisplay:wrapText( width )
         local starting = current
 
         if string_find( section, "\n" ) then
-            pre, post = string_match( text, "(.-)\n(.*)$" )
-            current = current + string_len( pre ) + 1 -- the + 1 is to account for the '\n' required for the match
+            if includeNewlines then
+                pre, post = string_match( text, "(.-\n)(.*)$" )
+                current = current + string_len( pre )
+            else
+                pre, post = string_match( text, "(.-)\n(.*)$" )
+                current = current + string_len( pre ) + 1 -- the + 1 is to account for the '\n' required for the match
+            end
         elseif string_len( text ) <= width then
             pre = text
             current = current + string_len( text )
         else
-            local lastSpace = string_find( section, "%s[%S]*$" )
+            local lastSpace, lastSpaceEnd = string_find( section, "%s[%S]*$" )
 
             pre = lastSpace and string_gsub( string_sub( text, 1, lastSpace - 1 ), "%s+$", "" ) or section
             post = lastSpace and string_sub( text, lastSpace + 1 ) or string_sub( text, width + 1 )
-            current = current + string_len( pre ) + 1
+
+            local match = lastSpace and string_match( string_sub( text, 1, lastSpace - 1 ), "%s+$" )
+            current = current + string_len( pre ) + ( match and #match or 1 )
         end
 
-        lines[ #lines + 1 ], text = { pre, starting + 1, current }, post
+        lines[ #lines + 1 ], text = { pre, starting + 1, current, #lines + 1 }, post
     end
 
     if current ~= string_len( self.text ) then

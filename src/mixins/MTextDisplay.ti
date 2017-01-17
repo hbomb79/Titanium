@@ -45,13 +45,8 @@ function MTextDisplay:wrapText( width )
         local starting = current
 
         if string_find( section, "\n" ) then
-            if includeNewlines then
-                pre, post = string_match( text, "(.-\n)(.*)$" )
-                current = current + string_len( pre )
-            else
-                pre, post = string_match( text, "(.-)\n(.*)$" )
-                current = current + string_len( pre ) + 1 -- the + 1 is to account for the '\n' required for the match
-            end
+            pre, post = string_match( text, "(.-)\n(.*)$" )
+            current = current + string_len( pre ) + 1 -- the + 1 is to account for the '\n' required for the match
         elseif string_len( text ) <= width then
             pre = text
             current = current + string_len( text )

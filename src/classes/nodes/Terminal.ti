@@ -146,11 +146,13 @@ end
     @param <Event Instance - eventObj>
 ]]
 function Terminal:handle( eventObj )
-    if eventObj.handled or not isThreadRunning( self ) then return end
+    if not isThreadRunning( self ) then self:unfocus(); return end
 
     if eventObj.main == "MOUSE" then
-        if eventObj:withinParent( self ) then self:focus() else self:unfocus() end
+        if not eventObj.handled and eventObj:withinParent( self ) then self:focus() else self:unfocus() end
         eventObj = eventObj:clone( self )
+    elseif eventObj.handled then
+        return
     end
 
     if Terminal.focusedEvents[ eventObj.main ] and not self.focused then return end

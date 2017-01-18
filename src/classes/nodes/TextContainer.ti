@@ -12,7 +12,7 @@ end
 
     The text is automatically wrapped to fit the containers width, and a vertical scrollbar will appear when the content becomes too tall.
 
-    The text can also be selected, using click and drag, and retrieved using :getSelection
+    The text can also be selected, using click and drag, and retrieved using :getSelectedText
 ]]
 
 class TextContainer extends ScrollContainer mixin MTextDisplay mixin MFocusable {
@@ -144,11 +144,9 @@ function TextContainer:drawLines( lines, selectionStart, selectionStop )
                 -- The selectionStop is here, but not the start. The selection is multiline
                 -- This line has two segments - selected(1) and unselected (2)
 
-                local selected = string_sub( lineContent, 1, lineSelectionStop )
-                local unselected = string_sub( lineContent, lineSelectionStop + 1 )
-
-                canvas:drawTextLine( xOffset, Y, selected, sTc, sBg )
-                canvas:drawTextLine( xOffset + #selected, Y, unselected, tc, bg )
+                pre = ""
+                current = string_sub( lineContent, 1, lineSelectionStop )
+                post = string_sub( lineContent, lineSelectionStop + 1 )
             elseif selectionStart <= lineStart and selectionStop >= lineEnd then
                 -- The selection neither starts, nor ends here - however it IS selected.
                 -- This line has one segment - selected(1)

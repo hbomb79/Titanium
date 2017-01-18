@@ -113,6 +113,7 @@ function TextContainer:drawLines( lines, selectionStart, selectionStop )
     local pos, sel, canvas = self.position, self.selection, self.canvas
     local isSelection = selectionStart and selectionStop
 
+    canvas:clear( bg )
     local cacheX, cacheY
     for i = self.yScroll + 1, #lines do
         local Y, line, xOffset = yOffset + i - self.yScroll, lines[ i ], 1

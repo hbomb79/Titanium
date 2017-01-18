@@ -44,7 +44,7 @@ function EditableTextContainer:removeContent( preAmount, postAmount )
     local text = self.text
     if self.selection then
         self.text = string_sub( text, 1, math.min( self.selection, self.position ) - preAmount ) .. string_sub( text, math.max( self.selection, self.position ) + ( postAmount or 1 ) )
-        self.position = self.position - ( #text - #self.text )
+        self.position = math.min( self.position, self.selection ) - 1
 
         self.selection = false
     else

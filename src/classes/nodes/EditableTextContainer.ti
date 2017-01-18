@@ -10,14 +10,19 @@ class EditableTextContainer extends TextContainer {
 }
 
 --[[
-    @constructor
-    @desc
-    @param
-]]
-function EditableTextContainer:__init__( ... )
-    self:super( ... )
-end
+    @instance
+    @desc Inserts the content given, using the provided offsets where provided.
 
+          The 'offsetPost' (def. 1) will be added to the position when appending the remainder of the string
+
+          'offsetPre' (def. 0) is substracted from the position when creating the section to the prepended to the value. If this is >1, content
+          will be lost (ie: backspace).
+
+          If there is a selection when this method is called, the selected content will be removed.
+
+          The position will be increased by the length of the value provided.
+    @param <string - value>, [number - offsetPost], [number - offsetPre]
+]]
 function EditableTextContainer:insertContent( value, offsetPost, offsetPre )
     if self.selection then self:removeContent() end
 
@@ -26,6 +31,14 @@ function EditableTextContainer:insertContent( value, offsetPost, offsetPre )
     self.position = self.position + #value
 end
 
+--[[
+    @instance
+    @desc Removes the content at the position (or if a selection is made, the selected text). The preAmount (def. 1) specifies the content
+          to be kept BEFORE the selection/position. Hence, the higher the number the more content is lost.
+
+          Likewise, 'postAmount' (def. 1) is added to the remainder, the higher the number the more content AFTER the selection/position is lost
+    @param [number - preAmount], [number - postAmount]
+]]
 function EditableTextContainer:removeContent( preAmount, postAmount )
     preAmount = preAmount or 1
     local text = self.text
@@ -44,8 +57,8 @@ end
 
 --[[
     @instance
-    @desc
-    @param
+    @desc Handles a 'key' event by moving the cursor (arrow keys), or removing text (delete/backspace), amongst other things
+    @param <KeyEvent - event>, <boolean - handled>
 ]]
 function EditableTextContainer:onKeyDown( event, handled )
     if handled then return end
@@ -87,14 +100,19 @@ end
 
 --[[
     @instance
-    @param
-    @return
+    @desc Inserts the character pressed, replacing the selection if one is made
+    @param <CharEvent - event>, <boolean - handled>
 ]]
 function EditableTextContainer:onChar( event, handled )
     if handled then return end
     self:insertContent( event.char )
 end
 
+--[[
+    @instance
+    @desc Invokes the setter for position on the super before resetting 'cache.tX'
+    @param <number - position>
+]]
 function EditableTextContainer:setPosition( ... )
     self.super:setPosition( ... )
     self.cache.tX = false
@@ -102,14 +120,14 @@ end
 
 --[[
     @instance
-    @desc
-    @return
-    @return
+    @desc Returns the information for the caret position, using cache.x and cache.y (caret only displayed when no selection is made and the node is focused)
+    @return <boolean - visible>, <number - x>, <number - y>, <number - colour> - When the x and y position of the caret is NOT out of the bounds of the node
+    @return <boolean - false> - When the x or y position of the caret IS out of bounds
 ]]
 function EditableTextContainer:getCaretInfo()
     if not ( self.cache.x and self.cache.y ) then return false end
     local x, y = self.cache.x - self.xScroll, self.cache.y - self.yScroll
-    -- if x < 0 or x > self.width or y < 1 or y > self.height then return false end
+    if x < 0 or x > self.width or y < 1 or y > self.height then return false end
 
     local sX, sY = self:getAbsolutePosition()
     return self.focused and not self.selection and true, x + sX, y + sY - 1, colours.lime

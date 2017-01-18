@@ -156,6 +156,7 @@ end
 ]]
 function PageContainer:setScroll( scroll )
     self.scroll = scroll
+    self.changed = true
     self:redrawArea( 1, 1, self.width, self.height )
 end
 

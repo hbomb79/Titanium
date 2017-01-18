@@ -37,16 +37,19 @@ end
 ]]
 function MTextDisplay:wrapText( width )
     local text, width, lines = self.text, width or self.width, {}
-    local includeNewlines = self.includeNewlines
 
-    local current = 0
+    local current = 1
     while text and string_len( text ) > 0 do
         local section, pre, post = string_sub( text, 1, width )
         local starting = current
+        local createTrail
 
         if string_find( section, "\n" ) then
             pre, post = string_match( text, "(.-\n)(.*)$" )
+
             current = current + string_len( pre )
+
+            if post == "" then createTrail = true end
         elseif string_len( text ) <= width then
             pre = text
             current = current + string_len( text )
@@ -60,12 +63,11 @@ function MTextDisplay:wrapText( width )
             current = current + string_len( pre ) + ( match and #match or 1 )
         end
 
-        lines[ #lines + 1 ], text = { pre, starting + 1, current, #lines + 1 }, post
+        lines[ #lines + 1 ], text = { pre, starting, current - 1, #lines + 1 }, post
+
+        if createTrail then lines[ #lines + 1 ] = { "", current, current, #lines + 1 } end
     end
 
-    if current ~= string_len( self.text ) then
-        return error("Failed to wrap text - information has been lost during wrap (length of input "..string_len( self.text )..", however wrapping only processed "..current..")")
-    end
     self.lineConfig.lines = lines
 end
 

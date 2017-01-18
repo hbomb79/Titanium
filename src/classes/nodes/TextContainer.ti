@@ -4,7 +4,7 @@ local function resolvePosition( self, lines, X, Y )
     if posY == 0 then return 0 end
 
     local selectedLine = lines[ posY ]
-    return math.min( selectedLine[ 3 ] - 1, selectedLine[ 2 ] + X - 1 )
+    return math.min( selectedLine[ 3 ] - ( posY == #lines and 0 or 1 ), selectedLine[ 2 ] + X - 1 )
 end
 
 --[[
@@ -160,13 +160,11 @@ function TextContainer:drawLines( lines, selectionStart, selectionStop )
             if post then canvas:drawTextLine( xOffset + #pre + #current, Y, post, tc, bg ) end
         else canvas:drawTextLine( xOffset, Y, lineContent, tc, bg ) end
 
-        if pos >= lineStart then
-            if pos == lineEnd then
+        if pos >= lineStart and pos <= lineEnd then
+            if pos == lineEnd and self.lineConfig.lines[ i + 1 ] then
                 cacheY = i + 1
-                cacheX = 0
-            elseif pos < lineEnd then
-                cacheY = i
-                cacheX = pos - lineStart + 1
+            else
+                cacheX, cacheY = pos - lineStart + 1, i
             end
         end
     end

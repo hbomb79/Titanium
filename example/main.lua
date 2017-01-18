@@ -63,13 +63,20 @@ Manager:addTheme( app.masterTheme )
     Calling ':on' tells Titanium to bind an event listener to all the nodes it found, in our case this is just one. We tell Titanium 'on trigger, run this function'.
     Trigger means the node was... triggered. In this case, the node we got is a Button so it means when the button is clicked.
 ]]
-Manager:query "#exit_button":on( "trigger", function( self )
-    -- Our exit button has been clicked. Exit if the 'yes' radio button is clicked
-    if RadioButton.getValue "rating" == "yes" then
-        -- The two radio buttons belong to the 'rating' group, meaning only one can be active at a time. We use the `RadioButton.getValue` function to see which one is active.
-        Manager:stop() -- Close our application by gracefully closing the event loop
-    end
+local exit_button = Manager:query "#exit_button"
+exit_button:on( "trigger", function( self )
+    -- Our exit button has been clicked. This means the button is enabled, and therefore the 'yes' checkbox was selected
+    Manager:stop()
 end)
+
+--[[
+    These two binds will enable/disable the button depending on the one clicked.
+
+    This means that the exit button will only become enabled when the '#yes_rating' radio button is clicked, preventing the button
+    from closing the program until the user 'allows exit'.
+]]
+Manager:query "#yes_rating":on( "select", function() exit_button:set{ enabled = true } end)
+Manager:query "#no_rating":on( "select", function() exit_button:set{ enabled = false } end)
 
 --[[
     Much like above, we grab our node with an id 'name_display'. In our TML file, we can see that is a label - a simple node for displaying a line of text

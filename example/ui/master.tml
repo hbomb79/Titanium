@@ -15,7 +15,7 @@
         <Label X=2 Y=8 text="Enter your name" id="name_display" class="sub"/>
         <Label X=2 Y=10 text="No selected text" id="selected_name_display" class="sub"/>
 
-        <Button text="Exit" X=41 Y=18 width=10 id="exit_button"/>
+        <Button text="Exit" X=41 Y=18 width=10 id="exit_button" enabled="false"/>
         <Button text="Toggle Theme" X=2 Y=18 height=1 width=14 id="toggle"/>
 
         <Button text="Toggle Pane" X=2 Y=15 height=1 width=13 id="pane_toggle"/>

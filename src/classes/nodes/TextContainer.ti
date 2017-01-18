@@ -19,6 +19,8 @@ class TextContainer extends ScrollContainer mixin MTextDisplay mixin MFocusable 
     position = 1,
     selection = false,
 
+    text = "",
+
     selectedColour = colours.blue,
     selectedBackgroundColour = colours.lightBlue,
 

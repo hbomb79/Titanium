@@ -24,7 +24,8 @@
         <Label text="-" X=9 Y=16 class="sub hotkey_part" id="hyphen_seperator"/>
         <Label text="p" id="right" X=10 Y=16 class="sub hotkey_part"/>
 
-        <Button text="Shell" width=7 height=1 X=43 Y=2 id="shell_toggle"/>
+        <Button text="Shell" width=7 height=1 X=43 Y=2 class="page_change" targetPage="console"/>
+        <Button text="Text" width=6 height=1 X=35 Y=2 class="page_change" targetPage="text"/>
 
         <Dropdown X=23 Y=6 width=25 maxHeight=4>
             <Option value="1">Example Option 1</Option>
@@ -74,6 +75,14 @@
 
     <Page id="console" xScrollAllowed="false">
         <Terminal X=2 Y=2 width=49 height=15 id="shell"/>
-        <Button id="shell_toggle" text="Return" X=22 Y=18 width=8/>
+        <Button class="page_change" text="Back" X=18 Y=18 width=6 targetPage="main"/>
+        <Button class="page_change" text="Next" X=26 Y=18 width=6 targetPage="text"/>
+    </Page>
+
+    <Page id="text" xScrollAllowed="false">
+        <EditableTextContainer X=2 Y=2 width="$parent.width - 2" height="$parent.height - 4"/>
+
+        <Button class="page_change" text="Back" X=18 Y=18 width=6 targetPage="console"/>
+        <Button class="page_change" text="Home" X=26 Y=18 width=6 targetPage="main"/>
     </Page>
 </PageContainer>

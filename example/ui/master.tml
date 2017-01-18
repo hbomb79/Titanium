@@ -80,7 +80,7 @@
     </Page>
 
     <Page id="text" xScrollAllowed="false">
-        <EditableTextContainer X=2 Y=2 width="$parent.width - 2" height="$parent.height - 4"/>
+        <EditableTextContainer X=2 Y=2 width="$parent.width - 2" height="$parent.height - 4" colour="256" focusedColour="white" backgroundColour="grey"/>
 
         <Button class="page_change" text="Back" X=18 Y=18 width=6 targetPage="console"/>
         <Button class="page_change" text="Home" X=26 Y=18 width=6 targetPage="main"/>

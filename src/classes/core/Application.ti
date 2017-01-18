@@ -193,6 +193,13 @@ function Application:unschedule( name )
 end
 
 --[[
+
+]]
+function Application:getAbsolutePosition()
+    return self.X, self.Y
+end
+
+--[[
     @instance
     @desc Begins the program loop
 ]]

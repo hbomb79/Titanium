@@ -63,18 +63,22 @@ end
     @desc Draws the text lines created by 'wrapText' using the selection where apropriate
 ]]
 function TextContainer:draw()
-    local selection = self.selection
-    if selection then
-        local position = self.position
+    if self.changed then
+        local selection = self.selection
+        if selection then
+            local position = self.position
 
-        self:drawLines(
-            self.lineConfig.lines,
-            selection < position and selection or position,
-            selection < position and position or selection
-        )
-    else self:drawLines( self.lineConfig.lines ) end
+            self:drawLines(
+                self.lineConfig.lines,
+                selection < position and selection or position,
+                selection < position and position or selection
+            )
+        else self:drawLines( self.lineConfig.lines ) end
 
-    self:drawScrollbars()
+        self:drawScrollbars()
+
+        self.changed = false
+    end
 end
 
 --[[

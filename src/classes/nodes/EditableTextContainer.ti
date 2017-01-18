@@ -61,14 +61,12 @@ end
     @param <KeyEvent - event>, <boolean - handled>
 ]]
 function EditableTextContainer:onKeyDown( event, handled )
-    if handled then return end
-    local key = event.keyName
-    local isShift = self.application:isPressed( keys.leftShift ) or self.application:isPressed( keys.rightShift )
-    local isSelection = self.selection ~= false
-    local lines = self.lineConfig.lines
-    local isReverse = isSelection and ( self.selection < self.position )
+    if handled or not self.focused then return end
 
-    local position, old_tX = self.position
+    local key, lines, position = event.keyName, self.lineConfig.lines, self.position
+    local isShift = self.application:isPressed( keys.leftShift ) or self.application:isPressed( keys.rightShift )
+
+    local old_tX
     if key == "up" or key == "down" then
         if not self.cache.tX then self.cache.tX = self.position - lines[ self.cache.y ][ 2 ] end
 
@@ -104,7 +102,7 @@ end
     @param <CharEvent - event>, <boolean - handled>
 ]]
 function EditableTextContainer:onChar( event, handled )
-    if handled then return end
+    if handled or not self.focused then return end
     self:insertContent( event.char )
 end
 

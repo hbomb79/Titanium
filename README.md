@@ -19,10 +19,7 @@ Want to learn more?
 Titanium is currently in alpha and your feedback, bug reports, suggestions (via [issues](https://gitlab.com/hbomb79/Titanium/issues)) and [merge requests](https://gitlab.com/hbomb79/Titanium/merge_requests) are welcomed.
 
 #### Download and Installation
-
-`pastebin get Nb3unphg fetch` will download the pastebin fetcher, running `fetch help` will fill you in on the argument syntax.
-
-Please see the [documentation](https://gitlab.com/hbomb79/Titanium/wikis/home) for more information regarding downloading and installing Titanium.
+Information regarding the multiple methods to download Titanium can be found at the [titanium website](http://harryfelton.web44.net/titanium/).
 
 #### Documentation
-[Documentation](https://gitlab.com/hbomb79/Titanium/wikis/home) is in the works, however the simultaneous development of features takes up a large majority of my free time. Due to this, the documentation is a little lackluster and will be the target of improvements - especially once this project moves into beta.
+The [documentation website](http://harryfelton.web44.net/titanium/doc) automatically updates to provide information regarding the latest release of Titanium (ability to view older documentation is provided).

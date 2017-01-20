@@ -1,5 +1,8 @@
 --[[
-    The checkbox is a node that can be toggled on and off
+    @instance checkedMark - string (def. "x") - The single character used when the checkbox is checked
+    @instance uncheckedMark - string (def. " ") - The single character used when the checkbox is not checked
+
+    The checkbox is a node that can be toggled on and off.
 ]]
 
 class Checkbox extends Node mixin MActivatable mixin MTogglable {

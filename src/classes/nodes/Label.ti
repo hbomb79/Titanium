@@ -1,6 +1,6 @@
 --[[
     A Label is a node which displays a single line of text. The text cannot be changed by the user directly, however the text can be changed by the program.
---]]
+]]
 
 class Label extends Node {
     labelFor = false;

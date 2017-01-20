@@ -1,9 +1,10 @@
 --[[
-    A Button is a node that can be clicked to trigger a callback.
-    The button can containtext which can span multiple lines, however if too much text is entered it will be truncated to fit the button dimensions.
+    @instance buttonLock - number (def. 1) - If 1 or 2, only mouse events with that button code will be handled. If 0, any mouse events will be handled
 
-    If buttonLock is 1 or 2, the mouse button used to click the button must match the value. Eg: If self.buttonLock == 1, the mouse button must be 1 when clicked to effect the button.
-    If the buttonLock value is 0, any button value will be accepted
+    A Button is a node that can be clicked to trigger a callback.
+    The button can contain text which can span multiple lines, however if too much text is entered it will be truncated to fit the button dimensions.
+
+    When the Button is clicked, the 'trigger' callback will be executed.
 ]]
 
 class Button extends Node mixin MTextDisplay mixin MActivatable {

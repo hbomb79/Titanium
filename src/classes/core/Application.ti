@@ -12,7 +12,7 @@
 
     This is why it is considered the heart of a Titanium project - without it, the project would simply not run due to the lack of a yielding
     event-loop.
---]]
+]]
 
 class Application extends Component mixin MThemeManager mixin MKeyHandler mixin MCallbackManager mixin MAnimationManager mixin MNodeContainer {
     width = 51;

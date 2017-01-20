@@ -12,7 +12,7 @@
     The Canvas object is used by all components. It facilitates the drawing of pixels which are stored in its buffer.
 
     The Canvas object is abstract. If you need a canvas for your object 'NodeCanvas' and 'TermCanvas' are provided with Titanium and may suite your needs.
---]]
+]]
 
 local function range( xBoundary, xDesired, width, canvasWidth )
     local x1 = xBoundary > xDesired and 1 - xDesired or 1

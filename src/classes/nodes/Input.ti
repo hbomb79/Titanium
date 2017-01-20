@@ -1,5 +1,16 @@
 --[[
-    The Input class provides the user with the ability to insert a single line of text.
+    @instance position - number (def. 0) - The position of the caret, dictates the position new characters are added
+    @instance scroll - number (def. 0) - The scroll position of the input, used when the content is longer than the width of the node
+    @instance value - string (def. "") - The value currently held by the input
+    @instance selection - number, boolean (def. false) - If a number, the end of the selection. If false, no selection made
+    @instance selectedColour - colour (def. false) - The colour of selected text
+    @instance selectedBackgroundColour - colour (def. false) - The background colour of selected text
+    @instance placeholder - string (def. false) - The text displayed when the input is unfocused and has no value
+    @instance placeholderColour - colour (def. 256) - The colour used when displaying the placeholder text
+    @instance limit - number (def. 0) - If greater than 0, the amount of text entered will be limited to that number. If 0, no limit is set.
+    @instance mask - string (def. "") - If not set to "", the character will be used instead of the characters displayed at draw time. Doesn't affect the actual value, only how it is displayed (ie: password forms)
+
+    The Input class provides the user with the ability to insert a single line of text, see EditableTextContainer for multi-line text input.
 ]]
 
 local stringRep, stringSub = string.rep, string.sub

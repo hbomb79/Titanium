@@ -21,7 +21,7 @@ end
 
     This allows emulation of a shell program inside of Titanium without causing visual issues due to the shell program drawing directly to the terminal and not
     through Titaniums canvas system.
---]]
+]]
 
 class RedirectCanvas extends NodeCanvas
 

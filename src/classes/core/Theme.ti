@@ -1,11 +1,3 @@
---[[
-    @instance name - string (def. false) - The name of the theme. A name should always be set on the instance, and is a required constructor argument
-    @instance rules - table (def. {}) - The rules of this theme, generated via Theme.static.parse.
-
-    The Theme class is a basic class designed to hold styling rules.
-
-    Themes are added to objects using the MThemeManager mixin (or a custom implementation). These themes then dictate the appearance of objects that utilize 'MThemeable'.
-]]
 local function getTagDetails( rule )
     return ( rule.arguments.id and ( "#" .. rule.arguments.id ) or "" ) .. (function( classString ) local classes = ""; for className in classString:gmatch("%S+") do classes = classes .. "."..className end; return classes end)( rule.arguments["class"] or "" )
 end
@@ -23,6 +15,15 @@ local function splitXMLTheme( queue, tree )
 
     return queue
 end
+
+--[[
+    @instance name - string (def. false) - The name of the theme. A name should always be set on the instance, and is a required constructor argument
+    @instance rules - table (def. {}) - The rules of this theme, generated via Theme.static.parse.
+
+    The Theme class is a basic class designed to hold styling rules.
+
+    Themes are added to objects using the MThemeManager mixin (or a custom implementation). These themes then dictate the appearance of objects that utilize 'MThemeable'.
+]]
 
 class Theme {
     name = false;

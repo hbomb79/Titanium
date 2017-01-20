@@ -1,7 +1,8 @@
 --[[
     The ContextMenu class allows developers to dynamically spawn context menus with content they can customize. This node takes the application bounds into account and ensures
     the content doesn't spill out of view.
---]]
+]]
+
 class ContextMenu extends Container {
     static = {
         allowedTypes = { "Button", "Label" }

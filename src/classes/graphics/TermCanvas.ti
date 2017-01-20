@@ -1,3 +1,10 @@
+local tableConcat = table.concat
+local hex = {}
+for i = 0, 15 do
+    hex[2 ^ i] = ("%x"):format( i ) -- %x = lowercase hexadecimal
+    hex[("%x"):format( i )] = 2 ^ i
+end
+
 --[[
     The TermCanvas is an object that draws it's buffer directly to the ComputerCraft term object, unlike the NodeCanvas.
 
@@ -6,15 +13,7 @@
 
     Unlike NodeCanvas, TermCanvas has no drawing functions as it's purpose is not to generate the buffer, just draw it to the term object.
     Nodes generate their content and store it in your buffer (and theirs aswell).
---]]
-
-local hex = {}
-for i = 0, 15 do
-    hex[2 ^ i] = ("%x"):format( i ) -- %x = lowercase hexadecimal
-    hex[("%x"):format( i )] = 2 ^ i
-end
-
-local tableConcat = table.concat
+]]
 
 class TermCanvas extends Canvas {
     static = { hex = hex };

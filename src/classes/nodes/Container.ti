@@ -1,3 +1,9 @@
+--[[
+    @instance consumeAll - boolean (def. true) - If true ANY mouse event that collide with the container will be 'handled', regardless of whether or not the event collided with a contained node.
+
+    Container is a simple node that allows multiple nodes to be contained using relative positions.
+]]
+
 class Container extends Node mixin MNodeContainer {
     allowMouse = true;
     allowKey = true;
@@ -88,6 +94,11 @@ function Container:handle( eventObj )
     return true
 end
 
+--[[
+    @instance
+    @desc Ships the 'event' provided to every direct child
+    @param <Event Instance - event>
+]]
 function Container:shipEvent( event )
     local nodes = self.nodes
     for i = #nodes, 1, -1 do
@@ -95,6 +106,11 @@ function Container:shipEvent( event )
     end
 end
 
+--[[
+    @setter
+    @desc Sets the width property on 'self', and queues a redraw on each direct child node
+    @param <number - width>
+]]
 function Container:setWidth( width )
 	self.super:setWidth( width )
 	local nodes = self.nodes
@@ -103,6 +119,11 @@ function Container:setWidth( width )
 	end
 end
 
+--[[
+    @setter
+    @desc Sets the height property on 'self', and queues a redraw on each direct child node
+    @param <number - height>
+]]
 function Container:setHeight( height )
 	self.super:setHeight( height )
 	local nodes = self.nodes

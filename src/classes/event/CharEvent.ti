@@ -2,6 +2,7 @@
     @instance main - string (def. "CHAR") - The main type of the event, should remain unchanged
     @instance char - string (def. false) - The character that has been pressed
 ]]
+
 class CharEvent extends Event {
     main = "CHAR";
     char = false;

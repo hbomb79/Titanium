@@ -1,12 +1,3 @@
---[[
-    The MThemeable mixin facilitates the use of themes on objects.
-    It allows properties to be registered allowing the object to monitor property changes and apply them correctly.
-
-    The mixin stores all properties set directly on the object in `mainValues`. These values are prioritised over values from themes unless the theme rule is designated as 'important'.
-
-    This mixin no longer handles property links as this functionality has been replaced by a more robust system 'MPropertyManager'.
-]]
-
 local function doesLevelMatch( target, criteria, noAttr )
     if ( ( criteria.type and target.__type == criteria.type ) or criteria.type == "*" or not criteria.type ) and noAttr then
         return true
@@ -69,6 +60,15 @@ local function doesMatchQuery( node, queryString, noAttr )
 
     return true
 end
+
+--[[
+    The MThemeable mixin facilitates the use of themes on objects.
+    It allows properties to be registered allowing the object to monitor property changes and apply them correctly.
+
+    The mixin stores all properties set directly on the object in `mainValues`. These values are prioritised over values from themes unless the theme rule is designated as 'important'.
+
+    This mixin no longer handles property links as this functionality has been replaced by a more robust system 'MPropertyManager'.
+]]
 
 abstract class MThemeable {
     isUpdating = false;

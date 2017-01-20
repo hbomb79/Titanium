@@ -6,7 +6,7 @@
     @instance closedIndicator - string (def. " \16") - Identical to 'openIndicator', with the exception that this is visible when the dropdown is closed (options hidden)
     @instance colour - colour (def. 1) - The colour of the dropdown options (not the toggle button), used when the buttons are not active
     @instance backgroundColour - colour (def. 8) - The background colour of the dropdown options (not the toggle button), used when the buttons are not active
-    @instance activeColour (def. nil) - The colour of the dropdown options (not the toggle button), used when the buttons are active
+    @instance activeColour - colour (def. nil) - The colour of the dropdown options (not the toggle button), used when the buttons are active
     @instance activeBackgroundColour - colour (def. 512) - The background colour of the dropdown options (not the toggle button), when the buttons are active
     @instance selectedColour - colour (def. 1) - The colour of the toggle button
     @instance selectedBackgroundColour - colour (def. 256) - The background colour of the toggle button
@@ -24,6 +24,7 @@
     Similarily, the toggle button's "horizontalAlign", "disabledColour", "disabledBackgroundColour", "activeColour" and, "activeBackgroundColour" properties are linked to the dropdown instance. The colour, and backgroundColour
     of the toggle button is controlled via 'selectedColour' and 'selectedBackgroundColour' respectively.
 ]]
+
 class Dropdown extends Container {
     maxHeight = false;
 

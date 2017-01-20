@@ -1,11 +1,11 @@
+local string_sub = string.sub
+
 --[[
     The NodeCanvas is an object that allows classes to draw to their canvas using functions that are useful when drawing 'nodes', hence the name.
 
     The NodeCanvas should only be used by high-level objects (Nodes). Low level objects, such as 'Application' that require the ability to draw to the CraftOS terminal object
     should be using TermCanvas instead.
---]]
-
-local string_sub = string.sub
+]]
 
 class NodeCanvas extends Canvas
 

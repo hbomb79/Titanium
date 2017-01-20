@@ -7,7 +7,7 @@
     @instance backgroundChar - string (def. " ") - Defines the character used when redrawing the canvas. Can be set to "nil" to use no character at all.
 
     A Component is an object that can be respresented visually.
---]]
+]]
 
 abstract class Component mixin MPropertyManager {
     width = 1;
@@ -20,6 +20,10 @@ abstract class Component mixin MPropertyManager {
     backgroundChar = " ";
 }
 
+--[[
+    @instance
+    @desc Redraws the area that 'self' occupies inside it's parent
+]]
 function Component:queueAreaReset()
     local parent = self.parent
     if parent then
@@ -29,28 +33,49 @@ function Component:queueAreaReset()
     self.changed = true
 end
 
-function Component:set( tbl )
-    if type( tbl ) ~= "table" then
-        return error "Table expected"
-    end
-
-    for property, value in pairs( tbl ) do
-        self[ property ] = value
-    end
+--[[
+    @instance
+    @desc Accepts either a property, or a property-value table to set on the instance
+    @param <string - property>, <any - value> - If setting just one property
+    @param <table - properties> - Setting multiple properties, using format { property = value }
+]]
+function Component:set( properties, value )
+    if type( properties ) == "string" then
+        self[ properties ] = value
+    elseif type( properties ) == "table" then
+        for property, val in pairs( properties ) do
+            self[ property ] = val
+        end
+    else return error "Expected table or string"end
 
     return self
 end
 
+--[[
+    @setter
+    @desc Resets the area the node previously occupied before moving the node's X position
+    @param <number - X>
+]]
 function Component:setX( X )
     self:queueAreaReset()
     self.X = X
 end
 
+--[[
+    @setter
+    @desc Resets the area the node previously occupied before moving the node's Y position
+    @param <number - Y>
+]]
 function Component:setY( Y )
     self:queueAreaReset()
     self.Y = Y
 end
 
+--[[
+    @setter
+    @desc Resets the area the node previously occupied before changing the nodes width
+    @param <number - width>
+]]
 function Component:setWidth( width )
     self:queueAreaReset()
 
@@ -58,6 +83,11 @@ function Component:setWidth( width )
     self.canvas.width = width
 end
 
+--[[
+    @setter
+    @desc Resets the area the node previously occupied before changing the nodes height
+    @param <number - height>
+]]
 function Component:setHeight( height )
     self:queueAreaReset()
 
@@ -65,6 +95,11 @@ function Component:setHeight( height )
     self.canvas.height = height
 end
 
+--[[
+    @setter
+    @desc Changes the colour of the canvas and the node, and queues a redraw
+    @param <number - colour>
+]]
 function Component:setColour( colour )
     self.colour = colour
     self.canvas.colour = colour
@@ -72,6 +107,11 @@ function Component:setColour( colour )
     self.changed = true
 end
 
+--[[
+    @setter
+    @desc Changes the background colour of the canvas and the node, and queues a redraw
+    @param <number - backgroundColour>
+]]
 function Component:setBackgroundColour( backgroundColour )
     self.backgroundColour = backgroundColour
     self.canvas.backgroundColour = backgroundColour
@@ -79,6 +119,11 @@ function Component:setBackgroundColour( backgroundColour )
     self.changed = true
 end
 
+--[[
+    @setter
+    @desc Changes the transparency of the canvas and node, and queues a redraw
+    @param <boolean - transparent>
+]]
 function Component:setTransparent( transparent )
     self.transparent = transparent
     self.canvas.transparent = transparent
@@ -86,6 +131,11 @@ function Component:setTransparent( transparent )
     self.changed = true
 end
 
+--[[
+    @setter
+    @desc Changes the canvas and nodes background character, and queues a redraw
+    @param <string - backgroundChar>
+]]
 function Component:setBackgroundChar( backgroundChar )
     if backgroundChar == "nil" then
         backgroundChar = nil
@@ -97,6 +147,11 @@ function Component:setBackgroundChar( backgroundChar )
     self.changed = true
 end
 
+--[[
+    @setter
+    @desc Changes the backgroundTextColour of the canvas and node, and queues a redraw
+    @param <number - backgroundTextColour>
+]]
 function Component:setBackgroundTextColour( backgroundTextColour )
     self.backgroundTextColour = backgroundTextColour
     self.canvas.backgroundTextColour = backgroundTextColour

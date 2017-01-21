@@ -63,30 +63,38 @@ end
 function EditableTextContainer:onKeyDown( event, handled )
     if handled or not self.focused then return end
 
-    local key, lines, position = event.keyName, self.lineConfig.lines, self.position
+    local key, lines, position, selection = event.keyName, self.lineConfig.lines, self.position, ( self.selection or self.position )
     local isShift = self.application:isPressed( keys.leftShift ) or self.application:isPressed( keys.rightShift )
 
     local old_tX
     if key == "up" or key == "down" then
-        if not self.cache.tX then self.cache.tX = self.position - lines[ self.cache.y ][ 2 ] end
+        if not self.cache.tX then self.cache.tX = ( isShift and selection or position ) - lines[ isShift and self.cache.selY or self.cache.y ][ 2 ] end
 
         old_tX = self.cache.tX
     end
 
     if key == "up" then
-        if self.cache.y == 1 then return end
+        local previousLine = lines[ ( isShift and self.cache.selY or self.cache.y ) - 1]
+        if not previousLine then return end
 
-        local previousLine = lines[ self.cache.y - 1 ]
-        self.position = math.min( previousLine[ 2 ] + self.cache.tX, previousLine[ 3 ] - 1 )
+        self[ isShift and "selection" or "position" ] = math.min( previousLine[ 2 ] + self.cache.tX, previousLine[ 3 ] - 1 )
     elseif key == "down" then
-        if self.cache.y == #lines then return end
+        local nextLine = lines[ ( isShift and self.cache.selY or self.cache.y ) + 1]
+        if not nextLine then return end
 
-        local nextLine = lines[ self.cache.y + 1 ]
-        self.position = math.min( nextLine[ 2 ] + self.cache.tX, nextLine[ 3 ] - 1 )
+        self[ isShift and "selection" or "position" ] = math.min( nextLine[ 2 ] + self.cache.tX, nextLine[ 3 ] - 1 )
     elseif key == "left" then
-        self.position = position - 1
+        if isShift then
+            self.selection = selection - 1
+        else
+            self.position = math.min( position, selection ) - 1
+        end
     elseif key == "right" then
-        self.position = position + 1
+        if isShift then
+            self.selection = selection + 1
+        else
+            self.position = math.max( position + 1, selection )
+        end
     elseif key == "backspace" then
         self:removeContent()
     elseif key == "enter" then
@@ -104,6 +112,16 @@ end
 function EditableTextContainer:onChar( event, handled )
     if handled or not self.focused then return end
     self:insertContent( event.char )
+end
+
+--[[
+    @instance
+    @desc Invokes the setter for selection on the super before resetting 'cache.tX'
+    @param <number - selection>
+]]
+function EditableTextContainer:setSelection( ... )
+    self.super:setSelection( ... )
+    self.cache.tX = false
 end
 
 --[[

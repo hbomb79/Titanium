@@ -114,7 +114,7 @@ function TextContainer:drawLines( lines, selectionStart, selectionStop )
     local isSelection = selectionStart and selectionStop
 
     canvas:clear( bg )
-    local cacheX, cacheY
+    local cacheX, cacheY, cacheSelX, cacheSelY = 0, 1, false, false
     for i = self.yScroll + 1, #lines do
         local Y, line, xOffset = yOffset + i - self.yScroll, lines[ i ], 1
         local lineContent, lineStart, lineEnd = line[ 1 ], line[ 2 ], line[ 3 ]
@@ -172,9 +172,17 @@ function TextContainer:drawLines( lines, selectionStart, selectionStop )
                 cacheX, cacheY = pos - lineStart + 1, i
             end
         end
+        if sel and sel >= lineStart and sel <= lineEnd then
+            if sel == lineEnd and self.lineConfig.lines[ i + 1 ] then
+                cacheSelY = i + 1
+            else
+                cacheSelX, cacheSelY = sel - lineStart + 1, i
+            end
+        end
     end
 
-    self.cache.x, self.cache.y = cacheX or 0, cacheY or 1
+    self.cache.x, self.cache.y = cacheX, cacheY
+    self.cache.selX, self.cache.selY = cachcSelX, cacheSelY
 end
 
 --[[
@@ -213,8 +221,10 @@ function TextContainer:onMouseClick( event, handled, within )
             return
         end
 
-        self.selection = false
-        self.position = resolvePosition( self, self.lineConfig.lines, X + self.xScroll, event.Y - self.Y + 1 + self.yScroll )
+        local isShift = self.application:isPressed( keys.leftShift ) or self.application:isPressed( keys.rightShift )
+
+        if not isShift then self.selection = false end
+        self[ isShift and "selection" or "position" ] = resolvePosition( self, self.lineConfig.lines, X + self.xScroll, event.Y - self.Y + 1 + self.yScroll )
 
         self.changed = true
         self:focus()
@@ -256,6 +266,7 @@ end
 ]]
 function TextContainer:setPosition( position )
     self.position = position and math.max( math.min( #self.text, position ), 0 ) or false
+    self.selection = false
     self.changed = true
 end
 

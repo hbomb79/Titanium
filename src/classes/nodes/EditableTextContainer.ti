@@ -93,7 +93,7 @@ function EditableTextContainer:onKeyDown( event, handled )
         if isShift then
             self.selection = selection + 1
         else
-            self.position = math.max( position + 1, selection )
+            self.position = math.max( position, selection - 1 ) + 1
         end
     elseif key == "backspace" then
         self:removeContent()

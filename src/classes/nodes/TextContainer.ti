@@ -237,6 +237,7 @@ end
     @instance
     @desc Handles a mouse draw. If the vertical scrollbar is currently selected, the mouse draw is passed to the ScrollContainer and ignored by further calculations
           Otherwise, the selection is expanded depending on the new selection positions.
+    @param <MouseEvent Instance - event>, <boolean - handled>, <boolean - within>
 ]]
 function TextContainer:onMouseDrag( event, handled, within )
     if handled or not within then return end

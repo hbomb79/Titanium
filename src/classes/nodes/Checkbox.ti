@@ -3,6 +3,8 @@
     @instance uncheckedMark - string (def. " ") - The single character used when the checkbox is not checked
 
     The checkbox is a node that can be toggled on and off.
+
+    When the checkbox is toggled, the 'toggle' callback will be fired due to mixing in MTogglable
 ]]
 
 class Checkbox extends Node mixin MActivatable mixin MTogglable {
@@ -27,7 +29,7 @@ end
 --[[
     @instance
     @desc Sets the checkbox to 'active' when clicked
-    @param <MouseEvent - event>, <boolean - handled>, <boolean - within>
+    @param <MouseEvent Instance - event>, <boolean - handled>, <boolean - within>
 ]]
 function Checkbox:onMouseClick( event, handled, within )
     if not handled then
@@ -42,7 +44,7 @@ end
 --[[
     @instance
     @desc Sets the checkbox to inactive when the mouse button is released. If released on checkbox while active 'onToggle' callback is fired and the checkbox is toggled.
-    @param <MouseEvent - event>, <boolean - handled>, <boolean - within>
+    @param <MouseEvent Instance - event>, <boolean - handled>, <boolean - within>
 ]]
 function Checkbox:onMouseUp( event, handled, within )
     if not handled and within and self.active then
@@ -57,7 +59,7 @@ end
 --[[
     @instance
     @desc If a label which specifies this node as its 'labelFor' paramater is clicked this function will be called, causing the checkbox to toggle
-    @param <LabelInstance - label>, <MouseEvent - event>, <boolean - handled>, <boolean - within>
+    @param <Label Instance - label>, <MouseEvent - event>, <boolean - handled>, <boolean - within>
 ]]
 function Checkbox:onLabelClicked( label, event, handled, within )
     self:toggle( event, handled, within, label )

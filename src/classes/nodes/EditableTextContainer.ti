@@ -67,7 +67,7 @@ end
 --[[
     @instance
     @desc Handles a 'key' event by moving the cursor (arrow keys), or removing text (delete/backspace), amongst other things
-    @param <KeyEvent - event>, <boolean - handled>
+    @param <KeyEvent Instance - event>, <boolean - handled>
 ]]
 function EditableTextContainer:onKeyDown( event, handled )
     if handled or not self.focused then return end
@@ -120,7 +120,7 @@ end
 --[[
     @instance
     @desc Inserts the character pressed, replacing the selection if one is made
-    @param <CharEvent - event>, <boolean - handled>
+    @param <CharEvent Instance - event>, <boolean - handled>
 ]]
 function EditableTextContainer:onChar( event, handled )
     if handled or not self.focused then return end

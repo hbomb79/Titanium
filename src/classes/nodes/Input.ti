@@ -10,6 +10,8 @@
     @instance limit - number (def. 0) - If greater than 0, the amount of text entered will be limited to that number. If 0, no limit is set.
     @instance mask - string (def. "") - If not set to "", the character will be used instead of the characters displayed at draw time. Doesn't affect the actual value, only how it is displayed (ie: password forms)
 
+    When the text is changed, the 'change' callback is executed. When the 'enter' key is pressed, the 'trigger' callback will be executed.
+
     The Input class provides the user with the ability to insert a single line of text, see EditableTextContainer for multi-line text input.
 ]]
 
@@ -48,7 +50,7 @@ end
 --[[
     @instance
     @desc Sets the input to active if clicked on, sets active and focused to false if the mouse click was not on the input.
-    @param <MouseEvent - event>, <boolean - handled>, <boolean - within>
+    @param <MouseEvent Instance - event>, <boolean - handled>, <boolean - within>
 ]]
 function Input:onMouseClick( event, handled, within )
     if within and not handled then
@@ -74,7 +76,7 @@ end
 --[[
     @instance
     @desc If a mouse drag occurs while the input is focused, the selection will be moved to the mouse drag location, creating a selection between the cursor position and the drag position
-    @param <MouseEvent - event>, <boolean - handled>, <boolean - within>
+    @param <MouseEvent Instance - event>, <boolean - handled>, <boolean - within>
 ]]
 function Input:onMouseDrag( event, handled, within )
     if not self.focused or handled then return end
@@ -86,7 +88,7 @@ end
     @instance
     @desc If the mouse up missed the input or the event was already handled, active and false are set to false.
           If within and not handled and input is active focused is set to true. Active is set to false on all conditions.
-    @param <MouseEvent - event>, <boolean - handled>, <boolean - within>
+    @param <MouseEvent Instance - event>, <boolean - handled>, <boolean - within>
 ]]
 function Input:onMouseUp( event, handled, within )
     if ( not within or handled ) and self.focused then
@@ -101,7 +103,7 @@ end
 --[[
     @instance
     @desc Catches char events and inserts the character pressed into the input's value.
-    @param <CharEvent - event>, <boolean - handled>
+    @param <CharEvent Instance - event>, <boolean - handled>
 ]]
 function Input:onChar( event, handled )
     if not self.focused or handled then return end
@@ -129,7 +131,7 @@ end
 --[[
     @instance
     @desc Catches key down events and performs an action depending on the key pressed
-    @param <KeyEvent - event>, <boolean - handled>
+    @param <KeyEvent Instance - event>, <boolean - handled>
 ]]
 function Input:onKeyDown( event, handled )
     if not self.focused or handled then return end

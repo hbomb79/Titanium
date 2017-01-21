@@ -27,7 +27,7 @@ end
 --[[
     @instance
     @desc Sets the button to 'active' when the button is clicked with the valid mouse button (self.buttonLock)
-    @param <MouseEvent - event>, <boolean - handled>, <boolean - within>
+    @param <MouseEvent Instance - event>, <boolean - handled>, <boolean - within>
 ]]
 function Button:onMouseClick( event, handled, within )
     if not handled and within and ( self.buttonLock == 0 or event.button == self.buttonLock ) then
@@ -38,7 +38,7 @@ end
 --[[
     @instance
     @desc Sets the button to inactive when the mouse button is released. If released on button while active 'onTrigger' callback is fired.
-    @param <MouseEvent - event>, <boolean - handled>, <boolean - within>
+    @param <MouseEvent Instance - event>, <boolean - handled>, <boolean - within>
 ]]
 function Button:onMouseUp( event, handled, within )
     if within and not handled and self.active then

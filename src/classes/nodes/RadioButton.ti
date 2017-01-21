@@ -1,3 +1,12 @@
+--[[
+    @static groups - table (def. {}) - The current radio button groups
+    @instance group - string (def. false) - The group the radio button belongs to
+
+    A radio button belongs to a group. Anytime a radio button in the same group is selected, all others are deselected. This means only one radio button
+    is selected at a time inside of a group. The value of the selected radio button can be retrieved using 'RadioButton.static.getValue'
+
+    When the radio button is selected, the 'select' callback is fired
+]]
 class RadioButton extends Checkbox {
     static = {
         groups = {}
@@ -6,6 +15,11 @@ class RadioButton extends Checkbox {
     group = false;
 }
 
+--[[
+    @constructor
+    @desc Constructs the instance, and selects the radio button if 'toggled' is set
+    @param [number - X], [number - Y], <string - group>
+]]
 function RadioButton:__init__( ... )
     self:super( ... )
 
@@ -14,13 +28,22 @@ function RadioButton:__init__( ... )
     end
 end
 
-function RadioButton:select( ... )
+--[[
+    @instance
+    @desc Deselects every radio button in the group, toggles this radio button
+]]
+function RadioButton:select()
     RadioButton.deselectInGroup( self.group )
 
     self.toggled = true
     self:executeCallbacks "select"
 end
 
+--[[
+    @instance
+    @desc If the radio button is active, and the mouse click occured on this node, the radio button is selected (:select)
+    @param <MouseEvent Instance - event>, <boolean - handled>, <boolean - within>
+]]
 function RadioButton:onMouseUp( event, handled, within )
     if not handled and within and self.active then
         self:select( event, handled, within )
@@ -31,11 +54,21 @@ function RadioButton:onMouseUp( event, handled, within )
     self.active = false
 end
 
+--[[
+    @instance
+    @desc If an assigned label (labelFor set as this nodes ID on a label) is clicked, this radio button is selected
+    @param <Label Instance - label>, <MouseEvent Instance - event>, <boolean - handled>, <boolean - within>
+]]
 function RadioButton:onLabelClicked( label, event, handled, within )
     self:select( event, handled, within, label )
     event.handled = true
 end
 
+--[[
+    @instance
+    @desc Updates the radio button group by removing the button from the old group and adding it to the new one
+    @param <string - group>
+]]
 function RadioButton:setGroup( group )
     if self.group then
         RadioButton.removeFromGroup( self, self.group )
@@ -45,6 +78,11 @@ function RadioButton:setGroup( group )
     RadioButton.addToGroup( self, group )
 end
 
+--[[
+    @static
+    @desc Adds the node provided to the group given
+    @param <Node Instance - node>, <string - group>
+]]
 function RadioButton.static.addToGroup( node, group )
     local g = RadioButton.groups[ group ]
     if type( g ) == "table" then
@@ -56,6 +94,11 @@ function RadioButton.static.addToGroup( node, group )
     end
 end
 
+--[[
+    @static
+    @desc Removes the node provided from the group given if present
+    @param <Node Instance - node>, <string - group>
+]]
 function RadioButton.static.removeFromGroup( node, group )
     local index = RadioButton.isInGroup( node, group )
     if index then
@@ -67,6 +110,12 @@ function RadioButton.static.removeFromGroup( node, group )
     end
 end
 
+--[[
+    @static
+    @desc Returns true if 'node' is inside 'group'
+    @param <Node Instance - node>, <string - group>
+    @return <boolean - isInsideGroup>
+]]
 function RadioButton.static.isInGroup( node, group )
     local g = RadioButton.groups[ group ]
     for i = 1, #g do
@@ -76,12 +125,23 @@ function RadioButton.static.isInGroup( node, group )
     return false
 end
 
+--[[
+    @static
+    @desc If no 'target', deselects every node inside 'group'. If a 'target' is given, every node BUT the 'target' is deselected inside the group
+    @param <string - group>, [Node Instance - target]
+]]
 function RadioButton.static.deselectInGroup( group, target )
     local g = RadioButton.groups[ group ]
 
     for i = 1, #g do if ( not target or ( target and g[ i ] ~= target ) ) then g[ i ].toggled = false end end
 end
 
+--[[
+    @static
+    @desc Returns the value of the selected radio button inside of the group given (if one is selected)
+    @param <string - group>
+    @return <string - value> - If a radio button is selected, it's value is returned
+]]
 function RadioButton.static.getValue( group )
     local g = RadioButton.groups[ group ]
     if g then

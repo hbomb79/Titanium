@@ -11,6 +11,15 @@ class EditableTextContainer extends TextContainer {
 
 --[[
     @instance
+    @desc Calls the super 'wrapText' with a reduced width (by one) so that space is left for the caret
+    @param <number - width>
+]]
+function EditableTextContainer:wrapText( width )
+    self.super:wrapText( width - 1 )
+end
+
+--[[
+    @instance
     @desc Inserts the content given, using the provided offsets where provided.
 
           The 'offsetPost' (def. 1) will be added to the position when appending the remainder of the string

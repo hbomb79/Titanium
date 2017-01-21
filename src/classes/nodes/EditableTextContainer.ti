@@ -105,7 +105,7 @@ function EditableTextContainer:onKeyDown( event, handled )
             self.position = math.max( position, selection - 1 ) + 1
         end
     elseif key == "backspace" then
-        self:removeContent()
+        self:removeContent( ( isShift and self.position - lines[ self.cache.y ][ 2 ] or 0 ) + 1 )
     elseif key == "enter" then
         self:insertContent "\n"
     elseif key == "home" then

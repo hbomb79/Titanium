@@ -1,4 +1,6 @@
 --[[
+    @instance callbacks - table (def. {}) - The callbacks set on this instance
+
     The callback manager is a mixin that can be used by classes that want to provide an easy way for a developer to assign actions on certain conditions.
 
     These conditions may include node specific callbacks, like a button click or input submission.

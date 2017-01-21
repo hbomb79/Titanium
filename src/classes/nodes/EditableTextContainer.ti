@@ -99,6 +99,10 @@ function EditableTextContainer:onKeyDown( event, handled )
         self:removeContent()
     elseif key == "enter" then
         self:insertContent "\n"
+    elseif key == "home" then
+        self[ isShift and "selection" or "position" ] = lines[ self.cache.y ][ 2 ] - 1
+    elseif key == "end" then
+        self[ isShift and "selection" or "position" ] = lines[ self.cache.y ][ 3 ] - ( lines[ self.cache.y + 1 ] and 1 or -1 )
     end
 
     self.cache.tX = old_tX or self.cache.tX

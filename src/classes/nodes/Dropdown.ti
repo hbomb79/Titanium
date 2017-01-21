@@ -25,7 +25,7 @@
     of the toggle button is controlled via 'selectedColour' and 'selectedBackgroundColour' respectively.
 ]]
 
-class Dropdown extends Container {
+class Dropdown extends Container mixin MActivatable {
     maxHeight = false;
 
     prompt = "Please select";
@@ -298,6 +298,14 @@ configureConstructor({
     orderedArguments = { "X", "Y", "width", "maxHeight", "prompt" },
     argumentTypes = {
         maxHeight = "number",
-        prompt = "string"
+        prompt = "string",
+
+        selectedColour = "colour",
+        selectedBackgroundColour = "colour"
     }
 }, true)
+
+alias {
+    selectedColor = "selectedColour",
+    selectedBackgroundColor = "selectedBackgroundColour"
+}

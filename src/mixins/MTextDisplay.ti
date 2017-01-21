@@ -34,6 +34,7 @@ end
 --[[
     @instance
     @desc Generates a table of text lines by wrapping on newlines or when the line gets too long.
+    @param <number - width>
 ]]
 function MTextDisplay:wrapText( width )
     local text, width, lines = self.text, width or self.width, {}
@@ -74,6 +75,7 @@ end
 --[[
     @instance
     @desc Uses 'wrapText' to generate the information required to draw the text to the canvas correctly.
+    @param <colour - bg>, <colour - tc>
 ]]
 function MTextDisplay:drawText( bg, tc )
     local lines = self.lineConfig.lines

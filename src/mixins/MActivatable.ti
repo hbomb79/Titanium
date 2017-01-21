@@ -1,4 +1,8 @@
 --[[
+    @instance active - boolean (def. false) - When a node is active, it uses active colours. A node should be activated before being focused.
+    @instance activeColour - colour (def. 1) - The foreground colour of the node used while the node is active
+    @instance activeBackgroundColour - colour (def. 512) - The background colour of the node used while the node is active
+
     A mixin to reuse code commonly written when developing nodes that can be (de)activated.
 ]]
 

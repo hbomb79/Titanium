@@ -60,6 +60,13 @@ function MCallbackManager:executeCallbacks( callbackName, ... )
     end
 end
 
-function MCallbackManager:canCallback( name )
-    return #self.callbacks[ name ] > 0
+--[[
+    @instance
+    @desc Returns true if there are any callbacks for 'target' exist
+    @param <string - target>
+    @return <boolean - callbacksExist>
+]]
+function MCallbackManager:canCallback( target )
+    local cbs = self.callbacks[ target ]
+    return cbs and #cbs > 0
 end

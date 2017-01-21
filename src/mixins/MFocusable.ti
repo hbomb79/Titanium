@@ -1,4 +1,6 @@
 --[[
+    @instance focused - boolean (def. false) - If true, the node is focused. Certain events will be rejected by nodes when not focused (ie: text input events)
+
     A focusable object is an object that after a mouse_click and a mouse_up event occur on the object is 'focused'.
 
     An 'input' is a good example of a focusable node, it is activatable (while being clicked) but it also focusable (allows you to type after being focused).
@@ -8,12 +10,21 @@ abstract class MFocusable {
     focused = false;
 }
 
+--[[
+    @constructor
+    @desc If the instance mixes in MThemeable, the "focused", "focusedColour", and "focusedBackgroundColour" are all registered as theme properties
+]]
 function MFocusable:MFocusable()
     if Titanium.mixesIn( self, "MThemeable" ) then
         self:register("focused", "focusedColour", "focusedBackgroundColour")
     end
 end
 
+--[[
+    @setter
+    @desc Invokes the super setter, and unfocuses the node if it is disabled
+    @param <boolean - enabled>
+]]
 function MFocusable:setEnabled( enabled )
     self.super:setEnabled( enabled )
 
@@ -22,6 +33,11 @@ function MFocusable:setEnabled( enabled )
     end
 end
 
+--[[
+    @setter
+    @desc If the node's focused property is changed, the nodes 'changed' property is set and the focused property is updated
+    @param <boolean - focused>
+]]
 function MFocusable:setFocused( focused )
     local raw = self.raw
     if raw.focused == focused then return end
@@ -30,6 +46,10 @@ function MFocusable:setFocused( focused )
     self.focused = focused
 end
 
+--[[
+    @instance
+    @desc The preferred way of focusing a node. Sets the 'focused' property to true and focuses the node application wide
+]]
 function MFocusable:focus()
     if not self.enabled then return end
 
@@ -37,6 +57,10 @@ function MFocusable:focus()
     self.focused = true
 end
 
+--[[
+    @instance
+    @desc The preferred way of un-focusing a node. Sets the 'focused' property to false and un-focuses the node application wide
+]]
 function MFocusable:unfocus()
     if self.application then self.application:unfocusNode( self ) end
     self.focused = false

@@ -81,6 +81,10 @@ function MNodeContainer:removeNode( target )
     return false
 end
 
+--[[
+    @instance
+    @desc Resets and removes every node from the instance
+]]
 function MNodeContainer:clearNodes()
     local nodes = self.nodes
     for i = #nodes, 1, -1 do
@@ -149,6 +153,11 @@ function MNodeContainer:clearCollatedNodes()
     end
 end
 
+--[[
+    @instance
+    @desc If no collatedNodes (or the collateNodes are empty), the nodes are collated (:collate) and returned.
+    @return <table - collatedNodes>
+]]
 function MNodeContainer:getCollatedNodes()
     if not self.collatedNodes or #self.collatedNodes == 0 then
         self:collate()
@@ -197,6 +206,11 @@ function MNodeContainer:setEnabled( enabled )
     end
 end
 
+--[[
+    @instance
+    @desc Updates all direct children with the new 'parentEnabled' property (found using 'enabled')
+    @param <boolean - enabled>
+]]
 function MNodeContainer:setParentEnabled( enabled )
     self.super:setParentEnabled( enabled )
 

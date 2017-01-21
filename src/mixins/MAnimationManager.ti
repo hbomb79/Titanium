@@ -1,3 +1,9 @@
+--[[
+    @instance animations - table (def. {}) - The current animations attached to this instance
+    @instance animationTimer - number, boolean (def. false) - If false, no animation timer is set. If a number, represents the ID of the timer that will update the animations every tick
+    @instance time - number (def. false) - Represents the current time (os.clock). Used to calculate deltaTime (dt) when updating each Tween
+]]
+
 abstract class MAnimationManager {
     animations = {};
     animationTimer = false;
@@ -31,7 +37,7 @@ end
 --[[
     @instance
     @desc Adds an animation to this object, on update this animation will be updated
-    @param <Tween - animation>
+    @param <Tween Instance - animation>
 ]]
 function MAnimationManager:addAnimation( animation )
     if not Titanium.typeOf( animation, "Tween", true ) then
@@ -51,6 +57,9 @@ end
 --[[
     @instance
     @desc Removes an animation from this object, it will stop receiving updates from this object
+    @param <string - animation> - The name of the animation to remove
+    @param <Tween Instance - animation> - The animation instance to remove
+    @return <Tween Instance - animation> - The removed animation. If nil, no animation removed
 ]]
 function MAnimationManager:removeAnimation( animation )
     local searchName

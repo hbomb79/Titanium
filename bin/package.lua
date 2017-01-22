@@ -386,28 +386,28 @@ end
 ]] or "") .. [[
 
 function VFS_ENV.load(src, name, mode, env)
-	return load( src, name or '(load)', mode, env or VFS_ENV )
+    return load( src, name or '(load)', mode, env or VFS_ENV )
 end
 
 function VFS_ENV.loadstring(src, name)
-	return VFS_ENV.load( src, name, 't', VFS_ENV )
+    return VFS_ENV.load( src, name, 't', VFS_ENV )
 end
 
 function VFS_ENV.loadfile(file, env)
-	local _ENV = VFS_ENV
-	local h = fs.open( file, "r" )
-	if h then
-		local fn, e = load(h.readAll(), fs.getName(file), 't', env or VFS_ENV)
-		h.close()
-		return fn, e
-	end
+    local _ENV = VFS_ENV
+    local h = fs.open( file, "r" )
+    if h then
+        local fn, e = load(h.readAll(), fs.getName(file), 't', env or VFS_ENV)
+        h.close()
+        return fn, e
+    end
 
-	return nil, 'File not found'
+    return nil, 'File not found'
 end
 if type( setfenv ) == "function" then setfenv( VFS_ENV.loadfile, VFS_ENV ) end
 
 function VFS_ENV.os.run( _tEnv, _sPath, ... )
-	local _ENV = VFS_ENV
+    local _ENV = VFS_ENV
     local tArgs, tEnv = { ... }, _tEnv
 
     setmetatable( tEnv, { __index = VFS_ENV } )
@@ -463,11 +463,11 @@ end
 
 VFS_ENV.os.loadAPI "/rom/apis/io"
 function VFS_ENV.dofile(file)
-	local _ENV = VFS_ENV
-	local fn, e = loadfile(file, VFS_ENV)
+    local _ENV = VFS_ENV
+    local fn, e = loadfile(file, VFS_ENV)
 
-	if fn then return fn()
-	else error(e, 2) end
+    if fn then return fn()
+    else error(e, 2) end
 end
 if type( setfenv ) == "function" then setfenv( VFS_ENV.dofile, VFS_ENV ) end
 
@@ -638,8 +638,26 @@ if not ok then return error("Failed to load TPM '"..tostring( err ).."'") end
 ok "fetch"
 ok( "--disposable", "--depend", shell.getRunningProgram(), "install", "Titanium:]]..VERSION..[["]] .. ( SETTINGS.TITANIUM.SILENT and ', "--silent"' or "" ) .. [[ )
 ]]
+    if VERSION == "latest" then
+        output = output .. [[local FAILURE = "Failed to execute Titanium package. Latest Titanium version cannot be found %s (/.tpm/cache)"
+print "Determining latest version of Titanium from TPM cache"
+if not fs.exists("/.tpm/cache") then
+    return error( FAILURE:format "because TPM cache is missing" )
+end
 
-    output = output .. "if not VFS_ENV.Titanium then VFS_ENV.dofile( \"/.tpm/packages/Titanium/" .. VERSION .. "\" ) end\n"
+local cacheHandle = fs.open("/.tpm/cache", "r")
+local cache = textutils.unserialise( cacheHandle.readAll() )
+cacheHandle.close()
+
+if not cache then
+    return error( FAILURE:format "because TPM cache is malformed" )
+elseif not cache.Titanium then
+    return error( FAILURE:format "because TPM cache missing Titanium version information" )
+end
+]]
+    end
+
+    output = output .. "if not VFS_ENV.Titanium then VFS_ENV.dofile( \"/.tpm/packages/Titanium/"..( VERSION == "latest" and "\"..cache.Titanium[1]" or VERSION .. "\"" ).." ) end\n"
 end
 
 output = output .. [[

@@ -1,3 +1,10 @@
+local function range( xBoundary, xDesired, width, canvasWidth )
+    local x1 = xBoundary > xDesired and 1 - xDesired or 1
+    local x2 = xDesired + width > canvasWidth and canvasWidth - xDesired or width
+
+    return x1, x2
+end
+
 --[[
     @instance buffer - table (def. {}) - A one-dimensional table containing all the pixels inside the canvas. Pixel format: { char, fg, bg }
     @instance last - table (def. {}) - A copy of buffer that is used to determine if the line has changed. If a pixel in the buffer doesn't match the same pixel in 'last', the line is redrawn
@@ -13,13 +20,6 @@
 
     The Canvas object is abstract. If you need a canvas for your object 'NodeCanvas' and 'TermCanvas' are provided with Titanium and may suite your needs.
 ]]
-
-local function range( xBoundary, xDesired, width, canvasWidth )
-    local x1 = xBoundary > xDesired and 1 - xDesired or 1
-    local x2 = xDesired + width > canvasWidth and canvasWidth - xDesired or width
-
-    return x1, x2
-end
 
 abstract class Canvas {
     buffer = {};

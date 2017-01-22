@@ -19,13 +19,16 @@ class TermCanvas extends Canvas {
     static = { hex = hex };
 }
 
-function TermCanvas:__init__( owner )
-    self:super( owner )
+--[[
+    @instance
+    @desc Draws the content of the canvas to the terminal object (term.blit). If 'force' is provided, even unchanged lines will be drawn, if not 'force' only changes lines will be blit.
 
-    self.raw.X = owner.raw.X
-    self.raw.Y = owner.raw.Y
-end
+          The canvas contents are drawn using the X and Y position of the owner as the offset
 
+          If a pixel has a missing foreground or background colour, it will use the owner colour or background colour (respectively). If the owner has no colour set, defaults will be used
+          instead (foreground = 1, backgroundColour = 32768)
+    @param [boolean - force]
+]]
 function TermCanvas:draw( force )
     local owner = self.owner
     local buffer, last = self.buffer, self.last

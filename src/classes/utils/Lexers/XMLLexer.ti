@@ -1,3 +1,10 @@
+--[[
+    @instance openTag - boolean (def. false) - If true, the lexer is currently inside of an XML tag
+    @instance definingAttribute - boolean (def. false) - If true, the lexer is currently inside an opening XML tag and is trying to find attributes (XML_ATTRIBUTE_VALUE)
+    @instance currentAttribute - boolean (def. false) - If true, the lexer will take the next token as an attribute value (after '=')
+
+    A lexer than processes XML content into tokens used by XMLParser
+]]
 class XMLLexer extends Lexer {
     openTag = false;
     definingAttribute = false;

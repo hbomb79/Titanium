@@ -1,3 +1,12 @@
+--[[
+    @static escapeChars - table (def. { ... }) - A table containing a special character -> escape character matrix (ie: n -> "\n")
+
+    @instance stream - string (def. false) - The current stream being lexed
+    @instance tokens - table (def. {}) - The tokens currently found by the lexer
+    @instance line - number (def. 1) - A number representing the line of the string currently being lexed
+    @instance char - number (def. 1) - A number representing the character of the current line being lexed
+]]
+
 abstract class Lexer {
     static = {
         escapeChars = {

@@ -1,4 +1,7 @@
 --[[
+    @instance position - number (def. 0) - The current token index being parsed
+    @instance tokens - table (def. {}) - The tokens found via lexing, corresponds to 'position'
+
     The parser class should be extended by classes that are used to parser lexer token output.
 ]]
 

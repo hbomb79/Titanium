@@ -1,3 +1,18 @@
+--[[
+    @instance cache - table (def. {}) - Contains information cached via the caching methods
+    @instance mouse - table (def. { ... }) - Contains information regarding the currently selected scrollbar, and the origin of the mouse event
+    @instance xScroll - number (def. 0) - The horizontal scroll offset
+    @instance yScroll - number (def. 0) - The vertical scroll offset
+    @instance xScrollAllowed - boolean (def. true) - If false, horizontal scrolling is not allowed (scrollbar will not appear, and mouse events will be ignored)
+    @instance yScrollAllowed - boolean (def. true) - If false, vertical scrolling is not allowed (scrollbar will not appear, and mouse events will be ignored)
+    @instance propagateMouse - boolean (def. false) - If false, all incoming mouse events will be handled
+    @instance trayColour - colour (def. 256) - The colour of the scrollbar tray (where the scrollbar is not occupying)
+    @instance scrollbarColour - colour (def. 128) - The colour of the scrollbar itself
+    @instance activeScrollbarColour - colour (def. 512) - The colour of the scrollbar while being held (mouse)
+
+    The ScrollContainer node is a more complex version of Container, allowing for horizontal and vertical scrolling.
+]]
+
 class ScrollContainer extends Container {
     cache = {};
 
@@ -18,12 +33,23 @@ class ScrollContainer extends Container {
     };
 }
 
+--[[
+    @constructor
+    @desc Registers 'scrollbarColour', 'activeScrollbarColour', 'trayColour' as theme properties and invokes the Container constructor with ALL properties passed to this constructor
+    @param <... - args>
+]]
 function ScrollContainer:__init__( ... )
     self:register( "scrollbarColour", "activeScrollbarColour", "trayColour" )
     self:super( ... )
 end
 
---[[ Event Listeners ]]--
+--[[
+    @instance
+    @desc Handles a mouse click by moving the scrollbar (if click occurred on tray) or activating a certain scrollbar (allows mouse_drag manipulation) if the click was on the scrollbar.
+
+          If mouse click occurred off of the scroll bar, event is not handled and children nodes can make use of it.
+    @param <MouseEvent Instance - event>, <boolean - handled>, <boolean - within>
+]]
 function ScrollContainer:onMouseClick( event, handled, within )
     if handled or not within then return end
 
@@ -53,6 +79,14 @@ function ScrollContainer:onMouseClick( event, handled, within )
     self.changed = true
 end
 
+--[[
+    @instance
+    @desc Moves the scroll of the ScrollContainer depending on the scroll direction and whether or not shift is held.
+
+          Scrolling that occurs while the shift key is held (or if there is ONLY a horizontal scrollbar) will adjust the horizontal scroll. Otherwise, the vertical scroll will be affected
+          if present.
+    @param <MouseEvent - event>, <boolean - handled>, <boolean - within>
+]]
 function ScrollContainer:onMouseScroll( event, handled, within )
     local cache, app = self.cache, self.application
     if handled or not within or not ( cache.xScrollActive or cache.yScrollActive ) then return end
@@ -63,6 +97,11 @@ function ScrollContainer:onMouseScroll( event, handled, within )
     self:cacheScrollbarPosition()
 end
 
+--[[
+    @instance
+    @desc If a scrollbar was selected, it is deselected preventing mouse_drag events from further manipulating it.
+    @param <MouseEvent - event>, <boolean - handled>, <boolean - within>
+]]
 function ScrollContainer:onMouseUp( event, handled, within )
     if self.mouse.selected then
         self.mouse.selected = false
@@ -70,6 +109,11 @@ function ScrollContainer:onMouseUp( event, handled, within )
     end
 end
 
+--[[
+    @instance
+    @desc If a scrollbar is selected it's value is manipulated when dragged
+    @param <MouseEvent - event>, <boolean - handled>, <boolean - within>
+]]
 function ScrollContainer:onMouseDrag( event, handled, within )
     local mouse, cache = self.mouse, self.cache
     if handled or not mouse.selected then return end
@@ -81,15 +125,25 @@ function ScrollContainer:onMouseDrag( event, handled, within )
     event.handled = self[ "set" .. key .. "Scroll" ]( self, math.floor( cache["content" .. scaleKey ] * ( ( ( event[ key ] - self[ key ] + 1 ) - mouse.origin ) / cache["display" .. scaleKey ] ) - .5 ) )
 end
 
+--[[
+    @instance
+    @desc Calls the super :addNode with all arguments passed to the function, re-caches the content and returns the node (arg #1)
+    @param <Node Instance - node>, <... - args>
+    @return <Node Instande - node>
+]]
 function ScrollContainer:addNode( node, ... )
     self.super:addNode( node, ... )
-
     self:cacheContent()
 
     return node
 end
 
---[[ Core Functions ]]--
+--[[
+    @instance
+    @desc A custom handle function that adjusts the values of incoming mouse events to work correctly with scroll offsets
+    @param <Event Instance - eventObj>
+    @return <boolean - propagate>
+]]
 function ScrollContainer:handle( eventObj )
     local cache, isWithin = self.cache, eventObj.isWithin
     local cloneEv
@@ -110,12 +164,25 @@ function ScrollContainer:handle( eventObj )
     return r == nil and true or r
 end
 
+--[[
+    @instance
+    @desc Returns true if the node, with respect to the horizontal and vertical scroll is within the bounds of the container
+    @param <Node Instance - node>, [number - width], [number - height]
+    @return <boolean - inBounds>
+]]
 function ScrollContainer:isNodeInBounds( node, width, height )
     local left, top = node.X - self.xScroll, node.Y - self.yScroll
 
     return not ( ( left + node.width ) < 1 or left > ( width or self.width ) or top > ( height or self.height ) or ( top + node.height ) < 1 )
 end
 
+--[[
+    @instance
+    @desc Invokes the Container draw function, offsetting the draw with the horizontal/vertical scroll.
+
+          After draw, the ScrollContainers scrollbars are drawn (:drawScrollbars)
+    @param [boolean - force]
+]]
 function ScrollContainer:draw( force )
     if self.changed or force then
         self.super:draw( force, -self.xScroll, -self.yScroll )
@@ -123,6 +190,10 @@ function ScrollContainer:draw( force )
     end
 end
 
+--[[
+    @instance
+    @desc Draws the enabled scrollbars. If both horizontal and vertical scrollbars are enabled, the bottom-right corner is filled in to prevent a single line of transparent space
+]]
 function ScrollContainer:drawScrollbars()
     local cache, canvas = self.cache, self.canvas
     local xEnabled, yEnabled = cache.xScrollActive, cache.yScrollActive
@@ -142,10 +213,23 @@ function ScrollContainer:drawScrollbars()
     end
 end
 
+--[[
+    @instance
+    @desc Invokes the super :redrawArea, offset by the scroll containers horizontal and vertical scroll
+    @param <number - x>, <number - y>, <number - width>, <number - height>
+]]
 function ScrollContainer:redrawArea( x, y, width, height )
     self.super:redrawArea( x, y, width, height, -self.xScroll, -self.yScroll )
 end
 
+--[[
+    @setter
+    @desc Sets 'yScroll', ensuring it doesn't go out of range. The position of the scrollbars are re-cached to reflect the new scroll position.
+
+          If the new scroll value is not the same as the old value, OR 'propagateMouse' is false, 'true' will be returned
+    @param <number - yScroll>
+    @return <boolean - consume>
+]]
 function ScrollContainer:setYScroll( yScroll )
     local oY, cache = self.yScroll, self.cache
     self.yScroll = math.max( 0, math.min( cache.contentHeight - cache.displayHeight, yScroll ) )
@@ -156,6 +240,14 @@ function ScrollContainer:setYScroll( yScroll )
     end
 end
 
+--[[
+    @setter
+    @desc Sets 'xScroll', ensuring it doesn't go out of range. The position of the scrollbars are re-cached to reflect the new scroll position.
+
+          If the new scroll value is not the same as the old value, OR 'propagateMouse' is false, 'true' will be returned
+    @param <number - xScroll>
+    @return <boolean - consume>
+]]
 function ScrollContainer:setXScroll( xScroll )
     local oX, cache = self.xScroll, self.cache
     self.xScroll = math.max( 0, math.min( cache.contentWidth - cache.displayWidth, xScroll ) )
@@ -166,11 +258,21 @@ function ScrollContainer:setXScroll( xScroll )
     end
 end
 
+--[[
+    @instance
+    @desc Invokes the super setter for 'height', and caches the content information (:cacheContent)
+    @param <number - height>
+]]
 function ScrollContainer:setHeight( height )
     self.super:setHeight( height )
     self:cacheContent()
 end
 
+--[[
+    @instance
+    @desc Invokes the super setter for 'width', and caches the content information (:cacheContent)
+    @param <number - width>
+]]
 function ScrollContainer:setWidth( width )
     self.super:setWidth( width )
     self:cacheContent()
@@ -182,6 +284,10 @@ function ScrollContainer:cacheContent()
     self:cacheActiveScrollbars()
 end
 
+--[[
+    @instance
+    @desc Finds the width and height bounds of the content and caches it inside 'contentWidth' and 'contentHeight' respectively
+]]
 function ScrollContainer:cacheContentSize()
     local w, h = 0, 0
 
@@ -196,6 +302,13 @@ function ScrollContainer:cacheContentSize()
     self.cache.contentWidth, self.cache.contentHeight = w, h
 end
 
+--[[
+    @instance
+    @desc Caches the display size of the container, with space made for the scrollbars (width - 1 if vertical scroll active, height - 1 if horizontal scroll active).
+
+          If 'single', the next cache function will not be called, allowing for other nodes to insert custom logic
+    @param [boolean - single]
+]]
 function ScrollContainer:cacheDisplaySize( single )
     local cache = self.cache
     cache.displayWidth, cache.displayHeight = self.width - ( cache.yScrollActive and 1 or 0 ), self.height - ( cache.xScrollActive and 1 or 0 )
@@ -203,6 +316,10 @@ function ScrollContainer:cacheDisplaySize( single )
     if not single then self:cacheScrollbarSize() end
 end
 
+--[[
+    @instance
+    @desc Caches the active scrollbars. If the contentWidth > displayWidth then the horizontal scrollbar is active. If the contentHeight > displayHeight then the vertical scrollbar is active.
+]]
 function ScrollContainer:cacheActiveScrollbars()
     local cache = self.cache
     local cWidth, cHeight, sWidth, sHeight = cache.contentWidth, cache.contentHeight, self.width, self.height
@@ -218,6 +335,10 @@ function ScrollContainer:cacheActiveScrollbars()
     self:cacheDisplaySize()
 end
 
+--[[
+    @instance
+    @desc Calculates the width/height of the active scrollbar(s) using the content size, and display size
+]]
 function ScrollContainer:cacheScrollbarSize()
     local cache = self.cache
     cache.xScrollSize, cache.yScrollSize = math.floor( cache.displayWidth * ( cache.displayWidth / cache.contentWidth ) + .5 ), math.floor( cache.displayHeight * ( cache.displayHeight / cache.contentHeight ) + .5 )
@@ -225,6 +346,10 @@ function ScrollContainer:cacheScrollbarSize()
     self:cacheScrollbarPosition()
 end
 
+--[[
+    @instance
+    @desc Uses the xScroll and yScroll properties to calculate the visible position of the active scrollbar(s)
+]]
 function ScrollContainer:cacheScrollbarPosition()
     local cache = self.cache
     cache.xScrollPosition, cache.yScrollPosition = math.ceil( self.xScroll / cache.contentWidth * cache.displayWidth + .5 ), math.ceil( self.yScroll / cache.contentHeight * cache.displayHeight + .5 )

@@ -187,6 +187,11 @@ function Input:onKeyDown( event, handled )
     end
 end
 
+--[[
+    @instance
+    @desc If an assigned label (labelFor set as this nodes ID on a label) is clicked, this input is focused
+    @param <Label Instance - label>, <MouseEvent Instance - event>, <boolean - handled>, <boolean - within>
+]]
 function Input:onLabelClicked( label, event, handled, within )
     self:focus()
     event.handled = true

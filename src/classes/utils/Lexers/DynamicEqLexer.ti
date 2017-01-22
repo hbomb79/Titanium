@@ -1,5 +1,14 @@
+--[[
+    A lexer that processes dynamic value equations into tokens used by DynamicEqParser
+]]
+
 class DynamicEqLexer extends Lexer
 
+--[[
+    @instance
+    @desc Finds a valid number in the current stream. Returns 'true' if one was found, 'nil' otherwise
+    @return <boolean - true> - Found a valid Lua number
+]]
 function DynamicEqLexer:lexNumber()
     local stream = self:trimStream()
     local exp, following = stream:match "^%d*%.?%d+(e)([-+]?%d*)"
@@ -15,6 +24,10 @@ function DynamicEqLexer:lexNumber()
     end
 end
 
+--[[
+    @instance
+    @desc The main token creator
+]]
 function DynamicEqLexer:tokenize()
     local stream = self:trimStream()
     local first = stream:sub( 1, 1 )

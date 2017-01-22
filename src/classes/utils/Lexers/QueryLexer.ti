@@ -1,5 +1,15 @@
+--[[
+    @instance inCondition - boolean (def. false) - If true, the lexer is currently processing a condition
+
+    A lexer that processes node queries into tokens used by QueryParser
+]]
+
 class QueryLexer extends Lexer
 
+--[[
+    @instance
+    @desc The main token creator
+]]
 function QueryLexer:tokenize()
     if self.stream:find "^%s" and not self.inCondition then
         self:pushToken { type = "QUERY_SEPERATOR" }
@@ -29,6 +39,11 @@ function QueryLexer:tokenize()
     end
 end
 
+--[[
+    @instance
+    @desc When the lexer finds a condition (isCondition = true), this function is used to lex the condition
+    @param <string - stream>
+]]
 function QueryLexer:tokenizeCondition( stream )
     local first = stream:sub( 1, 1 )
     if stream:find "%b[]" then

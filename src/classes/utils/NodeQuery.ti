@@ -66,6 +66,12 @@ local function performQuery( query, base )
     return lastResults
 end
 
+--[[
+    @static supportedMethods - table (def. { ... }) - Methods inside the table are automatically implemented on NodeQuery instances at instantiation. When called, the method is executed on all nodes in the result set with all arguments being passed
+    @instance result - table (def. false) - All nodes that matched the query
+    @instance parent - Instance (def. false) - The Titanium instance that the NodeQuery will begin searching at
+]]
+
 class NodeQuery {
     static = { supportedMethods = { "addClass", "removeClass", "setClass", "set", "animate", "on", "off" } };
     result = false;
@@ -73,6 +79,12 @@ class NodeQuery {
     parent = false;
 }
 
+--[[
+    @constructor
+    @desc Constructs the NodeQuery instance by parsing 'queryString' and executing the query.
+
+          Supported methods configured via NodeQuery.static.supportedMethods are then implemented on the instance.
+]]
 function NodeQuery:__init__( parent, queryString )
     if not ( Titanium.isInstance( parent ) and type( queryString ) == "string" ) then
         return error "Node query requires Titanium instance and string query"
@@ -126,6 +138,11 @@ function NodeQuery:hasClass( class )
     return true
 end
 
+--[[
+    @instance
+    @desc The function 'fn' will be called once for each node in the result set, with the node being passed each time (essentially iterates over each node in the result set)
+    @param <function - fn>
+]]
 function NodeQuery:each( fn )
     local nodes = self.result
     for i = 1, #nodes do

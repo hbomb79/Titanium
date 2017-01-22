@@ -1,5 +1,16 @@
+--[[
+    The Page node is used by PageContainer nodes to hold content.
+
+    The width and height of the page is automatically defined when setting a parent on the page.
+]]
+
 class Page extends ScrollContainer
 
+--[[
+    @setter
+    @desc Sets the parent, and adjusts the width and height of the page to match that of the parent
+    @param <Node Instance - parent>
+]]
 function Page:setParent( parent )
     self.super:setParent( parent )
 

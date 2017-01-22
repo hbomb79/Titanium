@@ -2,16 +2,44 @@ local TERMS = { "NAME", "STRING", "NUMBER", "PAREN" }
 local BIN_AMBIG = { "binary", "ambiguos" }
 local UNA_AMBIG = { "unary", "ambiguos" }
 
+--[[
+    @instance stacks - table (def. {{}}) - A two dimensional table, containing the stacks used by the query (ie: self.value, self.parent.value). Can be resolved to find the values using :resolveStacks
+    @instance state - string (def. "root") - The current state of the parser, can be 'root' or 'name'. If 'root', :parseRootState will be called, else :parseNameState
+    @instance output - string (def. "local args = ...; return") - The Lua equation formed while parsing.
+
+    Parses the tokens from DynamicEqLexer into a Lua equation (string) and a set of stacks
+]]
+
 class DynamicEqParser extends Parser {
     state = "root";
     stacks = {{}};
     output = "local args = ...; return ";
 }
 
+--[[
+    @constructor
+    @desc Invokes the Parser constructor, passing the tokens from the DynamicEqLexer (using the expression provided)
+    @param <string - expression>
+]]
 function DynamicEqParser:__init__( expression )
     self:super( DynamicEqLexer( expression ).tokens )
 end
 
+--[[
+    @instance
+    @desc Allows precise testing of adjacent operators so that a tokens position can be validated.
+
+          If the beforeType is specified, without an afterType the token before the current token must be an operator of the type specified using 'beforeType'.
+          If the afterType is specified, without a beforeType, the same as above applies for the token after the current token.
+
+          If both before and after type are specified, both the token before and after the current must match the type specified using 'beforeType' and 'afterType' respectively.
+
+          If 'optional', the test will no fail if no token exists before/after the current token (depending on which types are specified).
+
+          If the 'beforeOffset' or 'afterOffset' is specified, the token checked before or after the current token will be offset by the amount specified.
+    @param [string, table - beforeType], [string, table - afterType], [boolean - optional], [number - beforeOffset], [number - afterOffset]
+    @return <boolean - success>
+]]
 function DynamicEqParser:testForOperator( beforeType, afterType, optional, beforeOffset, afterOffset )
     local pass, before, after = self:testAdjacent( beforeType and "OPERATOR", afterType and "OPERATOR", false, beforeOffset, afterOffset, not optional )
     if not pass then return false end
@@ -32,10 +60,24 @@ function DynamicEqParser:testForOperator( beforeType, afterType, optional, befor
     if beforeType and afterType then return bT and aT else return ( beforeType and bT ) or ( afterType and aT ) end
 end
 
+--[[
+    @instance
+    @desc Tests for terms before the current token (if 'pre') and after the current token (if 'post'). If no token before/after current token and not 'optional', test will fail.
+
+          A term is a 'NAME', 'STRING', 'NUMBER', or 'PAREN' token from the lexer
+    @param [boolean - pre], [boolean - post], [boolean - optional]
+    @return <boolean - success>
+]]
 function DynamicEqParser:testForTerms( pre, post, optional )
     return self:testAdjacent( pre and TERMS, post and TERMS, false, false, false, not optional )
 end
 
+--[[
+    @instance
+    @desc Resolves the current stacks found using the parser by finding the Titanium instance attached to it. Stacks are passed to MPropertyManager:dynamicallyLinkProperty as 'arguments'
+    @param <Instance - target>
+    @return <table - instances>
+]]
 function DynamicEqParser:resolveStacks( target )
     local stacks, instances = self.stacks, {}
     for i = 1, #stacks - ( #stacks[ #stacks ] == 0 and 1 or 0 ) do
@@ -65,10 +107,20 @@ function DynamicEqParser:resolveStacks( target )
     return instances
 end
 
+--[[
+    @instance
+    @desc Appends 'str' to the parser output. If no 'str' is given, the 'value' of the current token is appended instead
+    @param [string - str]
+]]
 function DynamicEqParser:appendToOutput( str )
     self.output = self.output .. ( str or self:getCurrentToken().value )
 end
 
+--[[
+    @instance
+    @desc Parses 'token' at the root state (ie: not resolving a name)
+    @param <table - token>
+]]
 function DynamicEqParser:parseRootState( token )
     token = token or self:getCurrentToken()
     if token.type == "NAME" then
@@ -127,6 +179,13 @@ function DynamicEqParser:parseRootState( token )
     end
 end
 
+--[[
+    @instance
+    @desc Resolves the name by using the token provided. If a 'DOT' is found and a 'NAME' follows, the name is appended to the parser stacks (otherwise, trailing DOT raises exception)
+
+          If no DOT is found, the parser state is reset to 'root'
+    @param <table - token>
+]]
 function DynamicEqParser:parseNameState( token )
     token = token or self:getCurrentToken()
     if token.type == "DOT" then
@@ -146,18 +205,40 @@ function DynamicEqParser:parseNameState( token )
     end
 end
 
+--[[
+    @instance
+    @desc Returns the current stack if no 'offset', otherwise returns the stack using the offset (ie: offset of -1 will return the last stack)
+    @param [number - offset]
+    @return [table - stack]
+]]
 function DynamicEqParser:getStack( offset )
     return self.stacks[ #self.stacks + ( offset or 0 ) ]
 end
 
+--[[
+    @instance
+    @desc Appends 'value' to the stack information (current stack is used if no 'stackOffset', otherwise the offset is used to find the stack)
+    @param <string - value>, [number - stackOffset]
+]]
 function DynamicEqParser:appendToStack( value, stackOffset )
     table.insert( self:getStack( stackOffset ), value )
 end
 
+--[[
+    @setter
+    @desc Sets the state of the parser
+    @param <string - state>
+]]
 function DynamicEqParser:setState( state )
     self.state = state
 end
 
+--[[
+    @instance
+    @desc Invokes the correct parser function (:parseRoot or Name state) depending on the parser 'state'
+
+          Token is automatically stepped forward after invoking the parser function.
+]]
 function DynamicEqParser:parse()
     local token = self:stepForward()
     while token do

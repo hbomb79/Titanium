@@ -5,12 +5,27 @@ local function parseValue( val )
     return tonumber( val ) or error("Invalid value passed for parsing '"..tostring( val ).."'")
 end
 
+--[[
+    @instance query - table (def. nil) - The parsed query - only holds the query once parsing is complete
+
+    Parses the tokens from QueryLexer into a table containing the query
+]]
+
 class QueryParser extends Parser
 
+--[[
+    @constructor
+    @desc Invokes the Parser constructor, passing the tokens from QueryLexer
+    @param <string - queryString>
+]]
 function QueryParser:__init__( queryString )
     self:super( QueryLexer( queryString ).tokens )
 end
 
+--[[
+    @instance
+    @desc The main parser. Iterates over all tokens generating the table containing the query (stored in self.query)
+]]
 function QueryParser:parse()
     local allQueries, currentQuery, currentStep = {}, {}, {}
 
@@ -70,6 +85,11 @@ function QueryParser:parse()
     self.query = allQueries
 end
 
+--[[
+    @instance
+    @desc Used to parse conditions inside the query. Called from ':parse'
+    @return <table - conditions> - If a valid condition was found
+]]
 function QueryParser:parseCondition()
     local conditions, condition = {}, {}
 

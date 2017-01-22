@@ -12,6 +12,7 @@
     @instance disabledColour - colour (def. 128) - When the node is disabled (enabled 'false'), this colour should be used to draw the foreground
     @instance disabledBackgroundColour - colour (def. 256) - When the node is disabled (enabled 'false'), this colour should be used to draw the background
     @instance needsRedraw - boolean (def. true) - If true, the contents of the nodes canvas will be blit onto the parents canvas without redrawing the nodes canvas contents, unlike 'changed', which does both
+    @instance consumeWhenDisabled - boolean (def. true) - When true, mouse events that collide with this node while it is disabled will be consumed (handled = true). Non-mouse events are unaffected by this property
 
     A Node is an object which makes up the applications graphical user interface (GUI).
 
@@ -51,6 +52,8 @@ abstract class Node extends Component mixin MThemeable mixin MCallbackManager {
 
     needsRedraw = true;
     parent = false;
+
+    consumeWhenDisabled = true;
 }
 
 --[[
@@ -170,18 +173,20 @@ end
     *Note: The event instance passed can be of variable type, ideally it extends 'Event' so that required methods are implemented on the eventObj.
 ]]
 function Node:handle( eventObj )
-    if not self.enabled then return false end
-
     local main, sub, within = eventObj.main, eventObj.sub, false
-    local handled = eventObj.handled
+    local handled, enabled = eventObj.handled, self.enabled
 
     if main == "MOUSE" then
         if self.allowMouse then
             within = eventObj.isWithin and eventObj:withinParent( self ) or false
+
+            if within and not enabled and self.consumeWhenDisabled then eventObj.handled = true end
         else return end
     elseif ( main == "KEY" and not self.allowKey ) or ( main == "CHAR" and not self.allowChar ) then
         return
     end
+
+    if not enabled then return end
 
     local fn = Node.eventMatrix[ eventObj.name ] or "onEvent"
     if self:can( fn ) then

@@ -193,7 +193,9 @@ function Application:unschedule( name )
 end
 
 --[[
-
+    @instance
+    @desc Returns the position of the application, used when calculating the absolute position of a child node relative to the term object
+    @return <number - X>, <number - Y>
 ]]
 function Application:getAbsolutePosition()
     return self.X, self.Y

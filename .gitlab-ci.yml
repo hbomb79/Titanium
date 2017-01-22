@@ -40,7 +40,10 @@ build-release:
     - echo "Searching for documentation"
     - ruby bin/commentParse.rb
     - echo "Publishing documentation"
-    - curl --data "data=`base64 rubyout`&key=$DEPLOY_DOCUMENTATION_KEY&tag=$CI_BUILD_TAG" http://harryfelton.web44.net/titanium/deliverDocs.php
+    - echo -n data= > body
+    - echo -n "$(base64 rubyout)" >> body
+    - echo -n "&key=$DEPLOY_DOCUMENTATION_KEY&tag=$CI_BUILD_TAG" >> body
+    - curl --data "@body" http://harryfelton.web44.net/titanium/deliverDocs.php
   environment: release
   artifacts:
     name: "release_${CI_BUILD_REF_NAME}"

@@ -1,4 +1,6 @@
 --[[
+    @instance position - number, nil (def. nil) - If set, the page will be at that position in the container (ie: 1 = first page, 3 = 3rd page).If not set, the page will fit in whereever it can, making space for pages that
+
     The Page node is used by PageContainer nodes to hold content.
 
     The width and height of the page is automatically defined when setting a parent on the page.
@@ -12,13 +14,40 @@ class Page extends ScrollContainer
     @param <Node Instance - parent>
 ]]
 function Page:setParent( parent )
-    self.super:setParent( parent )
+    if Titanium.typeOf( parent, "PageContainer", true ) then
+        self:linkProperties( parent, "width", "height" )
+    else
+        self:unlinkProperties( parent, "width", "height" )
+    end
 
-    self.width = parent.width
-    self.height = parent.height
+    self.super:setParent( parent )
+end
+
+--[[
+    @instance
+    @desc Sets the X position of this page depending on it's position and the width of the parent.
+
+          This function is called by the parent PageContainer automatically
+]]
+function Page:updatePosition()
+    self.X = self.parent.width * ( self.position - 1 ) + 1
+end
+
+--[[
+    @setter
+    @desc Updates the position and sets 'isPositionTemporary' to nil
+    @param [number - position]
+]]
+function Page:setPosition( position )
+    self.position = position
+    self.isPositionTemporary = nil
 end
 
 configureConstructor {
     orderedArguments = { "id" },
+    argumentTypes = {
+        id = "string",
+        position = "number"
+    },
     requiredArguments = { "id" }
 }

@@ -1,4 +1,4 @@
-<PageContainer X=1 Y=1 width=51 height=19>
+<PageContainer X=1 Y=1 width="$application.width" height="$application.height">
     <Page id="main" xScrollAllowed="false">
         <Label X=2 Y=2 text="Titanium" class="header"/>
         <Label X=2 Y=3 text="Test Application" class="sub"/>

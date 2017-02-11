@@ -1,8 +1,8 @@
 --[[
     @instance width - number (def. 1) - The objects width, defines the width of the canvas.
     @instance height - number (def. 1) - The objects width, defines the height of the canvas.
-    @instance X - number (def. 1) - The objects X position
-    @instance Y - number (def. 1) - The objects Y position
+    @instance X - number (def. 1) - The objects X position.
+    @instance Y - number (def. 1) - The objects Y position.
     @instance changed - boolean (def. true) - If true, the node will be redrawn by it's parent. This propagates upto the application, before being drawn to the CraftOS term object. Set to false after draw.
     @instance backgroundChar - string (def. " ") - Defines the character used when redrawing the canvas. Can be set to "nil" to use no character at all.
 

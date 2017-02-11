@@ -2,6 +2,7 @@
     @static eventMatrix - table (def. {}) - Contains the event -> function name matrix. If an event name is found in the keys, the value is used as the function to call on the instance (otherwise, 'onEvent' is called)
     @static anyMatrix - table (def. {}) - Only used when 'useAnyCallbacks' is true. If a key matching the 'main' key of the event instance is found, it's value is called (ie: MOUSE -> onMouse)
 
+    @instance Z - number (def. 1) - The nodes Z index. Objects with higher z indexes appear above others.
     @instance enabled - boolean (def. true) - When 'true', node may receive events
     @instance parentEnabled - boolean (def. true) - When 'true', the parent of this node is enabled
     @instance visible - boolean (def. true) - When 'true', node is drawn to parent canvas
@@ -54,6 +55,8 @@ abstract class Node extends Component mixin MThemeable mixin MCallbackManager {
     parent = false;
 
     consumeWhenDisabled = true;
+
+    Z = 1;
 }
 
 --[[
@@ -232,6 +235,44 @@ function Node:animate( ... )
     return self.application:addAnimation( Tween( self, ... ) )
 end
 
+--[[
+    @instance
+    @desc Reorders the node inside the parents 'nodes' table depending on the nodes 'Z' position.
+]]
+function Node:updateZ()
+    if not self.parent then return end
+    local nodes, targetZ = self.parent.nodes, self.Z
+
+    for i = 1, #nodes do
+        if nodes[ i ] == self then
+            while true do
+                local before, after = nodes[ i - 1 ], nodes[ i + 1 ]
+
+                if before and before.Z > targetZ then
+                    nodes[ i ], nodes[ i - 1 ] = nodes[ i - 1 ], self
+                    i = i - 1
+                elseif after and after.X < targetZ then
+                    nodes[ i ], nodes[ i + 1 ] = nodes[ i + 1 ], self
+                    i = i + 1
+                else break end
+            end
+
+            self.changed = true
+            break
+        end
+    end
+end
+
+--[[
+    @setter
+    @desc Changes the z index of the node, and updates the z position (:updateZ)
+    @param <number - Z>
+]]
+function Node:setZ( Z )
+    self.Z = Z
+    self:updateZ()
+end
+
 configureConstructor {
-    argumentTypes = { enabled = "boolean", visible = "boolean", disabledColour = "colour", disabledBackgroundColour = "colour", consumeWhenDisabled = "boolean" }
+    argumentTypes = { enabled = "boolean", visible = "boolean", disabledColour = "colour", disabledBackgroundColour = "colour", consumeWhenDisabled = "boolean", Z = "number" }
 }

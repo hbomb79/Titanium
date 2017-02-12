@@ -56,7 +56,7 @@ function Dropdown:__init__( ... )
     self:super( ... )
 
     self.optionDisplay = self:addNode( Button "":linkProperties( self, "horizontalAlign", "disabledColour", "disabledBackgroundColour", "activeColour", "activeBackgroundColour" ):on("trigger", function() self:toggleOptionDisplay() end) )
-    self.optionContainer = self:addNode( ScrollContainer( 1, 2, self.width ):set{ xScrollAllowed = false } )
+    self.optionContainer = self:addNode( ScrollContainer( 1, 2, self.width ):set{ xScrollAllowed = false, consumeWhenDisabled = false } )
 
     self:closeOptionDisplay()
     self.consumeAll = false --TODO: Is this really needed - I think it would almost be better to have it as 'true' (default)
@@ -115,6 +115,8 @@ end
     @desc Updates the toggle buttons text, width, colour and backgroundColour (the colour and backgroundColour are sourced from 'selectedColour' and 'selectedBackgroundColour' respectively)
 ]]
 function Dropdown:updateDisplayButton()
+    self.height = 1 + ( self.optionContainer.visible and self.optionContainer.height or 0 )
+
     self.optionDisplay.text = ( type( self.selectedOption ) == "table" and self.selectedOption[ 1 ] or self.prompt ) .. ( self.optionContainer.visible and self.openIndicator or self.closedIndicator )
     self.optionDisplay.width = #self.optionDisplay.text
 
@@ -158,7 +160,6 @@ function Dropdown:checkOptions()
     local cont, options = self.optionContainer, self.options
     local nodes = cont.nodes
     local count = #nodes
-    self:updateDisplayButton()
 
     local rOptionCount = #options - ( self.selectedOption and 1 or 0 )
     if count > rOptionCount then
@@ -168,7 +169,7 @@ function Dropdown:checkOptions()
     elseif count < rOptionCount then
         repeat
             cont:addNode(Button( "ERR", 1, #nodes + 1, self.width )
-                :linkProperties( self, "colour", "activeColour",
+                :set("consumeWhenDisabled", false):linkProperties( self, "colour", "activeColour",
                 "disabledColour", "backgroundColour", "activeBackgroundColour",
                 "disabledBackgroundColour", "horizontalAlign" ))
         until #nodes == rOptionCount
@@ -177,11 +178,12 @@ function Dropdown:checkOptions()
 
     count = #nodes
     if self.maxHeight then
-        cont.height, self.height = math.min( count, self.maxHeight - 1 ), math.min( count + 1, self.maxHeight )
+        cont.height = math.min( count, self.maxHeight - 1 )
     else
-        cont.height, self.height = count, count + 1
+        cont.height = count
     end
 
+    self:updateDisplayButton()
     self.optionsChanged = false
     if #options > 0 then cont.yScroll = math.min( cont.yScroll, count ) end
 end

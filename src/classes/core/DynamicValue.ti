@@ -23,7 +23,7 @@ class DynamicValue {
     @param <Instance - target>, <string - property>, <string - equation>
 ]]
 function DynamicValue:__init__( target, property, equation )
-    if not ( Titanium.isType( target, "Node", true ) and type( equation ) == "string" ) then
+    if not ( Titanium.typeOf( target, "Node", true ) and type( equation ) == "string" ) then
         return error("Failed to initialise DynamicValue. Expected 'Node Instance' and string.")
     end
 

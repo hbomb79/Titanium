@@ -58,7 +58,8 @@ end
     @desc Create the property links for all properties required by the dynamic value.
 ]]
 function DynamicValue:attach()
-    if not self.resolvedStacks then
+    local resolvedStacks = self.resolvedStacks
+    if not resolvedStacks then
         return error "Cannot attach DynamicValue. Dynamic stacks have not been resolved yet, try :refresh"
     end
 
@@ -82,7 +83,8 @@ end
     @desc Removes the property links for all properties required by the dynamic value.
 ]]
 function DynamicValue:detach()
-    if not self.resolvedStacks then
+    local resolvedStacks = self.resolvedStacks
+    if not resolvedStacks then
         return error "Cannot detach DynamicValue. Dynamic stacks have not been resolved yet, try :refresh"
     end
 
@@ -102,7 +104,6 @@ end
 ]]
 function DynamicValue:destroy()
     if self.target then
-        self:detach()
         self.target:removeDynamicValue( self.property )
     end
 end

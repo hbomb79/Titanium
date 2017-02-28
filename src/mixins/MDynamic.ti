@@ -27,7 +27,7 @@ function MDynamic:setDynamicValue( dynamicValueInstance, enableOverride )
         if enableOverride then
             self.dynamicValues[ property ]:detach()
         else
-            return error("Failed to add dynamic value for property '"..property.."'. A dynamic value for this class already exists")
+            return error("Failed to add dynamic value for property '"..property.."'. A dynamic value for this instance already exists")
         end
     end
 

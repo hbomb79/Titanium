@@ -40,20 +40,25 @@ end
     @desc Removes the dynamic value instance set for the property provided if one is found.
 
           If one can be found, it is detached from the target and removed from this register.
+    @return <boolean - removed>
 ]]
 function MDynamic:removeDynamicValue( property )
     local dynamicValues = self.dynamicValues
     if dynamicValues[ property ] then
         dynamicValues[ property ]:detach()
         dynamicValues[ property ] = nil
+
+        return true
     end
+
+    return false
 end
 
 --[[
     @instance
     @desc Iterates over every dynamic value and detaches them from their target
 ]]
-function MDynamic:pauseDynamicValues()
+function MDynamic:detachDynamicValues()
     for _, instance in pairs( self.dynamicValues ) do
         instance:detach()
     end
@@ -64,7 +69,7 @@ end
     @desc Finds the dynamic value instance for the property provided and detaches it from it's target
     @param <string - property>
 ]]
-function MDynamic:pauseDynamicValue( property )
+function MDynamic:detachDynamicValue( property )
     local dyn = self.dynamicValues[ property ]
     if dyn then
         dyn:detach()

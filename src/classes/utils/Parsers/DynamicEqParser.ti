@@ -78,7 +78,7 @@ end
     @param <Instance - target>
     @return <table - instances>
 ]]
-function DynamicEqParser:resolveStacks( target )
+function DynamicEqParser:resolveStacks( target, allowFailure )
     local stacks, instances = self.stacks, {}
     for i = 1, #stacks - ( #stacks[ #stacks ] == 0 and 1 or 0 ) do
         local stack = stacks[ i ]
@@ -100,7 +100,7 @@ function DynamicEqParser:resolveStacks( target )
             instancePoint = instancePoint[ stack[ p ] ]
         end
 
-        if not instancePoint then self:throw "Invalid instance" elseif not stack[ #stack ] then self:throw "Invalid property" end
+        if not instancePoint then if allowFailure then return end self:throw "Invalid instance" elseif not stack[ #stack ] then self:throw "Invalid property" end
         instances[ #instances + 1 ] = { stack[ #stack ], instancePoint }
     end
 

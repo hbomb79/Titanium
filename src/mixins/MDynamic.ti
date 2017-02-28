@@ -80,9 +80,17 @@ end
     @instance
     @desc Iterates over every dynamic value and attaches them to their targets
 ]]
-function MDynamic:refreshDynamicValues()
+function MDynamic:refreshDynamicValues( noChildren )
     for _, instance in pairs( self.dynamicValues ) do
         instance:refresh()
+    end
+
+    if not noChildren and self.collatedNodes then
+        local nodes = self.collatedNodes
+
+        for i = 1, #nodes do
+            nodes[ i ]:refreshDynamicValues()
+        end
     end
 end
 

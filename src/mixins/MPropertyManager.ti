@@ -4,11 +4,10 @@
     Note: Only supports watching of arguments that have had their types set via `configure`.
 ]]
 
-abstract class MPropertyManager {
+abstract class MPropertyManager mixin MDynamic {
     watching = {};
     foreignWatchers = {};
     links = {};
-    binds = {};
 }
 
 --[[

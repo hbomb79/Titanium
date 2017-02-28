@@ -113,14 +113,18 @@ end
     @desc Refresh the dynamic value by resolving the instance stacks, removing any current property links and re-attaching the dynamic value to it's targets and
 ]]
 function DynamicValue:refresh()
-    local stacks, newCachedValues = self.eq:resolveStacks( self ), {}
+    local stacks, newCachedValues = self.eq:resolveStacks( self.target, true ), {}
     if stacks then
+        self.resolvedStacks = stacks
         self:attach()
 
+        local stack
         for i = 1, #stacks do
-            newCachedValues[ i ] = stacks[ 2 ][ stacks[ 1 ] ]
+            stack = stacks[ i ]
+            newCachedValues[ i ] = stack[ 2 ][ stack[ 1 ] ]
         end
     end
 
     self.resolvedStacks, self.cachedValues = stacks, newCachedValues
+    if stacks then self:solve() end
 end

@@ -1,91 +1,123 @@
 --[[
-    @instance propertyValues - table (def. {}) - The values of all watched properties, passed to the equation when solving the dynamic value equation
-    @instance properties - table (def. {}) - The properties being watched by this DynamicValue
-    @instance target - Instance (def. nil) - The Titanium instance that the DynamicValue belongs to. When re-solved, the 'property' is updated on this target to become the new value of the equation
-    @instance property - string (def. nil) - The property that the DynamicValue is responsible for updating on 'target'
-    @instance equation - string (def. nil) - The Lua equation that will be solved to find the value for 'property' on 'target'
-
-    A dynamic value object is used by MPropertyManager (primarily) to link properties to an equation.
-
-    When instantiated, the DynamicValue object automatically creates watch instructions on the properties provided via 'properties'.
-    Anytime one of the watched properties changes, the DynamicValue is updated and the equation provided is re-solved, with the new
-    property values provided.
-
-    This allows for equations dependent on other instances to become dynamic, changing with their target instances.
+    WIP
 ]]
 
 class DynamicValue {
-    propertyValues = {};
-    properties = {};
+    target = false;
+
+    equation = false;
+    compiledEquation = false;
+
+    parsed = false;
+    resolvedStacks = false;
+
+    cachedValues = {};
+
+    attached = false;
 }
 
 --[[
     @constructor
-    @desc Creates watcher instructions towards 'target' for each property linked
-    @param <Instance - target>, <string - property>, <table - properties>, <string - equation>
+    @desc Initialises the DynamicValue instance. Set's the target (instance), property (string) and equation (string) of the
+          dynamic value, parses the equation and stores the parser on the instance (eq).
+    @param <Instance - target>, <string - property>, <string - equation>
 ]]
-function DynamicValue:__init__( ... )
-    self:resolve( ... )
-    self:attach()
-
-    local reg = Titanium.getClass( self.target.__type ):getRegistry().constructor
-    if reg and reg.argumentTypes then
-        self.type = reg.argumentTypes[ self.property ]
+function DynamicValue:__init__( target, property, equation )
+    if not ( Titanium.isType( target, "Node", true ) and type( equation ) == "string" ) then
+        return error("Failed to initialise DynamicValue. Expected 'Node Instance' and string.")
     end
 
-    self:solve()
+    self.target = target
+    self.property = property
+    self.equation = equation
+
+    self.eq = DynamicEqParser( equation )
+    self.compiledEquation = loadstring( self.eq.output, "DYNAMIC_VALUE_EQUATION@" .. self.__ID )
 end
 
 --[[
     @instance
-    @desc Attach watch instructions to each required argument
-]]
-function DynamicValue:attach()
-    local properties = self.properties
-    for i = 1, #properties do
-        local obj, prop = properties[ i ][ 2 ], properties[ i ][ 1 ]
-
-        obj:watchProperty( prop, function( _, __, val )
-            self.propertyValues[ i ] = val
-            self:solve()
-        end, "DYNAMIC_LINK_" .. self.__ID )
-
-        self.propertyValues[ i ] = obj[ prop ]
-    end
-end
-
---[[
-    @instance
-    @desc Detaches the watcher instructions towards the targets of the dynamic value
-]]
-function DynamicValue:detach()
-    local properties = self.properties
-    for i = 1, #properties do
-        local prop = properties[ i ]
-        prop[ 2 ]:unwatchProperty( prop[ 1 ], "DYNAMIC_LINK_" .. self.__ID )
-    end
-end
-
---[[
-    @instance
-    @desc Solves the 'equation' by inserting the values fetched off of linked targets
+    @desc Solves the equation (compiledEquation)
 ]]
 function DynamicValue:solve()
-    local fn, err = loadstring( self.equation )
-    if not fn then return error("Failed to solve dynamic value equation ("..tostring( eq ).."). Parse exception: " .. tostring( err )) end
+    if not self.compiledEquation then
+        return error "Cannot solve DynamicValue. Dynamic equation has not been compiled yet, try :refresh"
+    end
 
-    local ok, val = pcall( fn, self.propertyValues )
-    if not ok then return error("Failed to solve dyamic value equation ("..tostring( eq ).."). Runtime exception: " .. tostring( val )) end
-
-    self.target[ self.property ] = XMLParser.convertArgType( val, self.type )
+    local ok, err = pcall( self.compiledEquation, self.cachedValues )
+    if not ok then
+        print( "[WARNING]: Failed to solve DynamicValue. Dynamic equation failed to execute '"..tostring( err ).."'" )
+        self:detach()
+    end
 end
 
-configureConstructor {
-    orderedArguments = { "target", "property", "properties", "equation" },
-    argumentTypes = {
-        property = "string",
-        properties = "table",
-        equation = "string"
-    },
-    requiredArguments = true
-}
+--[[
+    @instance
+    @desc Create the property links for all properties required by the dynamic value.
+]]
+function DynamicValue:attach()
+    if not self.resolvedStacks then
+        return error "Cannot attach DynamicValue. Dynamic stacks have not been resolved yet, try :refresh"
+    end
+
+    self:detach()
+
+    local stack
+    for i = 1, #resolvedStacks do
+        stack = resolvedStacks[ i ]
+
+        stack[ 2 ]:watchProperty( stack[ 1 ], function( _, __, value )
+            self.cachedValues[ i ] = value
+            self:solve()
+        end, "DYNAMIC_VALUE_" .. self.__ID )
+    end
+
+    self.attached = true
+end
+
+--[[
+    @instance
+    @desc Removes the property links for all properties required by the dynamic value.
+]]
+function DynamicValue:detach()
+    if not self.resolvedStacks then
+        return error "Cannot detach DynamicValue. Dynamic stacks have not been resolved yet, try :refresh"
+    end
+
+    local stack
+    for i = 1, #resolvedStacks do
+        stack = resolvedStacks[ i ]
+
+        stack[ 2 ]:unwatchProperty( stack[ 1 ], "DYNAMIC_VALUE_" .. self.__ID )
+    end
+
+    self.attached = false
+end
+
+--[[
+    @instance
+    @desc Invokes :detach on the dynamic value to remove all property links, before removing the DynamicValue instance from the targets MDynamic register.
+]]
+function DynamicValue:destroy()
+    if self.target then
+        self:detach()
+        self.target:removeDynamicValue( self.property )
+    end
+end
+
+--[[
+    @instance
+    @desc Refresh the dynamic value by resolving the instance stacks, removing any current property links and re-attaching the dynamic value to it's targets and
+]]
+function DynamicValue:refresh()
+    local stacks, newCachedValues = self.eq:resolveStacks( self ), {}
+    if stacks then
+        self:attach()
+
+        for i = 1, #stacks do
+            newCachedValues[ i ] = stacks[ 2 ][ stacks[ 1 ] ]
+        end
+    end
+
+    self.resolvedStacks, self.cachedValues = stacks, newCachedValues
+end

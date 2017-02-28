@@ -45,8 +45,10 @@ function DynamicValue:solve()
     end
 
     local ok, err = pcall( self.compiledEquation, self.cachedValues )
-    if not ok then
-        print( "[WARNING]: Failed to solve DynamicValue. Dynamic equation failed to execute '"..tostring( err ).."'" )
+    if ok then
+        self.target[ self.property ] = err
+    else
+        printError( "[WARNING]: Failed to solve DynamicValue. Dynamic equation failed to execute '"..tostring( err ).."'" )
         self:detach()
     end
 end

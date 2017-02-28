@@ -20,7 +20,7 @@
     Objects such as labels, buttons and text inputs are nodes.
 ]]
 
-abstract class Node extends Component mixin MThemeable mixin MCallbackManager {
+abstract class Node extends Component mixin MThemeable mixin MCallbackManager mixin MDynamic {
     static = {
         eventMatrix = {
             mouse_click = "onMouseClick",

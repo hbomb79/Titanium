@@ -211,6 +211,7 @@ end
     @param <string - property>, <table - arguments>, <string - equation>
 ]]
 function MPropertyManager:dynamicallyLinkProperty( property, arguments, equation )
+    error "Function deprecated"
     if self.links[ property ] then
         return error("Failed to create dynamic link for '"..property.."'. A link already exists for this property")
     elseif self.binds[ property ] then

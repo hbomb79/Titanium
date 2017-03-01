@@ -23,8 +23,16 @@ function MPropertyManager:MPropertyManager()
         local oldSetter = self.raw[ setterName ]
 
         self[ setterName ] = function( instance, value )
-            value = self:updateWatchers( property, value )
+            if type( value ) == "string" then
+                local escaped, rest = value:match "^(%%*)%$(.*)$"
+                if escaped and #escaped % 2 == 0 then
+                    self:setDynamicValue( DynamicValue( self, property, rest ), true )
 
+                    return
+                end
+            end
+
+            value = self:updateWatchers( property, value )
             if oldSetter then
                 oldSetter( self, instance, value )
             else

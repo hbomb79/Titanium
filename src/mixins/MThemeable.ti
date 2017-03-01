@@ -74,7 +74,6 @@ abstract class MThemeable {
     isUpdating = false;
     hooked = false;
 
-    rules = {};
     properties = {};
     classes = {};
     applicableRules = {};

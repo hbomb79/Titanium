@@ -24,7 +24,7 @@ local function formArguments( class, target )
                 returnArguments[ i ] = XMLParser.convertArgType( val, argType )
             else
                 returnArguments[ i ] = argType == "string" and "" or ( argType == "number" and 1 or ( argType == "boolean" ) ) or error "invalid argument type"
-                dynamics[ target ] = DynamicEqParser( rest )
+                dynamics[ target ] = rest
             end
         end
 
@@ -121,10 +121,8 @@ function TML:parseTree()
     for i = 1, #toSetup do
         local instance = toSetup[ i ][ 1 ]
 
-        for property, config in pairs( toSetup[ i ][ 2 ] ) do
-            --TODO: Resolve node queries
-
-            instance:dynamicallyLinkProperty( property, config:resolveStacks( instance ), config.output )
+        for property, expression in pairs( toSetup[ i ][ 2 ] ) do
+            instance:setDynamicValue( DynamicValue( instance, property, expression ) )
         end
     end
 end

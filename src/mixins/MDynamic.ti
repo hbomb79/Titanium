@@ -1,0 +1,107 @@
+--[[
+    WIP
+]]
+
+abstract class MDynamic {
+    dynamicValues = {};
+}
+
+--[[
+    @instance
+    @desc Set the dynamic value instance to be used for that property (the property set on the DynamicValue instance).
+
+          The dynamic value instance provided is refreshed after setting (:refresh)
+
+          If not enableOverride, exception will be raised if a dynamic value for the property has already been set.
+    @param <DynamicValue Instance - dynamicValueInstance>, [boolean - enableOveride]
+]]
+function MDynamic:setDynamicValue( dynamicValueInstance, enableOverride )
+    if not Titanium.typeOf( dynamicValueInstance, "DynamicValue", true ) then
+        return error "Failed to set dynamic value. Expected DynamicValue instance as argument #2"
+    elseif dynamicValueInstance.target ~= self then
+        return error "Failed to set dynamic value. DynamicValue instance provided belongs to another instance (target doesn't match this instance)"
+    end
+
+    local property = dynamicValueInstance.property
+    if self.dynamicValues[ property ] then
+        if enableOverride then
+            self.dynamicValues[ property ]:detach()
+        else
+            return error("Failed to add dynamic value for property '"..property.."'. A dynamic value for this instance already exists")
+        end
+    end
+
+    self.dynamicValues[ property ] = dynamicValueInstance
+    dynamicValueInstance:refresh()
+end
+
+--[[
+    @instance
+    @desc Removes the dynamic value instance set for the property provided if one is found.
+
+          If one can be found, it is detached from the target and removed from this register.
+    @return <boolean - removed>
+]]
+function MDynamic:removeDynamicValue( property )
+    local dynamicValues = self.dynamicValues
+    if dynamicValues[ property ] then
+        dynamicValues[ property ]:detach()
+        dynamicValues[ property ] = nil
+
+        return true
+    end
+
+    return false
+end
+
+--[[
+    @instance
+    @desc Iterates over every dynamic value and detaches them from their target
+]]
+function MDynamic:detachDynamicValues()
+    for _, instance in pairs( self.dynamicValues ) do
+        instance:detach()
+    end
+end
+
+--[[
+    @instance
+    @desc Finds the dynamic value instance for the property provided and detaches it from it's target
+    @param <string - property>
+]]
+function MDynamic:detachDynamicValue( property )
+    local dyn = self.dynamicValues[ property ]
+    if dyn then
+        dyn:detach()
+    end
+end
+
+--[[
+    @instance
+    @desc Iterates over every dynamic value and attaches them to their targets
+]]
+function MDynamic:refreshDynamicValues( noChildren )
+    for _, instance in pairs( self.dynamicValues ) do
+        instance:refresh()
+    end
+
+    if not noChildren and self.collatedNodes then
+        local nodes = self.collatedNodes
+
+        for i = 1, #nodes do
+            nodes[ i ]:refreshDynamicValues()
+        end
+    end
+end
+
+--[[
+    @instance
+    @desc Finds the dynamic value instance for the property provided and attached it to it's target
+    @param <string - property>
+]]
+function MDynamic:refreshDynamicValue( property )
+    local dyn = self.dynamicValues[ property ]
+    if dyn then
+        dyn:attach()
+    end
+end

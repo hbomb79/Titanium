@@ -29,6 +29,7 @@ function Container:__init__( ... )
         end
     end
 
+    self:register( "width", "height" )
     self:super()
 end
 

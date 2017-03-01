@@ -4,11 +4,10 @@
     Note: Only supports watching of arguments that have had their types set via `configure`.
 ]]
 
-abstract class MPropertyManager {
+abstract class MPropertyManager mixin MDynamic {
     watching = {};
     foreignWatchers = {};
     links = {};
-    binds = {};
 }
 
 --[[
@@ -181,12 +180,15 @@ end
     @return <Instance - self>
 ]]
 function MPropertyManager:linkProperties( target, ... )
-    local links = self.links
+    local links, ERR = self.links, "Failed to link foreign property '"..tostring(foreignProperty).."' from '"..tostring(target).."' to local property '"..tostring(localProperty).."'. A %s already exists for this local property, remove that link before linking"
+
     local function createLink( foreignProperty, localProperty )
         localProperty = localProperty or foreignProperty
 
         if self.links[ localProperty ] then
-            return error("Failed to link foreign property '"..tostring(foreignProperty).."' from '"..tostring(target).."' to local property '"..tostring(localProperty).."'. A link already exists for this local property, remove that link before linking")
+            return error( ERR:format "link" )
+        elseif self.dynamicValues[ localProperty ] then
+            return error( ERR:format "dynamic link" )
         end
 
         self:watchForeignProperty( foreignProperty, target, function( _, __, value )
@@ -207,33 +209,15 @@ end
 
 --[[
     @instance
-    @desc Creates a dynamic property link to self and all provided arguments. Can be removed using 'unlinkProperties'
-    @param <string - property>, <table - arguments>, <string - equation>
-]]
-function MPropertyManager:dynamicallyLinkProperty( property, arguments, equation )
-    if self.links[ property ] then
-        return error("Failed to create dynamic link for '"..property.."'. A link already exists for this property")
-    elseif self.binds[ property ] then
-        return error("Lingering dynamic bind found for property '"..property.."'. Failed to bind property")
-    end
-
-    self.links[ property ], self.binds[ property ] = true, DynamicValue( self, property, arguments, equation )
-end
-
---[[
-    @instance
     @desc Removes the property link for foreign properties ..., bound to 'target'. The properties provided represent the foreign property that is bound to, not the local property.
     @param <Instance - target>, <... - foreignProperties>
     @return <Instance - self>
 ]]
 function MPropertyManager:unlinkProperties( target, ... )
-    local properties, links, binds = { ... }, self.links, self.binds
+    local properties, links, dynamics = { ... }, self.links, self.dynamicValues
     for i = 1, #properties do
         local prop = properties[ i ]
-        if binds[ prop ] then
-            binds[ prop ]:detach()
-            binds[ prop ], links[ prop ] = nil, nil
-        else
+        if not self:removedDynamicValue( prop )then
             self:unwatchForeignProperty( prop, target, "PROPERTY_LINK_" .. self.__ID )
 
             if links[ prop ] == target then

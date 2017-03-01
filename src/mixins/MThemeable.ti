@@ -78,6 +78,7 @@ abstract class MThemeable {
     properties = {};
     classes = {};
     applicableRules = {};
+    rules = {};
 
     mainValues = {}; --TODO: Preserve dynamic values, instead of the dynamic value output so that they can be restored fully
     defaultValues = {};
@@ -242,6 +243,13 @@ function MThemeable:retrieveThemes( preserveOld )
     end
 
     self:filterThemes()
+
+    local nodes = self.nodes
+    if nodes then
+        for i = 1, #nodes do
+            nodes[ i ]:retrieveThemes( preserveOld )
+        end
+    end
 end
 
 --[[

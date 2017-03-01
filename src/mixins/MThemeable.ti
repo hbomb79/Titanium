@@ -129,6 +129,19 @@ function MThemeable:hook()
         self[ self.__resolved[ property ] and "mainValues" or "defaultValues" ][ property ] = self[ property ]
     end
 
+    self:on( "dynamic-instance-set", function( self, dynamicInstance )
+        if not self.isUpdating and dynamicInstance.property then
+            self.mainValues[ dynamicInstance.property ] = dynamicInstance
+        end
+    end )
+
+    self:on( "dynamic-instance-unset", function( self, property, dynamicInstance )
+        if not self.isUpdating and self.mainValues[ property ] == dynamicInstance then
+            self.mainValues[ property ] = nil
+        end
+    end )
+
+
     self.hooked = true
 end
 
@@ -139,6 +152,9 @@ end
 function MThemeable:unhook()
     if not self.hooked then return error "Failed to unhook theme handler. Already unhooked" end
     self:unwatchProperty( "*", "THEME_HOOK_" .. self.__ID )
+
+    self:off "dynamic-instance-set"
+    self:off "dynamic-instance-unset"
 
     self.hooked = false
 end
@@ -178,14 +194,13 @@ function MThemeable:updateProperty( property )
         return error( "Failed to update property '"..tostring( property ).."'. Property not registered" )
     end
 
-    --TODO: Look into removing old dynamic values when the theme rule is no longer used. Manual dynamicValues need to be distinguished from those created automatically. Ugh.
     local new, rule = self:fetchPropertyValue( property )
     self.isUpdating = true
     if new ~= nil then
-        if rule and rule.isDynamic then
-            if self.binds[ property ] then self:unlinkProperties( self, property ) end
-
-            self:dynamicallyLinkProperty( property, new:resolveStacks( self ), new.output )
+        if Titanium.typeOf( new, "DynamicValue", true ) then
+            self:setDynamicValue( new, true )
+        elseif rule and rule.isDynamic then
+            self:setDynamicValue( DynamicValue( self, property, new ), true )
         else
             self[ property ] = new
         end

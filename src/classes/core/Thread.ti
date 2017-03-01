@@ -5,6 +5,7 @@
     @instance filter - string (def. false) - If set, only events that match will be handled. If titanium events are enabled, the :is() function will be used.
     @instance exception - string (def. false) - If the thread crashes, coroutine.resume will catch the error and it will be stored inside of this property.
     @instance titaniumEvents - boolean (def. false) - If 'true', events passed to this thread will NOT be converted to CC events and will remain event instances
+    @instance crashSilently - boolean (def. false) - If 'false', errors caused by the thread will propogate out of the thread. If 'true', the error will not propogate
 
     The Thread object is a simple class used to wrap a function (chunk) in a coroutine.
 
@@ -13,6 +14,8 @@
 
     When resuming a thread, a titanium event should be passed via ':filterHandle'. Failing to do so will cause unexpected side-effects for threads
     that don't use 'titaniumEvents'. As a rule, ':handle' shouldn't be called manually.
+
+    Thread status can be managed with the 'finish' callback. If the thread crashes, the exception will be passed to that callback
 ]]
 
 class Thread mixin MCallbackManager {
@@ -24,13 +27,15 @@ class Thread mixin MCallbackManager {
     filter = false;
     exception = false;
 
+    crashSilently = false;
+
     titaniumEvents = false;
 }
 
 --[[
     @instance
     @desc Constructs the instance and starts the thread by invoking ':start'
-    @param <function - func>, [boolean - titaniumEvents], [string - id]
+    @param <function - func>, [boolean - titaniumEvents], [crashSilently - boolean], [string - id]
 ]]
 function Thread:__init__( ... )
     self:resolve( ... )
@@ -100,6 +105,10 @@ function Thread:handle( ... )
     else
         self.exception = filter
         self.running = false
+
+        if not self.crashSilently then
+            error( tostring( self ) .. " coroutine exception: " .. tostring( filter ) )
+        end
     end
 end
 
@@ -117,6 +126,6 @@ function Thread:setRunning( running )
 end
 
 configureConstructor {
-    orderedArguments = { "func", "titaniumEvents", "id" },
+    orderedArguments = { "func", "titaniumEvents", "crashSilently", "id" },
     requiredArguments = { "func" }
 }

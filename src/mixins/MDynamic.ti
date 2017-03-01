@@ -33,6 +33,8 @@ function MDynamic:setDynamicValue( dynamicValueInstance, enableOverride )
 
     self.dynamicValues[ property ] = dynamicValueInstance
     dynamicValueInstance:refresh()
+
+    self:executeCallbacks( "dynamic-instance-set", dynamicValueInstance )
 end
 
 --[[
@@ -44,9 +46,12 @@ end
 ]]
 function MDynamic:removeDynamicValue( property )
     local dynamicValues = self.dynamicValues
-    if dynamicValues[ property ] then
-        dynamicValues[ property ]:detach()
+    local dyn = dynamicValues[ property ]
+    if dyn then
+        dyn:detach()
         dynamicValues[ property ] = nil
+
+        self:executeCallbacks( "dynamic-instance-unset", property, dyn )
 
         return true
     end

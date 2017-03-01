@@ -79,7 +79,7 @@ function Theme.static.parse( source )
             end
 
             if dynamic then
-                value = DynamicEqParser( rule.content )
+                value = rule.content
             end
 
             if not rawRules[ ruleTarget ] then rawRules[ ruleTarget ] = {} end

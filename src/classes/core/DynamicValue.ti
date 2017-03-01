@@ -46,7 +46,12 @@ function DynamicValue:solve()
 
     local ok, err = pcall( self.compiledEquation, self.cachedValues )
     if ok then
+        local target = self.target
+
+        -- Stop MThemeable picking up this update and changing the mainValue to match
+        target.isUpdating = true
         self.target[ self.property ] = err
+        target.isUpdating = false
     else
         printError( "[WARNING]: Failed to solve DynamicValue. Dynamic equation failed to execute '"..tostring( err ).."'" )
         self:detach()

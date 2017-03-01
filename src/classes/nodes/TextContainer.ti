@@ -277,7 +277,7 @@ end
 ]]
 function TextContainer:setText( text )
     self.text = text
-    self:wrapText( self.cache.displayWidth )
+    self:wrapText( self.cache.displayWidth or 1 )
     self:cacheContent()
 
     self.yScroll = math.min( self.yScroll, self.cache.contentHeight - self.cache.displayHeight )

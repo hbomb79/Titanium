@@ -90,7 +90,7 @@ function TML:parseTree()
                 if classArg then target.arguments["class"] = nil end
 
                 local itemClass = Titanium.getClass( target.type ) or error( "Failed to spawn XML tree. Failed to find class '"..target.type.."'" )
-                if not Titanium.typeOf( itemClass, "Node" ) and target.type ~= "Page" then --TODO: Remove this page exception when issue #28 is resolved
+                if not Titanium.typeOf( itemClass, "Node" ) then
                     error("Failed to spawn XML tree. Class '"..target.type.."' is not a valid node")
                 end
 

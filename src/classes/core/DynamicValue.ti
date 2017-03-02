@@ -89,9 +89,7 @@ end
 ]]
 function DynamicValue:detach()
     local resolvedStacks = self.resolvedStacks
-    if not resolvedStacks then
-        return error "Cannot detach DynamicValue. Dynamic stacks have not been resolved yet, try :refresh"
-    end
+    if not resolvedStacks then return end
 
     local stack
     for i = 1, #resolvedStacks do

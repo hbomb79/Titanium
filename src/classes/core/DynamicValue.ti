@@ -50,7 +50,7 @@ function DynamicValue:solve()
 
         -- Stop MThemeable picking up this update and changing the mainValue to match
         target.isUpdating = true
-        self.target[ self.property ] = err
+        self.target[ self.property ] = XMLParser.convertArgType( err, self.propertyType )
         target.isUpdating = false
     else
         printError( "[WARNING]: Failed to solve DynamicValue. Dynamic equation failed to execute '"..tostring( err ).."'" )
@@ -126,6 +126,11 @@ function DynamicValue:refresh()
             stack = stacks[ i ]
             newCachedValues[ i ] = stack[ 2 ][ stack[ 1 ] ]
         end
+    end
+
+    if self.target then
+        local reg = Titanium.getClass( self.target.__type ).getRegistry().constructor.argumentTypes
+        self.propertyType = reg[ self.property ]
     end
 
     self.resolvedStacks, self.cachedValues = stacks, newCachedValues

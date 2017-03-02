@@ -1,4 +1,4 @@
-local TERMS = { "NAME", "STRING", "NUMBER", "PAREN" }
+local TERMS = { "NAME", "STRING", "NUMBER", "PAREN", "QUERY" }
 local BIN_AMBIG = { "binary", "ambiguos" }
 local UNA_AMBIG = { "unary", "ambiguos" }
 
@@ -93,6 +93,20 @@ function DynamicEqParser:resolveStacks( target, allowFailure )
             instancePoint = target.parent
         elseif stackStart == "application" then
             instancePoint = target.application
+        elseif stackStart:sub( 1, 1 ) == "{" then
+            if not target.application then
+                if allowFailure then return end
+                self:throw "Cannot resolve stacks. Resolution of node queries requires an application instance be set on the target"
+            end
+
+            local query = NodeQuery( target.application, stackStart:sub( 2, -2 ) ).result
+            if not query then
+                if allowFailure then return end
+
+                self:throw( "Failed to resolve stacks. Node query '"..stackStart.."' resolved to 0 nodes" )
+            end
+
+            instancePoint = query[ 1 ]
         else self:throw("Invalid stack start '"..stackStart.."'. Only self, parent and application allowed") end
 
         for p = 2, #stack - 1 do
@@ -174,6 +188,11 @@ function DynamicEqParser:parseRootState( token )
         else self:throw("Unknown operator '"..token.value.."'") end
 
         self:appendToOutput( (" %s "):format( token.value ) )
+    elseif token.type == "QUERY" then
+        self:appendToStack( token.value )
+        self:setState "name"
+
+        self:appendToOutput( "args["..#self.stacks.."]" )
     else
         self:throw("Unexpected block '"..token.value.."' of token type '"..token.type.."'.")
     end

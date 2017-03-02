@@ -68,12 +68,16 @@ function Theme.static.parse( source )
             local ownerType = entry[ 3 ].type
             local dynamic = rule.arguments.dynamic
 
-            local ruleTarget, computeType, value = ownerType, false, rule.content
+            local ruleTarget, computeType, value, ruleProperty = ownerType, false, rule.content, rule.type
             if ownerType == "Any" then
                 ruleTarget, computeType = "ANY", true
             elseif not dynamic then
                 local parentReg = Titanium.getClass( ownerType ).getRegistry()
                 local argumentTypes = parentReg.constructor and parentReg.constructor.argumentTypes or {}
+
+                if parentReg.alias[ rule.type ] then
+                    ruleProperty = parentReg.alias[ rule.type ]
+                end
 
                 value = XMLParser.convertArgType( value, argumentTypes[ parentReg.alias[ rule.type ] or rule.type ] )
             end
@@ -86,7 +90,7 @@ function Theme.static.parse( source )
             if not rawRules[ ruleTarget ][ queryPrefix ] then rawRules[ ruleTarget ][ queryPrefix ] = {} end
             table.insert( rawRules[ ruleTarget ][ queryPrefix ], {
                 computeType = not dynamic and computeType or nil,
-                property = rule.type,
+                property = ruleProperty,
                 value = value,
                 important = rule.arguments.important,
                 isDynamic = dynamic

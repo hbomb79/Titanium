@@ -24,8 +24,8 @@
         <Label text="-" X=9 Y=16 class="sub hotkey_part" id="hyphen_seperator"/>
         <Label text="p" id="right" X=10 Y=16 class="sub hotkey_part"/>
 
-        <Button text="Shell" width=7 height=1 X=43 Y=2 class="page_change" targetPage="console"/>
-        <Button text="Text" width=6 height=1 X=35 Y=2 class="page_change" targetPage="text"/>
+        <Button text="Shell" width=7 height=1 X="${Container#pane}.X - 2 - self.width" Y=2 class="page_change" targetPage="console" id="shell_link"/>
+        <Button text="Text" width=6 height=1 X="${#shell_link}.X - 2 - self.width" Y=2 class="page_change" targetPage="text"/>
 
         <Dropdown X=23 Y=6 width=25 maxHeight=4>
             <Option value="1">Example Option 1</Option>

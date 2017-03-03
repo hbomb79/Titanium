@@ -1,0 +1,67 @@
+class Window extends Container mixin MFocusable {
+    title = false;
+    titleBar = true;
+    titleBarColour = 16384;
+    titleBarBackgroundColour = 128;
+
+    closeable = true;
+    closeButtonBackgroundColour = 16384;
+    closeButtonColour = 1;
+
+    resizeable = true;
+    resizeButtonChar = "/";
+    resizeButtonBackgroundColour = 0;
+    resizeButtonColour = 256;
+
+    moveable = true;
+
+    minWidth = false;
+    maxWidth = false;
+
+    minHeight = false;
+    maxHeight = false;
+
+    shadow = false;
+    shadowColour = 128;
+}
+
+--[[
+    @constructor
+    @desc Creates the default window layout, complete with a titlebar and content container
+]]
+function Window:__init__( ... )
+    self:resolve( ... )
+    self:super()
+
+    self.titleBarContent = self:addNode( Container():set {
+        id = "titlebar",
+
+        width = "$parent.width - ( parent.shadow and 1 or 0 )",
+
+        backgroundColour = "$parent.titleBarBackgroundColour",
+        colour = "$parent.titleBarColour"
+    })
+
+    self.content = self:addNode( ScrollContainer():set {
+        Y = "$parent.titleBar and 2 or 1",
+
+        width = "$parent.width - ( parent.shadow and 1 or 0 )",
+        height = "$parent.height - ( parent.titleBar and 1 or 0 ) - ( parent.shadow and 1 or 0 )",
+
+        backgroundColour = "$parent.enabled and ( parent.focused and parent.focusedBackgroundColour ) or ( not parent.enabled and parent.disabledBackgroundColour ) or parent.backgroundColour",
+        colour = "$parent.enabled and ( parent.focused and parent.focusedColour ) or ( not parent.enabled and parent.disabledColour ) or parent.colour",
+
+        id = "content"
+    } )
+end
+
+function Window:draw( ... )
+    self.super:draw( ... )
+
+    -- Draw the shadow, and the transparent pixels
+    if self.shadow then
+        local canvas = self.canvas
+        canvas:drawBox( self.width, 2, 1, self.height - 1, self.shadowColour )
+        canvas:drawBox( 2, self.height, self.width - 1, 1, self.shadowColour )
+    end
+end

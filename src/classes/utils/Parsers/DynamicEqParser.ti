@@ -147,7 +147,7 @@ function DynamicEqParser:parseRootState( token )
         self:appendToOutput( "args["..#self.stacks.."]" )
     elseif token.type == "PAREN" then
         if token.value == "(" then
-            if not ( self:testForOperator( BIN_AMBIG, false, true ) and ( self:testForTerms( false, true ) or self:testForOperator( false, UNA_AMBIG ) ) ) then
+            if not ( ( self:testForOperator( BIN_AMBIG, false, true ) or self:testAdjacent "PAREN" ) and ( self:testForTerms( false, true ) or self:testForOperator( false, UNA_AMBIG ) ) ) then
                 self:throw("Unexpected parentheses '"..token.value.."'")
             end
         elseif token.value == ")" then

@@ -37,15 +37,21 @@ function Window:__init__( ... )
         colour = "$not parent.enabled and parent.disabledColour or parent.titleBarColour"
     })
 
-    local l = self.titleBarContent:addNode( Label( "" ) )
-    l:set( "text", "$parent.parent.title" )
+    self.titleBarTitle = self.titleBarContent:addNode( Label( "" ) )
 
     local b = self.titleBarContent:addNode( Button( "" ):set( "X", "$parent.width" ) )
     b:set {
         backgroundColour = "$parent.parent.closeButtonBackgroundColour",
         colour = "$parent.parent.closeButtonColour",
-        text = "$parent.parent.closeButtonChar"
+        text = "$parent.parent.closeButtonChar",
+        visible = "$parent.parent.closeable",
+        enabled = "$self.visible"
     }
+
+    b:on("trigger", function()
+        self:executeCallbacks "close"
+        self.parent:removeNode( self )
+    end)
 
     self.content = self:addNode( ScrollContainer():set {
         Y = "$parent.titleBar and 2 or 1",
@@ -58,12 +64,56 @@ function Window:__init__( ... )
 
         id = "content"
     } )
+end
 
-    self:watchProperty( "title", function( self, property, value )
-        local titleContentWidth = self.titleBarContent.width - ( self.closeable and 3 or 2 )
+--[[
+    @instance
+    @desc TODO
+    @param <MouseEvent Instance - event>, <boolean - handled>, <boolean - within>
+]]
+function Window:onMouseClick( event, handled, within )
+    if within and not handled and event.button == 1 then
+        local X, Y = event.X - self.X + 1, event.Y - self.Y + 1
+        if self.moveable and Y == 1 and ( X >= 1 and X <= self.titleBarContent.width - ( self.closeable and 1 or 0 ) ) then
+            self.mouse = { "move", X, Y }
+            event.handled = true
+        elseif self.resizeable and Y == self.content.height + ( self.titleBar and 1 or 0 ) and X == self.content.width then
+            self.mouse = { "resize", event.X - self.width, event.Y - self.height }
+            event.handled = true
+        end
+    end
+end
 
-        return value and #value > titleContentWidth and value:sub( 1, titleContentWidth - 2 ) .. ".." or value or ""
-    end, "WINDOW_TITLE_BIND_" .. self.__ID )
+--[[
+    @instance
+    @desc TODO
+    @param <MouseEvent Instance - event>, <boolean - handled>, <boolean - within>
+]]
+function Window:onMouseUp( event, handled, within )
+    self.mouse = nil
+end
+
+--[[
+    @instance
+    @desc TODO
+    @param <MouseEvent Instance - event>, <boolean - handled>, <boolean - within>
+]]
+function Window:onMouseDrag( event, handled, within )
+    if not handled and self.mouse then
+        if self.mouse[ 1 ] == "move" then
+            self.X = event.X - self.mouse[ 2 ] + 1
+            self.Y = event.Y - self.mouse[ 3 ] + 1
+        elseif self.mouse[ 1 ] == "resize" then
+            self.width = event.X - self.mouse[ 2 ]
+            self.height = event.Y - self.mouse[ 3 ]
+        end
+    end
+end
+
+function Window:updateTitle()
+    local title, titleContentWidth = self.title, self.titleBarContent.width - ( self.closeable and 3 or 2 )
+
+    self.titleBarTitle.text = title and #title > titleContentWidth and title:sub( 1, titleContentWidth - 2 ) .. ".." or title or ""
 end
 
 function Window:draw( ... )
@@ -72,9 +122,24 @@ function Window:draw( ... )
     -- Draw the shadow, and the transparent pixels
     if self.shadow then
         local canvas = self.canvas
-        canvas:drawBox( self.width, 2, 1, self.height - 1, self.shadowColour )
-        canvas:drawBox( 2, self.height, self.width - 1, 1, self.shadowColour )
+        canvas:drawBox( self.width, 2, 1, self.height - 2, self.shadowColour )
+        canvas:drawBox( 3, self.height, self.width - 2, 1, self.shadowColour )
     end
+end
+
+function Window:setWidth( width )
+    self.super:setWidth( width )
+    self:updateTitle()
+end
+
+function Window:setHeight( height )
+    self.super:setHeight( height )
+    self:updateTitle()
+end
+
+function Window:setTitle( title )
+    self.title = title
+    self:updateTitle()
 end
 
 configureConstructor {

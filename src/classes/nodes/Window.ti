@@ -105,7 +105,9 @@ function Window:onMouseDrag( event, handled, within )
         elseif self.mouse[ 1 ] == "resize" then
             self.width = event.X - self.mouse[ 2 ]
             self.height = event.Y - self.mouse[ 3 ]
-        end
+        else return end
+
+        event.handled = true
     end
 end
 

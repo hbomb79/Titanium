@@ -88,10 +88,11 @@
     </Page>
 
     <Page id="windows" xScrollAllowed="false">
-        <Button text="Home" width="$#self.text + 2" class="page_change" X=2 Y=2 targetPage="main"/>
-
         <Window Z=5 X=3 Y=5 width=14 height=5 backgroundColour="lightBlue" title="Example Window">
             <Label X=2 Y=2 text="A label"/>
         </Window>
+
+        <Button class="page_change" text="Back" X=18 Y=18 width=6 targetPage="text"/>
+        <Button class="page_change" text="Home" X=26 Y=18 width=6 targetPage="main"/>
     </Page>
 </PageContainer>

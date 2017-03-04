@@ -1,4 +1,12 @@
+--[[
+    TODO
+]]
+
 class Window extends Container mixin MFocusable {
+    static = {
+        proxyMethods = { "addNode", "removeNode", "getNode", "query", "clearNodes" }
+    };
+
     titleBar = true;
     titleBarColour = 16384;
     titleBarBackgroundColour = 128;
@@ -63,6 +71,16 @@ function Window:__init__( ... )
 
         id = "content"
     } )
+
+    for _, name in pairs( Window.static.proxyMethods ) do
+        self[ name ] = function( self, ... )
+            return self.content[ name ]( self.content, ... )
+        end
+
+        self[ name .. "Raw" ] = function( self, ... )
+            return self.super[ name ]( self, ... )
+        end
+    end
 end
 
 --[[

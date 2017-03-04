@@ -266,6 +266,9 @@ end
 function ScrollContainer:setHeight( height )
     self.super:setHeight( height )
     self:cacheContent()
+
+    local cache = self.cache
+    self.yScroll = math.max( 0, math.min( cache.contentHeight - cache.displayHeight, self.yScroll ) )
 end
 
 --[[
@@ -276,6 +279,9 @@ end
 function ScrollContainer:setWidth( width )
     self.super:setWidth( width )
     self:cacheContent()
+
+    local cache = self.cache
+    self.xScroll = math.max( 0, math.min( cache.contentWidth - cache.displayWidth, self.xScroll ) )
 end
 
 --[[ Caching Functions ]]--

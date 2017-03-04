@@ -8,7 +8,7 @@ class Window extends Container mixin MFocusable {
     };
 
     titleBar = true;
-    titleBarColour = 16384;
+    titleBarColour = 256;
     titleBarBackgroundColour = 128;
 
     closeable = true;
@@ -41,7 +41,10 @@ function Window:__init__( ... )
         width = "$parent.width - ( parent.shadow and 1 or 0 )",
 
         backgroundColour = "$parent.titleBarBackgroundColour",
-        colour = "$not parent.enabled and parent.disabledColour or parent.titleBarColour"
+        colour = "$not parent.enabled and parent.disabledColour or parent.titleBarColour",
+
+        visible = "$parent.titleBar",
+        enabled = "$self.visible"
     })
 
     self.titleBarTitle = self.titleBarContent:addNode( Label( "" ) )

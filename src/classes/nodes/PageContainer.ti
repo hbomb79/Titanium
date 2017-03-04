@@ -161,7 +161,7 @@ end
     @param <number - x>, <number - y>, <number - width>, <number - height>
 ]]
 function PageContainer:redrawArea( x, y, width, height )
-    self.super:redrawArea( x, y, width, height, -self.scroll )
+    self.super:redrawArea( x - self.scroll, y, width, height, -self.scroll )
 end
 
 --[[

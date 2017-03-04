@@ -9,7 +9,6 @@ class Window extends Container mixin MFocusable {
 
     resizeable = true;
     resizeButtonChar = "/";
-    resizeButtonBackgroundColour = 0;
     resizeButtonColour = 256;
 
     moveable = true;
@@ -124,6 +123,10 @@ function Window:draw( ... )
         local canvas = self.canvas
         canvas:drawBox( self.width, 2, 1, self.height - 2, self.shadowColour )
         canvas:drawBox( 3, self.height, self.width - 2, 1, self.shadowColour )
+    end
+
+    if self.resizeable then
+        self.canvas:drawPoint( self.content.width, self.content.height + ( self.titleBar and 1 or 0 ), self.resizeButtonChar, self.resizeButtonColour, self.resizeButtonBackgroundColour )
     end
 end
 

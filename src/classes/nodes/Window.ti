@@ -155,11 +155,6 @@ function Window:setWidth( width )
     self:updateTitle()
 end
 
-function Window:setHeight( height )
-    self.super:setHeight( height )
-    self:updateTitle()
-end
-
 function Window:setTitle( title )
     self.title = title
     self:updateTitle()

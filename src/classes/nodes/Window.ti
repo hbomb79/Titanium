@@ -266,7 +266,7 @@ end
 
 configureConstructor {
     argumentTypes = {
-        title = "text",
+        title = "string",
         titleBar = "boolean",
         titleBarColour = "colour",
         titleBarBackgroundColour = "colour",

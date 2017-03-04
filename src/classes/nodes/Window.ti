@@ -114,7 +114,7 @@ end
 function Window:updateTitle()
     local title, titleContentWidth = self.title, self.titleBarContent.width - ( self.closeable and 3 or 2 )
 
-    self.titleBarTitle.text = title and #title > titleContentWidth and title:sub( 1, titleContentWidth - 2 ) .. ".." or title or ""
+    self.titleBarTitle.text = title and #title > titleContentWidth and title:sub( 1, math.max( 1, titleContentWidth - 2 ) ) .. ".." or title or ""
 end
 
 function Window:draw( ... )

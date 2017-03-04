@@ -25,7 +25,8 @@
         <Label text="p" id="right" X=10 Y=16 class="sub hotkey_part"/>
 
         <Button text="Shell" width=7 height=1 X="${Container#pane}.X - 2 - self.width" Y=2 class="page_change" targetPage="console" id="shell_link"/>
-        <Button text="Text" width=6 height=1 X="${#shell_link}.X - 2 - self.width" Y=2 class="page_change" targetPage="text"/>
+        <Button text="Text" width=6 height=1 X="${#shell_link}.X - 2 - self.width" Y=2 class="page_change" targetPage="text" id="button_link"/>
+        <Button text="Windows" width="$#self.text + 2" height=1 X="${#button_link}.X - 2 - self.width" Y=2 class="page_change" targetPage="windows"/>
 
         <Dropdown X=23 Y=6 width=25 maxHeight=4>
             <Option value="1">Example Option 1</Option>
@@ -84,5 +85,13 @@
 
         <Button class="page_change" text="Back" X=18 Y=18 width=6 targetPage="console"/>
         <Button class="page_change" text="Home" X=26 Y=18 width=6 targetPage="main"/>
+    </Page>
+
+    <Page id="windows" xScrollAllowed="false">
+        <Button text="Home" width="$#self.text + 2" class="page_change" X=2 Y=2 targetPage="main"/>
+
+        <Window Z=5 X=3 Y=5 width=14 height=5 backgroundColour="lightBlue" title="Example Window">
+            <Label X=2 Y=2 text="A label"/>
+        </Window>
     </Page>
 </PageContainer>

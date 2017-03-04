@@ -1,4 +1,52 @@
+local TERM_X, TERM_Y = term.getSize()
+
+term.setBackgroundColour( 1 )
+term.clear()
+
+local tasks = {
+    {"Launching Titanium"},
+    {"Instantiating Application"},
+    {"Loading TML"},
+    {"Loading Theme"},
+    {"Applying Theme"},
+    {"Registering callbacks"},
+    {"Starting parallel thread"},
+    {"Done"}
+}
+
+local function printCentre( text, y, col )
+    if col then term.setTextColour( col ) end
+
+    term.setCursorPos( math.floor( TERM_X / 2 - ( #text / 2 ) ), y )
+    term.clearLine()
+    term.write( text )
+end
+
+local function completeTask( task )
+    for i = 1, #tasks do
+        if not tasks[ i ][ 2 ] then
+            tasks[ i ][ 2 ] = os.clock()
+
+            local y = 9
+            for i = 1, #tasks do
+                local done = tasks[ i ][ 2 ]
+                printCentre( tasks[ i ][ 1 ] .. ( done and " ["..done.."]" or "" ), y, done and colours.green or ( pre and colours.orange ) or 256 )
+
+                pre, y = done, y + 1
+            end
+
+            return
+        end
+    end
+end
+
+sleep( 0 )
+printCentre("Titanium GUI Framework", 4, colours.cyan)
+printCentre("Example Application", 5, colours.lightGrey)
+printCentre("Loading", TERM_Y - 1, 128)
+
 dofile "build/titanium.lua" -- Run the compiled Titanium script
+completeTask()
 
 --[[
     An Application instance is the starting point of a Titanium application. It accepts 4 arguments: x, y, width and height.
@@ -16,6 +64,8 @@ Manager = Application():set {
     terminatable = true
 }
 
+completeTask()
+
 --[[
     TML is a custom markup language for Titanium aiming to drastically increase productivity and descrease the amount of Lua you write when
     designing your UI.
@@ -23,6 +73,7 @@ Manager = Application():set {
     The import function loads the TML file and adds all the nodes generated to `Manager`, which is our Application instance.
 ]]
 Manager:importFromTML "example/ui/master.tml"
+completeTask()
 
 --[[
     This local is a table that contains some commonly used assets. `Manager:query` allows us to use CSS like selectors
@@ -47,11 +98,14 @@ local app = {
     },
 }
 
+completeTask()
+
 -- Using our `app` local, switch the current page to 'main'. The page named 'main' which is defined in our TML file is now visible on the screen
 app.pages:selectPage "main"
 
 -- We already imported our theme file inside our `app` local, however we haven't added it to our application yet. Doing so means the theme file will be applied
 Manager:addTheme( app.masterTheme )
+completeTask()
 
 --[[
     This is the first time we have used ':on', so what exactly does it do?
@@ -162,6 +216,8 @@ Manager:registerHotkey("paneToggle", "leftCtrl-p", function()
     paneToggle( true )
 end)
 
+completeTask()
+
 --[[
     This thread runs alongside the Application thread, allowing parallel programming from inside Titanium.
 
@@ -182,6 +238,8 @@ Manager:addThread(Thread(function()
         end
     end
 end, true)) -- This true value tells Titanium to give the thread Titanium events, NOT CC events.
+
+completeTask()
 
 -- On the second page of the Application we have a terminal node that can be accessed by pressing the 'Shell' button in the top right.
 -- We start the terminal by loading the '/rom/programs/shell' program and setting that as the terminal 'chunk'. The terminal node is now running
@@ -218,4 +276,5 @@ Manager:on("mouse_click", function( self, event )
 end)
 
 -- We are ready to go. Any code after this function will not be executed until the application closes.
+completeTask()
 Manager:start()

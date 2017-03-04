@@ -81,6 +81,14 @@ function Window:__init__( ... )
             return self.super[ name ]( self, ... )
         end
     end
+
+    self:watchProperty( "width", function( _, __, value )
+        return self:updateWidth( value )
+    end, "WINDOW_MIN_MAX_WIDTH_CHECK" )
+
+    self:watchProperty( "height", function( _, __, value )
+        return self:updateHeight( value )
+    end, "WINDOW_MIN_MAX_HEIGHT_CHECK" )
 end
 
 --[[
@@ -129,12 +137,46 @@ function Window:onMouseDrag( event, handled, within )
     end
 end
 
+--[[
+    @instance
+    @desc Updates the titleBar label to display a correctly truncated version of the windows title.
+]]
 function Window:updateTitle()
     local title, titleContentWidth = self.title, self.titleBarContent.width - ( self.closeable and 3 or 2 )
 
     self.titleBarTitle.text = title and #title > titleContentWidth and title:sub( 1, math.max( 1, titleContentWidth - 2 ) ) .. ".." or title or ""
 end
 
+--[[
+    @instance
+    @desc Returns a bounded (min/max width) version of 'w' (or self.width if 'w' not provided).
+    @param [number - w]
+    @return <number - boundedW>
+]]
+function Window:updateWidth( w )
+    w = w or self.width
+
+    w = self.minWidth and math.max( w, self.minWidth ) or w
+    return math.max( self.maxWidth and math.min( w, self.maxWidth ) or w, ( self.shadow and 4 or 3 ) )
+end
+
+--[[
+    @instance
+    @desc Returns a bounded (min/max height) version of 'h' (or self.height if 'h' not provided).
+    @param [number - h]
+    @return <number - boundedH>
+]]
+function Window:updateHeight( h )
+    h = h or self.height
+
+    h = self.minHeight and math.max( h, self.minHeight ) or h
+    return math.max( self.maxHeight and math.min( h, self.maxHeight ) or h, ( self.titleBar and 4 or 3 ) )
+end
+
+--[[
+    @instance
+    @desc A custom draw function that invokes the super:draw method, before drawing the shadow and resize handle over top.
+]]
 function Window:draw( ... )
     self.super:draw( ... )
 
@@ -150,11 +192,70 @@ function Window:draw( ... )
     end
 end
 
+--[[
+    @setter
+    @desc Sets the width of the window, following the min/max properties (ie: uses :updateWidth())
+    @param <number - width>
+]]
 function Window:setWidth( width )
-    self.super:setWidth( width )
+    self.super:setWidth( self:updateWidth( width ) )
     self:updateTitle()
 end
 
+--[[
+    @setter
+    @desc Sets the minimum width the window can be. The current width will be increased if it falls below this limit.
+    @param <number - minWidth>
+]]
+function Window:setMinWidth( minWidth )
+    self.minWidth = minWidth
+    self:updateWidth()
+end
+
+--[[
+    @setter
+    @desc Sets the maximum width the window can be. The current width will be reduced if it exceeds this limit.
+    @param <number - maxWidth>
+]]
+function Window:setMaxWidth( maxWidth )
+    self.maxWidth = maxWidth
+    self:updateWidth()
+end
+
+--[[
+    @setter
+    @desc Sets the height of the window, following the min/max properties (ie: uses :updateHeight())
+    @param <number - height>
+]]
+function Window:setHeight( height )
+    self.super:setHeight( self:updateHeight( height ) )
+end
+
+--[[
+    @setter
+    @desc Sets the minimum height the window can be. The current height will be increased if it falls below this limit.
+    @param <number - minHeight>
+]]
+function Window:setMinHeight( minHeight )
+    self.minHeight = minHeight
+    self:updateHeight()
+end
+
+--[[
+    @setter
+    @desc Sets the maximum height the window can be. The current height will be reduced if it exceeds this limit.
+    @param <number - maxHeight>
+]]
+function Window:setMaxHeight( maxHeight )
+    self.maxHeight = maxHeight
+    self:updateHeight()
+end
+
+--[[
+    @setter
+    @desc Sets the new title of the window, and then calls :updateTitle to apply the change to the titleBar label
+    @param <string - title>
+]]
 function Window:setTitle( title )
     self.title = title
     self:updateTitle()

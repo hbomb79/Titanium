@@ -6,9 +6,9 @@ local function splitXMLTheme( queue, tree )
     for i = 1, #tree do
         local children = tree[ i ].children
         if children then
-            for c = 1, #children do
+            for n = 1, #children do
                 local type = tree[ i ].type
-                queue[ #queue + 1 ] = { ( type == "Any" and "*" or type ) .. getTagDetails( tree[ i ] ), children[ c ], tree[ i ] }
+                queue[ #queue + 1 ] = { ( type == "Any" and "*" or type ) .. getTagDetails( tree[ i ] ), children[ n ], tree[ i ] }
             end
         end
     end
@@ -56,13 +56,13 @@ function Theme.static.parse( source )
         local children = rule.children
 
         if children then
-            for c = 1, #children do
+            for n = 1, #children do
                 if not Titanium.getClass( rule.type ) and rule.type ~= "Any" then
                     return error( "Failed to generate theme data. Child target '"..rule.type.."' doesn't exist as a Titanium class" )
                 end
 
                 local type = rule.type
-                queue[ #queue + 1 ] = { queryPrefix .. " " .. ( rule.arguments.direct and "> " or "" ) .. ( type == "Any" and "*" or type ) .. getTagDetails( rule ), children[ c ], rule }
+                queue[ #queue + 1 ] = { queryPrefix .. " " .. ( rule.arguments.direct and "> " or "" ) .. ( type == "Any" and "*" or type ) .. getTagDetails( rule ), children[ n ], rule }
             end
         elseif rule.content then
             local ownerType = entry[ 3 ].type

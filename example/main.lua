@@ -30,7 +30,7 @@ local function completeTask( task )
             local y = 9
             for i = 1, #tasks do
                 local done = tasks[ i ][ 2 ]
-                printCentre( tasks[ i ][ 1 ] .. ( done and " ["..done.."]" or "" ), y, done and colours.green or ( pre and colours.orange ) or 256 )
+                printCentre( tasks[ i ][ 1 ] .. ( done and " ["..done.."]" or "" ), y, done and colours.green or ( pre and colours.cyan ) or 256 )
 
                 pre, y = done, y + 1
             end

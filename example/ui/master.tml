@@ -89,8 +89,8 @@
     </Page>
 
     <Page id="windows" xScrollAllowed="false">
-        <Window Z=5 X=3 Y=5 width=14 height=5 backgroundColour="lightBlue" title="Example Window">
-            <Label X=2 Y=2 text="A label"/>
+        <Window Z=5 X=3 Y=5 width=25 height=6 backgroundColour="lightBlue" title="Example Window">
+            <TextContainer width="$parent.width" height="$parent.height" text="This window can contain any nodes. For example, this is a TextContainer."/>
         </Window>
 
         <Button class="page_change" text="Back" X=18 Y=18 width=6 targetPage="text"/>

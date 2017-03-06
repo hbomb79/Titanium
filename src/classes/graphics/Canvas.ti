@@ -1,3 +1,4 @@
+local tableInsert, tableRemove = table.insert, table.remove
 local function range( xBoundary, xDesired, width, canvasWidth )
     local x1 = xBoundary > xDesired and 1 - xDesired or 1
     local x2 = xDesired + width > canvasWidth and canvasWidth - xDesired or width
@@ -133,8 +134,33 @@ end
     @desc Updates the canvas width, and then clears the canvas to apply the change
 ]]
 function Canvas:setWidth( width )
-	self.width = width
-	self:clear()
+	local pixel = { not self.transparent and self.backgroundChar, self.colour, colours.red }
+
+    local sWidth, sHeight, buffer = self.width, self.height, self.buffer
+    while width > sWidth do
+        -- If the width is greater than the current canvas width, add the extra pixels
+        for rowIndex = 1, sHeight do
+            -- Iterate over each row, adding a new pixel to the end of each (ie: width of the row + 1)
+            tableInsert( buffer, ( sWidth + 1 ) * rowIndex, pixel )
+        end
+
+        -- Update the width to account for the new pixels
+        sWidth = sWidth + 1
+    end
+
+    while width < sWidth do
+        -- If the width is less than the current canvas width, remove the excess pixels
+        for rowIndex = 1, sHeight do
+            -- Remove the last pixel on this row
+            tableRemove( buffer, sWidth * rowIndex )
+        end
+
+        -- Update the width to account for the removed pixels
+        sWidth = sWidth - 1
+    end
+
+    -- sWidth and width are equal now. Set the canvas width property to the width specified
+    self.width = width
 end
 
 --[[
@@ -142,8 +168,31 @@ end
     @desc Updates the canvas height, and then clears the canvas to apply the change
 ]]
 function Canvas:setHeight( height )
-	self.height = height
-	self:clear()
+	local pixel = { not self.transparent and self.backgroundChar, self.colour, colours.red }
+
+    local sWidth, sHeight, buffer = self.width, self.height, self.buffer
+    while height > sHeight do
+        -- The new height is greater than the current height. Add the extra rows. No need for table.insert here as no pixels lie ahead
+        for i = 1, sWidth do
+            -- Add a new pixel to the end of the array for every pixel in a row (width)
+            buffer[ #buffer + 1 ] = pixel
+        end
+
+        sHeight = sHeight + 1
+    end
+
+    while height < sHeight do
+        -- The new width is less than the current height. Remove the excess rows
+        for i = 1, sWidth do
+            -- Remove the last pixel in the array for every pixel in a row (width)
+            buffer[ #buffer ] = nil
+        end
+
+        sHeight = sHeight - 1
+    end
+
+    -- sHeight and height are equal now. Set the canvas height property to the height specified
+    self.height = height
 end
 
 --[[

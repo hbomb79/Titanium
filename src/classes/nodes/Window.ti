@@ -2,7 +2,7 @@
     TODO
 ]]
 
-class Window extends Container mixin MFocusable {
+class Window extends Container mixin MFocusable mixin MInteractable {
     static = {
         proxyMethods = { "addNode", "removeNode", "getNode", "query", "clearNodes" }
     };
@@ -103,10 +103,10 @@ function Window:onMouseClick( event, handled, within )
     if within and not handled and event.button == 1 then
         local X, Y = event.X - self.X + 1, event.Y - self.Y + 1
         if self.moveable and Y == 1 and ( X >= 1 and X <= self.titleBarContent.width - ( self.closeable and 1 or 0 ) ) then
-            self.mouse = { "move", X, Y }
+            self:updateMouse( "move", X, Y )
             event.handled = true
         elseif self.resizeable and Y == self.content.height + ( self.titleBar and 1 or 0 ) and X == self.content.width then
-            self.mouse = { "resize", event.X - self.width, event.Y - self.height }
+            self:updateMouse( "resize", event.X - self.width + 1, event.Y - self.height + 1 )
             event.handled = true
         end
     end
@@ -118,7 +118,7 @@ end
     @param <MouseEvent Instance - event>, <boolean - handled>, <boolean - within>
 ]]
 function Window:onMouseUp( event, handled, within )
-    self.mouse = nil
+    self.mouse = false
 end
 
 --[[
@@ -127,17 +127,7 @@ end
     @param <MouseEvent Instance - event>, <boolean - handled>, <boolean - within>
 ]]
 function Window:onMouseDrag( event, handled, within )
-    if not handled and self.mouse then
-        if self.mouse[ 1 ] == "move" then
-            self.X = event.X - self.mouse[ 2 ] + 1
-            self.Y = event.Y - self.mouse[ 3 ] + 1
-        elseif self.mouse[ 1 ] == "resize" then
-            self.width = event.X - self.mouse[ 2 ]
-            self.height = event.Y - self.mouse[ 3 ]
-        else return end
-
-        event.handled = true
-    end
+    self:handleMouseDrag( event, handled, within )
 end
 
 --[[

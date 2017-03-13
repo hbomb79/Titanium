@@ -1,0 +1,30 @@
+abstract class MInteractable {
+    static = {
+        properties = {
+            move = { "X", "Y" },
+            resize = { "width", "height" }
+        }
+    };
+
+    mouse = false;
+}
+
+function MInteractable:updateMouse( mode, X, Y )
+    if not mode then
+        self.mouse = false
+    else
+        self.mouse = { mode, X, Y }
+    end
+end
+
+function MInteractable:handleMouseDrag( eventObj, handled, within )
+    local mouse = self.mouse
+    if not mouse or handled then return end
+
+    local props = MInteractable.static.properties[ mouse[ 1 ] ]
+    if not props then return end
+
+    self[ props[ 1 ] ], self[ props[ 2 ] ] = eventObj.X - mouse[ 2 ] + 1, eventObj.Y - mouse[ 3 ] + 1
+
+    eventObj.handled = true
+end

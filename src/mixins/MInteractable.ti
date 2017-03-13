@@ -3,6 +3,10 @@ abstract class MInteractable {
         properties = {
             move = { "X", "Y" },
             resize = { "width", "height" }
+        },
+
+        callbacks = {
+            move = { "onPickup", "onDrop" }
         }
     };
 
@@ -10,10 +14,20 @@ abstract class MInteractable {
 }
 
 function MInteractable:updateMouse( mode, X, Y )
-    if not mode then
+    if not mode and self.mouse then
+        local cb = MInteractable.static.callbacks[ self.mouse[ 1 ] ]
+        if cb then
+            self:executeCallbacks( cb[ 2 ] )
+        end
+
         self.mouse = false
     else
         self.mouse = { mode, X, Y }
+
+        local cb = MInteractable.static.callbacks[ mode ]
+        if cb then
+            self:executeCallbacks( cb[ 1 ], X, Y )
+        end
     end
 end
 

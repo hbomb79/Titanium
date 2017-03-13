@@ -8,6 +8,7 @@
 
 abstract class MFocusable {
     focused = false;
+    passiveFocus = false;
 }
 
 --[[
@@ -53,7 +54,7 @@ end
 function MFocusable:focus()
     if not self.enabled then return end
 
-    if self.application then self.application:focusNode( self ) end
+    if self.application and not self.passiveFocus then self.application:focusNode( self ) end
     self.focused = true
 end
 
@@ -62,7 +63,7 @@ end
     @desc The preferred way of un-focusing a node. Sets the 'focused' property to false and un-focuses the node application wide
 ]]
 function MFocusable:unfocus()
-    if self.application then self.application:unfocusNode( self ) end
+    if self.application and not self.passiveFocus then self.application:unfocusNode( self ) end
     self.focused = false
 end
 

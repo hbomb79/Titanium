@@ -4,7 +4,7 @@ local function resolvePosition( self, lines, X, Y )
     if posY == 0 then return 0 end
 
     local selectedLine = lines[ posY ]
-    return math.min( selectedLine[ 3 ] - ( posY == #lines and 0 or 1 ), selectedLine[ 2 ] + X - selectedLine[ 5 ] - 1 )
+    return math.min( selectedLine[ 3 ] - ( posY == #lines and 0 or 1 ), selectedLine[ 2 ] + X - selectedLine[ 5 ] )
 end
 
 --[[

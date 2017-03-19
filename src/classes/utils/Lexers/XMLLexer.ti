@@ -5,11 +5,27 @@
 
     A lexer than processes XML content into tokens used by XMLParser
 ]]
+
 class XMLLexer extends Lexer {
     openTag = false;
     definingAttribute = false;
     currentAttribute = false;
 }
+
+--[[
+    @instance
+    @desc Searches for a XML comment closer. If one is found, all content between the opener and closer is removed from the stream.
+
+          If one cannot be found, all content after the opener is removed from the stream
+]]
+function XMLLexer:consumeComment()
+    local stream = self.stream
+
+    local found = stream:find( "%-%-%>", 4 )
+    if found then
+        self.stream = stream:sub( found + 3 )
+    else self.stream = "" end
+end
 
 --[[
     @instance
@@ -30,6 +46,8 @@ function XMLLexer:tokenize()
         self:pushToken({type = "XML_END_CLOSE"})
         self:consume( 2 )
         self.openTag = false
+    elseif stream:find "^%<%!%-%-" then
+        self:consumeComment()
     elseif openTag and stream:find "^%w+" then
         self:pushToken({type = definingAttribute and "XML_ATTRIBUTE_VALUE" or "XML_ATTRIBUTE", value = self:consumePattern "^%w+"})
 

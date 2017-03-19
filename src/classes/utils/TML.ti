@@ -7,10 +7,25 @@
 local function formArguments( class, target )
     local reg = class:getRegistry()
     local constructor, alias, args = reg.constructor, reg.alias, target.arguments
+    local req = constructor.requiredArguments or {}
     local returnArguments, trailingTable, dynamics = {}, {}, {}
 
     if not constructor then return nil end
     local argumentTypes = constructor.argumentTypes
+
+    local function handleArgument( val, target )
+        if type( val ) ~= "string" then
+            return false
+        end
+
+        local escaped, rest = val:match "^(%%*)%$(.*)$"
+        if not escaped or #escaped % 2 ~= 0 then
+            return false
+        end
+
+        dynamics[ target ] = rest
+        return true
+    end
 
     local ordered, set, target = constructor.orderedArguments, {}
     for i = 1, #ordered do
@@ -19,12 +34,14 @@ local function formArguments( class, target )
 
         local val = args[ target ]
         if val then
-            local escaped, rest = val:match "^(%%*)%$(.*)$"
-            if not escaped or #escaped % 2 ~= 0 then
-                returnArguments[ i ] = XMLParser.convertArgType( val, argType )
+            if handleArgument( val, target ) then
+                if req[ target ] then
+                    -- This argument is required for instantiation, provide a suitable default value to be used between now and dynamic value init.
+                    returnArguments[ i ] = argType == "string" and "" or ( argType == "number" and 1 or ( argType == "boolean" ) ) or error "invalid argument type"
+                end
             else
-                returnArguments[ i ] = argType == "string" and "" or ( argType == "number" and 1 or ( argType == "boolean" ) ) or error "invalid argument type"
-                dynamics[ target ] = rest
+                printError("Failed to handle '"..tostring( val ).."'. Not a dynamic value.")
+                returnArguments[ i ] = XMLParser.convertArgType( val, argType )
             end
         end
 
@@ -33,7 +50,9 @@ local function formArguments( class, target )
 
     for argName, argValue in pairs( args ) do
         if not set[ argName ] then
-            trailingTable[ argName ] = XMLParser.convertArgType( argValue, argumentTypes[ alias[ argName ] or argName ] )
+            if not handleArgument( argValue, argName ) then
+                trailingTable[ argName ] = XMLParser.convertArgType( argValue, argumentTypes[ alias[ argName ] or argName ] )
+            end
         end
     end
 

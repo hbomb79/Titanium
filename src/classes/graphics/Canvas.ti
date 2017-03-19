@@ -149,14 +149,14 @@ function Canvas:setWidth( width )
     end
 
     while width < sWidth do
+        -- Update the width to account for the removed pixels
+        sWidth = sWidth - 1
+
         -- If the width is less than the current canvas width, remove the excess pixels
         for rowIndex = 1, sHeight do
             -- Remove the last pixel on this row
             tableRemove( buffer, sWidth * rowIndex )
         end
-
-        -- Update the width to account for the removed pixels
-        sWidth = sWidth - 1
     end
 
     -- sWidth and width are equal now. Set the canvas width property to the width specified

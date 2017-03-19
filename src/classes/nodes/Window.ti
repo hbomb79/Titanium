@@ -97,6 +97,19 @@ function Window:__init__( ... )
 end
 
 --[[
+    @constructor
+    @desc After all the instance mixins are ready, this function is called allowing the dynamic value default to be set (before post init, the MPropertyManager is not listening for property changes)
+]]
+function Window:__postInit__()
+    if not self.resizeButtonBackgroundColour then
+        -- Apply the default dynamic value
+        self.resizeButtonBackgroundColour = "$self.content.backgroundColour"
+    end
+
+    self.super:__postInit__()
+end
+
+--[[
     @instance
     @desc TODO
     @param <MouseEvent Instance - event>, <boolean - handled>, <boolean - within>

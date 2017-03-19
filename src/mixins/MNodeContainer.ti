@@ -156,7 +156,7 @@ function MNodeContainer:clearCollatedNodes()
 end
 
 --[[
-    @instance
+    @getter
     @desc If no collatedNodes (or the collateNodes are empty), the nodes are collated (:collate) and returned.
     @return <table - collatedNodes>
 ]]
@@ -194,7 +194,7 @@ function MNodeContainer:collate( collated )
 end
 
 --[[
-    @instance
+    @setter
     @desc Sets the enabled property of the node to 'enabled'. Sets node's 'changed' to true.
     @param <boolean - enabled>
 ]]
@@ -209,7 +209,7 @@ function MNodeContainer:setEnabled( enabled )
 end
 
 --[[
-    @instance
+    @setter
     @desc Updates all direct children with the new 'parentEnabled' property (found using 'enabled')
     @param <boolean - enabled>
 ]]
@@ -224,7 +224,7 @@ end
 
 
 --[[
-    @instance
+    @setter
     @desc Iterates over child nodes to ensure that nodes added to this container prior to Application set are updated (with the new Application)
     @param <Application - app>
 ]]

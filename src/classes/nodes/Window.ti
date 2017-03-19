@@ -25,6 +25,8 @@ class Window extends Container mixin MFocusable mixin MInteractable {
     shadowColour = 128;
 
     transparent = true;
+
+    passiveFocus = true;
 }
 
 --[[
@@ -100,15 +102,21 @@ end
     @param <MouseEvent Instance - event>, <boolean - handled>, <boolean - within>
 ]]
 function Window:onMouseClick( event, handled, within )
-    if within and not handled and event.button == 1 then
-        local X, Y = event.X - self.X + 1, event.Y - self.Y + 1
-        if self.moveable and Y == 1 and ( X >= 1 and X <= self.titleBarContent.width - ( self.closeable and 1 or 0 ) ) then
-            self:updateMouse( "move", X, Y )
-            event.handled = true
-        elseif self.resizeable and Y == self.content.height + ( self.titleBar and 1 or 0 ) and X == self.content.width then
-            self:updateMouse( "resize", event.X - self.width + 1, event.Y - self.height + 1 )
-            event.handled = true
+    if within then
+        if not handled and event.button == 1 then
+            self:focus()
+
+            local X, Y = event.X - self.X + 1, event.Y - self.Y + 1
+            if self.moveable and Y == 1 and ( X >= 1 and X <= self.titleBarContent.width - ( self.closeable and 1 or 0 ) ) then
+                self:updateMouse( "move", X, Y )
+                event.handled = true
+            elseif self.resizeable and Y == self.content.height + ( self.titleBar and 1 or 0 ) and X == self.content.width then
+                self:updateMouse( "resize", event.X - self.width + 1, event.Y - self.height + 1 )
+                event.handled = true
+            end
         end
+    else
+        self:unfocus()
     end
 end
 

@@ -238,6 +238,20 @@ function MNodeContainer:setApplication( app )
 end
 
 --[[
+    @setter
+    @desc When the background colour of a node changes (and therefore, it's canvas is to be cleared in Component), the children need to be redrawn over top.
+    @param <colour - backgroundColour>
+]]
+function MNodeContainer:setBackgroundColour( backgroundColour )
+    self.super:setBackgroundColour( backgroundColour )
+
+    local nodes = self.nodes
+    for i = 1, #nodes do
+        nodes[ i ].needsRedraw = true
+    end
+end
+
+--[[
     @instance
     @desc Clears the area provided and queues a redraw for child nodes intersecting the area.
           The content of the child node will not be update, it's content will only be drawn to it's parent.

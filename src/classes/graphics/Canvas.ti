@@ -134,7 +134,7 @@ end
     @desc Updates the canvas width, and then clears the canvas to apply the change
 ]]
 function Canvas:setWidth( width )
-	local pixel = { not self.transparent and self.backgroundChar, self.colour, colours.red }
+	local pixel = { not self.transparent and self.backgroundChar, self.colour, self.transparent and 0 or colour or self.backgroundColour }
 
     local sWidth, sHeight, buffer = self.width, self.height, self.buffer
     while width > sWidth do
@@ -168,7 +168,7 @@ end
     @desc Updates the canvas height, and then clears the canvas to apply the change
 ]]
 function Canvas:setHeight( height )
-	local pixel = { not self.transparent and self.backgroundChar, self.colour, colours.red }
+	local pixel = { not self.transparent and self.backgroundChar, self.colour, self.transparent and 0 or colour or self.backgroundColour }
 
     local sWidth, sHeight, buffer = self.width, self.height, self.buffer
     while height > sHeight do

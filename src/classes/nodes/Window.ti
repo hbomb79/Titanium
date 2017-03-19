@@ -178,18 +178,19 @@ end
     @instance
     @desc A custom draw function that invokes the super:draw method, before drawing the shadow and resize handle over top.
 ]]
-function Window:draw( ... )
-    self.super:draw( ... )
+function Window:draw( force, ... )
+    if force or self.changed then
+        self.super:draw( force, ... )
 
-    -- Draw the shadow, and the transparent pixels
-    if self.shadow then
-        local canvas = self.canvas
-        canvas:drawBox( self.width, 2, 1, self.height - 2, self.shadowColour )
-        canvas:drawBox( 3, self.height, self.width - 2, 1, self.shadowColour )
-    end
+        if self.shadow then
+            local canvas = self.canvas
+            canvas:drawBox( self.width, 2, 1, self.height - 2, self.shadowColour )
+            canvas:drawBox( 3, self.height, self.width - 2, 1, self.shadowColour )
+        end
 
-    if self.resizeable then
-        self.canvas:drawPoint( self.content.width, self.content.height + ( self.titleBar and 1 or 0 ), self.resizeButtonChar, self.resizeButtonColour, self.resizeButtonBackgroundColour )
+        if self.resizeable then
+            self.canvas:drawPoint( self.content.width, self.content.height + ( self.titleBar and 1 or 0 ), self.resizeButtonChar, self.resizeButtonColour, self.resizeButtonBackgroundColour )
+        end
     end
 end
 

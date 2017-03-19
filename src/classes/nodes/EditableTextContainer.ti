@@ -77,21 +77,22 @@ function EditableTextContainer:onKeyDown( event, handled )
 
     local old_tX
     if key == "up" or key == "down" then
-        if not self.cache.tX then self.cache.tX = ( isShift and selection or position ) - lines[ isShift and self.cache.selY or self.cache.y ][ 2 ] end
+        local line = lines[ isShift and self.cache.selY or self.cache.y ]
+        if not self.cache.tX then self.cache.tX = ( isShift and selection or position ) - line[ 2 ] + line[ 5 ] - 1 end
 
         old_tX = self.cache.tX
     end
 
     if key == "up" then
-        local previousLine = lines[ ( isShift and self.cache.selY or self.cache.y ) - 1]
+        local previousLine = lines[ ( isShift and self.cache.selY or self.cache.y ) - 1 ]
         if not previousLine then return end
 
-        self[ isShift and "selection" or "position" ] = math.min( previousLine[ 2 ] + self.cache.tX, previousLine[ 3 ] - 1 )
+        self[ isShift and "selection" or "position" ] = math.min( previousLine[ 2 ] + self.cache.tX - previousLine[ 5 ] + 1, previousLine[ 3 ] )
     elseif key == "down" then
-        local nextLine = lines[ ( isShift and self.cache.selY or self.cache.y ) + 1]
+        local nextLine = lines[ ( isShift and self.cache.selY or self.cache.y ) + 1 ]
         if not nextLine then return end
 
-        self[ isShift and "selection" or "position" ] = math.min( nextLine[ 2 ] + self.cache.tX, nextLine[ 3 ] - 1 )
+        self[ isShift and "selection" or "position" ] = math.min( nextLine[ 2 ] + self.cache.tX - nextLine[ 5 ] + 1, nextLine[ 3 ] - 1 )
     elseif key == "left" then
         if isShift then
             self.selection = selection - 1

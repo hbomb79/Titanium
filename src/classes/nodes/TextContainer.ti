@@ -4,7 +4,7 @@ local function resolvePosition( self, lines, X, Y )
     if posY == 0 then return 0 end
 
     local selectedLine = lines[ posY ]
-    return math.min( selectedLine[ 3 ] - ( posY == #lines and 0 or 1 ), selectedLine[ 2 ] + X - 1 )
+    return math.min( selectedLine[ 3 ] - ( posY == #lines and 0 or 1 ), selectedLine[ 2 ] + X - selectedLine[ 5 ] - 1 )
 end
 
 --[[
@@ -114,15 +114,11 @@ function TextContainer:drawLines( lines, selectionStart, selectionStop )
     local isSelection = selectionStart and selectionStop
 
     canvas:clear( bg )
-    local cacheX, cacheY, cacheSelX, cacheSelY = 0, 1, false, false
+    local cacheX, cacheY, cacheSelX, cacheSelY = ( hAlign == "centre" and width / 2 or ( hAlign == "right" and width ) or 0 ), 1, false, false
     for i = self.yScroll + 1, #lines do
-        local Y, line, xOffset = yOffset + i - self.yScroll, lines[ i ], 1
+        local Y, line = yOffset + i - self.yScroll, lines[ i ]
         local lineContent, lineStart, lineEnd = line[ 1 ], line[ 2 ], line[ 3 ]
-        if hAlign == "centre" then
-            xOffset = math.floor( width / 2 - ( #line / 2 ) + .5 )
-        elseif hAlign == "right" then
-            xOffset = width - #line + 1
-        end
+        local xOffset = line[ 5 ]
 
         if isSelection then
             local pre, current, post
@@ -169,7 +165,7 @@ function TextContainer:drawLines( lines, selectionStart, selectionStop )
             if pos == lineEnd and self.lineConfig.lines[ i + 1 ] then
                 cacheY = i + 1
             else
-                cacheX, cacheY = pos - lineStart + 1, i
+                cacheX, cacheY = pos - lineStart + xOffset, i
             end
         end
         if sel and sel >= lineStart and sel <= lineEnd then

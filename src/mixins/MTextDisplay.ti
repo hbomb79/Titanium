@@ -38,6 +38,7 @@ end
 ]]
 function MTextDisplay:wrapText( width )
     local text, width, lines = self.text, width or self.width, {}
+    local align, halfWidth = self.horizontalAlign, width / 2
 
     local current = 1
     while text and string_len( text ) > 0 do
@@ -64,9 +65,16 @@ function MTextDisplay:wrapText( width )
             current = current + string_len( pre ) + ( match and #match or 1 )
         end
 
-        lines[ #lines + 1 ], text = { pre, starting, current - 1, #lines + 1 }, post
+        local offset = 0
+        if align == "centre" then
+            offset = math.floor( halfWidth - ( #pre / 2 ) + .5 )
+        elseif align == "right" then
+            offset = width - #pre
+        end
 
-        if createTrail then lines[ #lines + 1 ] = { "", current, current, #lines + 1 } end
+        lines[ #lines + 1 ], text = { pre, starting, current - 1, #lines + 1, offset < 1 and 1 or offset }, post
+
+        if createTrail then lines[ #lines + 1 ] = { "", current, current, #lines + 1, align == "centre" and halfWidth or ( align == "right" and width ) or 0 } end
     end
 
     self.lineConfig.lines = lines

@@ -106,6 +106,7 @@ function Window:__postInit__()
         self.resizeButtonBackgroundColour = "$self.content.backgroundColour"
     end
 
+    self.consumeAll = false
     self.super:__postInit__()
 end
 

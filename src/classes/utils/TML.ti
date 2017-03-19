@@ -40,7 +40,6 @@ local function formArguments( class, target )
                     returnArguments[ i ] = argType == "string" and "" or ( ( argType == "number" or argType == "colour" ) and 1 or ( argType == "boolean" ) ) or error "invalid argument type"
                 end
             else
-                printError("Failed to handle '"..tostring( val ).."'. Not a dynamic value.")
                 returnArguments[ i ] = XMLParser.convertArgType( val, argType )
             end
         end

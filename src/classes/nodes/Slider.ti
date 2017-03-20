@@ -1,0 +1,100 @@
+--[[
+    @instance trackCharacter - string (def. "\140") - The character used when drawing the slider track
+    @instance trackColour - colour (def. 128) - The colour used when drawing the slider track
+    @instance slideCharacter - string (def. " ") - The character(s) used as the slider knob text
+    @instance slideBackgroundColour - colour (def. 512) - The background colour of the slider knob
+
+    @instance track - Label Instance (def. nil) - The label used to hold the slider track. Created at instantiation and can be customized at will.
+    @instance slide - Button Instance (def. nil) - The button used as the slider control knob. Created at instantiation and can be customized at will.
+
+    @instance value - number (def. 1) - The value of slider, controls the X position of the slider knob.
+
+    A basic node that provides a sliding knob on a track. The knob, when slid along the track (click and drag) will
+    change the 'value' of the slider instance.
+]]
+
+class Slider extends Container {
+    trackCharacter = "\140";
+    trackColour = 128;
+
+    slideCharacter = " ";
+    slideBackgroundColour = colours.cyan;
+
+    value = 1;
+}
+
+--[[
+    @constructor
+    @desc Constructs the Slider instance by registering properties for themeing, and creating the slider track and control. See 'Container' for instance arguments
+]]
+function Slider:__init__( ... )
+    self:super( ... )
+    self:register( "value", "trackCharacter", "trackColour", "slideCharacter", "slideBackgroundColour" )
+
+    self.track = self:addNode( Label( self.trackCharacter:rep( self.width ) ) ):set( "colour", "$parent.trackColour" )
+    self.slide = self:addNode( Button( self.slideCharacter ) ):set {
+        backgroundColour = "$parent.slideBackgroundColour";
+        X = "$parent.value";
+    }
+end
+
+--[[
+    @instance
+    @desc When a mouse drag occurs and the control knob is active, the value is changed to match that of the mouse drag location. This slides the control across the track.
+    @param <MouseEvent Instance - eventObj>, <boolean - handled>, <boolean - within>
+]]
+function Slider:onMouseDrag( eventObj, handled, within )
+    local slide = self.slide
+    if handled or not slide.active then return end
+
+    local value = math.max( 1, math.min( eventObj.X - self.X + 1, self.width ) )
+
+    self.value = value
+    self:executeCallbacks( "change", value )
+
+    eventObj.handled = true
+end
+
+--[[
+    @instance
+    @desc The slider control is moved to the click location if the mouse click falls inside the slider.
+    @param <MouseEvent Instance - eventObj>, <boolean - handled>, <boolean - within>
+]]
+function Slider:onMouseClick( eventObj, handled, within )
+    if within and not handled then
+        self.value = eventObj.X - self.X + 1
+    end
+end
+
+--[[
+    @setter
+    @desc If the width of the slider is updated, the track's text will automatically be updated to match the new width
+    @param <number - width>
+]]
+function Slider:setWidth( width )
+    self.super:setWidth( width )
+
+    self.track.text = self.trackCharacter:rep( self.width )
+end
+
+--[[
+    @setter
+    @desc If the track character of the slider is updated, the track's text will automatically be updated to match
+    @param <string - char>
+]]
+function Slider:setTrackCharacter( char )
+    self.trackCharacter = char
+    self.track.text = char:rep( self.width )
+end
+
+configureConstructor {
+    argumentTypes = {
+        trackCharacter = "string",
+        trackColour = "colour",
+
+        slideCharacter = "string",
+        slideBackgroundColour = "colour",
+
+        value = "number"
+    }
+}

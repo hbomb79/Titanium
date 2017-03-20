@@ -41,6 +41,10 @@
             <Option value="10">Example Option 10</Option>
         </Dropdown>
 
+        <Label X="${#animationSlider}.X" text="Animation Duration" Y=10/>
+        <Slider X=23 width=15 Y=11 id="animationSlider" value=2/>
+        <Label X="${#animationSlider}.X + ( {#animationSlider}.width / 2 ) - self.width / 2" Y=12 text="${#animationSlider}.value * 0.15 .. 's'" id="animationD" class="sub"/>
+
         <Container id="pane" width=21 height=19 X=52 backgroundColour="grey">
             <Label text="Settings" colour=1 X=2 Y=2/>
 

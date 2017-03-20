@@ -102,6 +102,7 @@ completeTask()
 
 -- Using our `app` local, switch the current page to 'main'. The page named 'main' which is defined in our TML file is now visible on the screen
 app.pages:selectPage "main"
+app.pages.animationDuration = "${#animationSlider}.value * 0.15"
 
 -- We already imported our theme file inside our `app` local, however we haven't added it to our application yet. Doing so means the theme file will be applied
 Manager:addTheme( app.masterTheme )

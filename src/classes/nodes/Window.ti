@@ -277,6 +277,26 @@ function Window:setTitle( title )
     self:updateTitle()
 end
 
+--[[
+    @setter
+    @desc When the shadow of the window is updated, the window is redrawn to show the change
+    @param <boolean - enabled>
+]]
+function Window:setShadow( enabled )
+    self.shadow = enabled
+    self.changed = true
+end
+
+--[[
+    @setter
+    @desc When the shadow colour of the window is updated, the window is redrawn to show the change
+    @param <colour - colour>
+]]
+function Window:setShadowColour( colour )
+    self.shadowColour = colour
+    self.changed = true
+end
+
 configureConstructor {
     argumentTypes = {
         title = "string",

@@ -35,10 +35,7 @@ local function formArguments( class, target )
         local val = args[ target ]
         if val then
             if handleArgument( val, target ) then
-                if req[ target ] then
-                    -- This argument is required for instantiation, provide a suitable default value to be used between now and dynamic value init.
-                    returnArguments[ i ] = argType == "string" and "" or ( ( argType == "number" or argType == "colour" ) and 1 or ( argType == "boolean" ) ) or error "invalid argument type"
-                end
+                returnArguments[ i ] = argType == "string" and "" or ( ( argType == "number" or argType == "colour" ) and 1 or ( argType == "boolean" ) ) or error "invalid argument type"
             else
                 returnArguments[ i ] = XMLParser.convertArgType( val, argType )
             end

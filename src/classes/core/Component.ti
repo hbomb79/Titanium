@@ -58,7 +58,7 @@ end
 ]]
 function Component:setX( X )
     self:queueAreaReset()
-    self.X = X
+    self.X = math.ceil( X )
 end
 
 --[[
@@ -68,7 +68,7 @@ end
 ]]
 function Component:setY( Y )
     self:queueAreaReset()
-    self.Y = Y
+    self.Y = math.ceil( Y )
 end
 
 --[[
@@ -79,6 +79,7 @@ end
 function Component:setWidth( width )
     self:queueAreaReset()
 
+    width = math.ceil( width )
     self.width = width
     self.canvas.width = width
 end
@@ -91,6 +92,7 @@ end
 function Component:setHeight( height )
     self:queueAreaReset()
 
+    height = math.ceil( height )
     self.height = height
     self.canvas.height = height
 end

@@ -115,7 +115,6 @@ end
 ]]
 function XMLParser.static.convertArgType( argumentValue, desiredType )
     local vType = type( argumentValue )
-    argumentValue = vType == "number" and math.ceil( argumentValue ) or argumentValue
 
     if not desiredType or not argumentValue or vType == desiredType then
         return argumentValue

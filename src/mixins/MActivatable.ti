@@ -10,7 +10,7 @@ abstract class MActivatable {
     active = false;
 
     activeColour = colours.white;
-    activeBackgroundColour = colours.cyan;
+    activeBackgroundColour = colours.lightBlue;
 }
 
 --[[

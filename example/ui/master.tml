@@ -85,19 +85,19 @@
     </Page>
 
     <Page id="text" xScrollAllowed="false">
-        <EditableTextContainer X=2 Y=2 width="$parent.width - 2" height="$parent.height - 4" colour="256" focusedColour="white" backgroundColour="grey"/>
+        <EditableTextContainer X=2 Y=2 width="$parent.width - 2" height="$parent.height - 4" horizontalAlign="right" colour="256" focusedColour="white" backgroundColour="grey"/>
 
         <Button class="page_change" text="Back" X=15 Y=18 width=6 targetPage="console"/>
         <Button class="page_change" text="Home" X=23 Y=18 width=6 targetPage="main"/>
         <Button class="page_change" text="Next" X=31 Y=18 width=6 targetPage="windows"/>
     </Page>
 
-    <Page id="windows" xScrollAllowed="false">
-        <Window Z=5 X=3 Y=5 width=25 height=6 backgroundColour="lightBlue" title="Example Window">
-            <TextContainer width="$parent.width" height="$parent.height" text="This window can contain any nodes. For example, this is a TextContainer."/>
+    <Page id="windows" xScrollAllowed="false" position=1>
+        <Window Z=5 X=6 Y=3 width=25 height=6 backgroundColour="256" title="Example Window" focusedBackgroundColour="lightBlue" minHeight="7">
+            <Label text="Drag me around!" class="centre" Y=2 colour=128/>
+            <Input width="$parent.width - 2" backgroundColour="red" X=2 Y=4/>
         </Window>
 
-        <Button class="page_change" text="Back" X=18 Y=18 width=6 targetPage="text"/>
-        <Button class="page_change" text="Home" X=26 Y=18 width=6 targetPage="main"/>
+        <Button class="page_change" text="Home" X=23 Y=18 width=6 targetPage="main"/>
     </Page>
 </PageContainer>

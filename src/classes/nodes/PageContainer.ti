@@ -212,3 +212,12 @@ function PageContainer:getAbsolutePosition()
         return -1 + pX + X, -1 + pY + Y
     else return X, Y end
 end
+
+configureConstructor {
+    argumentTypes = {
+        animationDuration = "number",
+        animationEasing = "string",
+        customAnimation = "function",
+        selectedPage = "string"
+    }
+}

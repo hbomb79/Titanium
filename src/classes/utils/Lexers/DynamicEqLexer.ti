@@ -51,6 +51,10 @@ function DynamicEqLexer:tokenize()
             self:pushToken { type = "OPERATOR", value = self:consumePattern "^%.%.", binary = true }
         elseif stream:find "^%=%=" then
             self:pushToken { type = "OPERATOR", value = self:consumePattern "^%=%=", binary = true }
+        elseif stream:find "^%>" then
+            self:pushToken { type = "OPERATOR", value = self:consumePattern "^%>", binary = true }
+        elseif stream:find "^%<" then
+            self:pushToken { type = "OPERATOR", value = self:consumePattern "^%<", binary = true }
         elseif stream:find "^[%+%-]" then
             self:pushToken { type = "OPERATOR", value = self:consumePattern "^[%+%-]", ambiguos = true }
         elseif stream:find "^[%(%)]" then

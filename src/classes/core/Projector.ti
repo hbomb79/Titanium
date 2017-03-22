@@ -1,0 +1,84 @@
+--[[
+    WIP
+]]
+
+class Projector extends Component {
+    static = {
+        modes = {}
+    };
+
+    application = false;
+
+    target = false;
+    mode = false;
+    mirrors = {};
+
+    name = false;
+}
+
+--[[
+    @constructor
+    @desc Instantiates the Projector instance, resolves properties and creates a blank Canvas.
+]]
+function Projector:__init__( ... )
+    self:resolve( ... )
+
+    self.canvas = Canvas( self )
+end
+
+--[[
+    @instance
+    @desc Updates the projector by drawing all of it's mirrors to the projectors buffer, before invoking the modes draw function
+]]
+function Projector:update()
+    local canvas, mirrors = self.canvas, self.mirrors
+    for n = 1, #mirrors do
+        local mirror = mirrors[ n ]
+        mirror.canvas:drawTo( canvas, mirror.mirrorX or mirror.X, mirror.mirrorY or mirror.Y )
+    end
+
+    self:updateDisplay()
+end
+
+--[[
+    @setter
+    @desc Sets the target of the projector after checking the type is correct
+    @param <Any - target>
+]]
+function Projector:setTarget( target )
+    if self.mode then
+        local args = Projector.static.modes[ self.mode ].argumentTypes
+        if args.target then
+            self.target = XMLParser.convertArgType( target, args.target )
+
+            return
+        end
+    end
+
+    self.target = target
+end
+
+--[[
+    @static
+    @desc Registers a projector mode. The given argumentTypes are used when setting variable to ensure valid data is provided.
+
+          The drawFunction is called, and has access to the current buffer. This buffer can then be 'drawn' using any method, such as
+          monitor draw functions, rednet, etc...
+    @param <mode - string>, <table - argumentTypes>, <function - drawFunction>
+]]
+function Projector.static.registerMode( mode, argumentTypes, drawFunction )
+    if not ( type( mode ) == "string" and type( argumentTypes ) == "table" and type( drawFunction ) == "function" ) then
+        return error "Failed to register projector mode. Expected arguments string, table, function (all required)"
+    elseif Projector.modes[ mode ] then
+        return error( "Failed to register projector mode. Mode '"..tostring( mode ) .."' has already been registered" )
+    end
+end
+
+configureConstructor {
+    orderedArguments = { "name", "mode", "target" },
+    requiredArguments = true,
+    argumentTypes = {
+        name = "string",
+        mode = "string"
+    }
+}

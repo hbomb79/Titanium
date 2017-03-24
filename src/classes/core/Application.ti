@@ -14,7 +14,7 @@
     event-loop.
 ]]
 
-class Application extends Component mixin MThemeManager mixin MKeyHandler mixin MCallbackManager mixin MAnimationManager mixin MNodeContainer {
+class Application extends Component mixin MThemeManager mixin MKeyHandler mixin MCallbackManager mixin MAnimationManager mixin MNodeContainer mixin MProjectorManager {
     width = 51;
     height = 19;
 

@@ -1,0 +1,44 @@
+--[[
+    WIP
+]]
+
+abstract class MProjectable {
+    projectX = false;
+    projectY = false;
+
+    projector = false;
+    mirrorProjector = false;
+}
+
+--[[
+    WIP
+]]
+function MProjectable:resolveProjector()
+    local app, p = self.application, self.projector
+    if app and p then
+        self.resolvedProjector = app:getProjector( p )
+    end
+end
+
+--[[
+    WIP
+]]
+function MProjectable:setProjector( projector )
+    if self.resolvedProjector then
+        -- Detach this object as a projector mirror
+        self.resolvedProjector:detachMirror( self )
+    end
+
+    self.projector = projector
+    self:resolveProjector()
+end
+
+configureConstructor {
+    argumentTypes = {
+        projectX = "number",
+        projectY = "number",
+
+        projector = "string",
+        mirrorProjector = "projector"
+    }
+}

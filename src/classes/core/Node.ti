@@ -20,7 +20,7 @@
     Objects such as labels, buttons and text inputs are nodes.
 ]]
 
-abstract class Node extends Component mixin MThemeable mixin MCallbackManager {
+abstract class Node extends Component mixin MThemeable mixin MCallbackManager mixin MProjectable {
     static = {
         eventMatrix = {
             mouse_click = "onMouseClick",
@@ -147,6 +147,22 @@ function Node:setVisible( visible )
     if not visible then
         self:queueAreaReset()
     end
+end
+
+--[[
+    @setter
+    @desc Sets the application of the node, and updates any attached projectors
+    @param <Application Instance - application>
+]]
+function Node:setApplication( application )
+    if self.application then
+        self.parent:removeNode( self )
+    end
+
+    self.application = application
+    self:resolveProjector()
+
+    self.changed = true
 end
 
 --[[

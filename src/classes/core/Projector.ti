@@ -34,10 +34,30 @@ function Projector:update()
     local canvas, mirrors = self.canvas, self.mirrors
     for n = 1, #mirrors do
         local mirror = mirrors[ n ]
-        mirror.canvas:drawTo( canvas, mirror.mirrorX or mirror.X, mirror.mirrorY or mirror.Y )
+        mirror.canvas:drawTo( canvas, mirror.projectX or mirror.X, mirror.projectY or mirror.Y )
     end
 
     self:updateDisplay()
+end
+
+--[[
+    @instance
+    @desc
+]]
+function Projector:updateDisplay()
+    if not self.mode then
+        return error "Failed to update projector display. No mode has been set on the Projector"
+    elseif not self.target then
+        return error "Failed to update projector display. No target has been set on the Projector"
+    end
+
+    local mode = Projector.static.modes[ self.mode ]
+    local args = mode.argumentTypes
+    if not self.resolvedTarget then
+        self.resolvedTarget = args.target and XMLParser.convertArgType( self.target, args.target ) or self.target
+    end
+
+    mode.draw( self )
 end
 
 --[[
@@ -46,16 +66,18 @@ end
     @param <Any - target>
 ]]
 function Projector:setTarget( target )
-    if self.mode then
-        local args = Projector.static.modes[ self.mode ].argumentTypes
-        if args.target then
-            self.target = XMLParser.convertArgType( target, args.target )
-
-            return
-        end
-    end
-
     self.target = target
+    self.resolvedTarget = nil
+end
+
+--[[
+    @setter
+    @desc Sets the mode of the projector and resets the resolved target
+    @param <string - mode>
+]]
+function Projector:setMode( mode )
+    self.mode = mode
+    self.resolvedTarget = nil
 end
 
 --[[
@@ -64,11 +86,15 @@ end
 
           The drawFunction is called, and has access to the current buffer. This buffer can then be 'drawn' using any method, such as
           monitor draw functions, rednet, etc...
-    @param <mode - string>, <table - argumentTypes>, <function - drawFunction>
+
+          The 'config' table MUST contain 'draw (function)' and 'argumentTypes (table)' keys.
+    @param <table - config>
 ]]
-function Projector.static.registerMode( mode, argumentTypes, drawFunction )
-    if not ( type( mode ) == "string" and type( argumentTypes ) == "table" and type( drawFunction ) == "function" ) then
-        return error "Failed to register projector mode. Expected arguments string, table, function (all required)"
+function Projector.static.registerMode( config )
+    if not type( config ) == "table" then
+        return error "Failed to register projector mode. Expected argument table (config)"
+    elseif not ( type( config.argumentTypes ) == "table" and type( config.mode ) == "string" and type( config.draw ) == "function" ) then
+        return error "Failed to register projector mode. Expected config table (arg #2) to contain 'argumentTypes (table)', 'mode (string)' and 'draw (function)' keys"
     elseif Projector.modes[ mode ] then
         return error( "Failed to register projector mode. Mode '"..tostring( mode ) .."' has already been registered" )
     end

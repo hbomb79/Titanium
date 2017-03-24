@@ -229,7 +229,11 @@ end
     @param <Application - app>
 ]]
 function MNodeContainer:setApplication( app )
-    self.application = app
+    if self.super.setApplication then
+        self.super:setApplication( app )
+    else
+        self.application = app
+    end
 
     local nodes = self.nodes
     for i = 1, #nodes do

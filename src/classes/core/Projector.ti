@@ -38,12 +38,22 @@ function Projector:updateDisplay()
     end
 
     local mode = Projector.static.modes[ self.mode ]
-    local args = mode.argumentTypes
     if not self.resolvedTarget then
-        self.resolvedTarget = args.target and XMLParser.convertArgType( self.target, args.target ) or self.target
+        self.resolvedTarget = mode.targetResolver and mode.targetResolver( self.target ) or self.target
     end
 
     mode.draw( self )
+end
+
+function Projector:handleEvent( eventObj )
+    if not self.mode then
+        return error "Failed to handle event. No mode has been set on the Projector"
+    end
+
+    local eventDispatcher = Projector.static.modes[ self.mode ].eventDispatcher
+    if eventDispatcher then
+        eventDispatcher( self, eventObj )
+    end
 end
 
 --[[
@@ -57,13 +67,49 @@ function Projector:setTarget( target )
 end
 
 --[[
+    @instance
+    @desc Attaches a mirror (MProjectable mixer) to the Projector
+    @param <Instance - mirror>
+]]
+function Projector:attachMirror( mirror )
+    local mirrors = self.mirrors
+    for i = 1, #mirrors do
+        if mirrors[ i ] == mirror then return end
+    end
+
+    mirrors[ #mirrors + 1 ] = mirror
+end
+
+--[[
+    @instance
+    @desc Removes the mirror from the Projector
+    @param <Instance - mirror>
+    @return <Instance - removedMirror> - If a mirror is removed it is returned
+]]
+function Projector:detachMirror( mirror )
+    local mirrors = self.mirrors
+    for i = 1, #mirrors do
+        if mirrors[ i ] == mirror then
+            return table.remove( mirrors, i )
+        end
+    end
+end
+
+--[[
     @setter
     @desc Sets the mode of the projector and resets the resolved target
     @param <string - mode>
 ]]
 function Projector:setMode( mode )
+    local md = Projector.modes[ mode ]
+    if not md then
+        return error("Projector mode '"..tostring( mode ).." is invalid (doesn't exist)")
+    end
+
     self.mode = mode
     self.resolvedTarget = nil
+
+    md.init( self )
 end
 
 --[[
@@ -79,18 +125,21 @@ end
 function Projector.static.registerMode( config )
     if not type( config ) == "table" then
         return error "Failed to register projector mode. Expected argument table (config)"
-    elseif not ( type( config.argumentTypes ) == "table" and type( config.mode ) == "string" and type( config.draw ) == "function" ) then
-        return error "Failed to register projector mode. Expected config table (arg #2) to contain 'argumentTypes (table)', 'mode (string)' and 'draw (function)' keys"
+    elseif not ( type( config.init ) == "function" and type( config.mode ) == "string" and type( config.draw ) == "function" ) then
+        return error "Failed to register projector mode. Expected config table to contain 'init (function)', 'mode (string)' and 'draw (function)' keys"
     elseif Projector.modes[ mode ] then
         return error( "Failed to register projector mode. Mode '"..tostring( mode ) .."' has already been registered" )
     end
+
+    Projector.modes[ config.mode ] = config
 end
 
-configureConstructor {
+configureConstructor( {
     orderedArguments = { "name", "mode", "target" },
     requiredArguments = true,
     argumentTypes = {
         name = "string",
         mode = "string"
-    }
-}
+    },
+    useProxy = { "mode" }
+}, true )

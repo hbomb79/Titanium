@@ -23,21 +23,7 @@ class Projector extends Component {
 function Projector:__init__( ... )
     self:resolve( ... )
 
-    self.canvas = Canvas( self )
-end
-
---[[
-    @instance
-    @desc Updates the projector by drawing all of it's mirrors to the projectors buffer, before invoking the modes draw function
-]]
-function Projector:update()
-    local canvas, mirrors = self.canvas, self.mirrors
-    for n = 1, #mirrors do
-        local mirror = mirrors[ n ]
-        mirror.canvas:drawTo( canvas, mirror.projectX or mirror.X, mirror.projectY or mirror.Y )
-    end
-
-    self:updateDisplay()
+    self.canvas = TermCanvas( self )
 end
 
 --[[

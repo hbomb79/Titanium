@@ -219,6 +219,10 @@ function Node:handle( eventObj )
         end
     end
 
+    if main == "MONITOR_TOUCH" and self.projector then
+        self.resolvedProjector:handleEvent( eventObj )
+    end
+
     return true
 end
 

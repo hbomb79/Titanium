@@ -276,6 +276,10 @@ Manager:on("mouse_click", function( self, event )
     end
 end)
 
+Manager:addProjector( Projector( "main_mirror", "monitor", "monitor_0" ):set {
+    backgroundColour = 1
+} )
+
 -- We are ready to go. Any code after this function will not be executed until the application closes.
 completeTask()
 Manager:start()

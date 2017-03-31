@@ -1,4 +1,4 @@
-<PageContainer X=1 Y=1 width="$application.width" height="$application.height">
+<PageContainer X=1 Y=1 width="$application.width" height="$application.height" projector="main_mirror" mirrorProjector=true>
     <Page id="main" xScrollAllowed="false">
         <Label X=2 Y=2 text="Titanium" class="header"/>
         <Label X=2 Y=3 text="Test Application" class="sub"/>

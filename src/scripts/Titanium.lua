@@ -125,7 +125,7 @@ Projector.registerMode {
         local targets = {}
         for t in target:gmatch "%S+" do
             if not targets[ t ] then
-                targets[ #targets + 1 ] = peripheral.wrap( t ) or error("Failed to resolve targets for projector 'monitor'. Invalid target '"..t.."'")
+                targets[ #targets + 1 ] = peripheral.wrap( t ) or error("Failed to resolve targets for projector '"..self.name.."'. Invalid target '"..t.."'")
                 targets[ t ] = true
             end
         end

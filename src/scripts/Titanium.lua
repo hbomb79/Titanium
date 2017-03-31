@@ -53,6 +53,83 @@ end).setImageParser("nfp", function( stream ) -- NFP images, .nfp extension
 end)
 
 --[[
+    Projector Setup
+    ===============
+
+    Before projectors can be used, modes for them must be registered. For example in order to project/mirror a container to a monitor a mode
+    specifically designed to project content to a monitor must be created (see below for the monitor projector mode).
+
+    Every projector mode must be registered via 'Projector.registerMode', passing a table of configuration keys. The table has to contain:
+        - mode (string) - The name of the 'mode' used when creating a projector
+        - init (function) - Executed automatically when this mode is selected inside a projector
+        - draw (function) - Executed when any of the mirrors have changed, requiring a redraw of the projector
+
+    Optional configuration keys:
+        - eventDispatcher (function) - Executed automatically when an event is caught by an attached mirror.
+        - targetResolver (function) - Executed automatically when the mode is changed, or the target is changed. Can be used to parse the target value (return the new target [becomes resolvedTarget])
+
+]]
+
+Projector.registerMode {
+    mode = "monitor",
+    init = function( self )
+        -- TODO
+    end,
+    draw = function( self )
+        local targets = self.resolvedTarget
+        local old = term.current()
+        for i = 1, #targets do
+            --TODO: Remove this wrap function, and wrap all targets somewhere else (once)
+            local m = peripheral.wrap( targets[ i ] )
+            if not m then
+                error("Failed to draw projector (to monitor). Target '"..targets[ i ].."' is invalid (perhipheral doesn't exist)")
+            end
+
+            if i == 1 then
+                -- Use size of first monitor for projector.
+                --TODO: Remove this for something that makes sense
+                self.canvas.width, self.canvas.height = m.getSize()
+            end
+
+            term.redirect( m )
+            self.canvas:draw( true )
+        end
+
+        term.redirect( old )
+    end,
+    eventDispatcher = function( self, event )
+        if event.handled then return end
+
+        local function dispatch( event )
+            local mirrors = self.mirrors
+            for i = 1, #mirrors do
+                mirrors[ i ]:handle( event )
+            end
+        end
+
+        dispatch( MouseEvent( "mouse_click", 1, event.data[ 3 ], event.data[ 4 ] ) )
+        self.application:schedule( function()
+            dispatch( MouseEvent( "mouse_up", 1, event.data[ 3 ], event.data[ 4 ] ) )
+        end, 0.1 )
+    end,
+    targetResolver = function( target )
+        if not type( target ) == "string" then
+            return error( "Failed to resolve target '"..tostring( target ).."' for monitor projector mode. Expected number, got '"..type( target ).."'")
+        end
+
+        local targets = {}
+        for t in target:gmatch "%S+" do
+            if not targets[ t ] then
+                targets[ #targets + 1 ] = t
+                targets[ t ] = true
+            end
+        end
+
+        return targets
+    end
+}
+
+--[[
     Tween setup
     ===========
 

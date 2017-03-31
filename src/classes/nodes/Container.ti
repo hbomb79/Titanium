@@ -64,7 +64,16 @@ function Container:draw( force, offsetX, offsetY )
             if force or ( node.needsRedraw and node.visible ) then
                 node:draw( force )
 
-                node.canvas:drawTo( canvas, node.X + offsetX, node.Y + offsetY )
+                if node.projector then
+                    if node.mirrorProjector then
+                        node.canvas:drawTo( canvas, node.X + offsetX, node.Y + offsetY )
+                    end
+
+                    node:updateProjection()
+                else
+                    node.canvas:drawTo( canvas, node.X + offsetX, node.Y + offsetY )
+                end
+
                 node.needsRedraw = false
             end
         end

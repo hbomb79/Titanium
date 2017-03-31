@@ -248,13 +248,23 @@ function Application:draw( force )
 
     for i = 1, #nodes do
         node = nodes[ i ]
-        if node.needsRedraw and node.visible then
+        if force or ( node.needsRedraw and node.visible ) then
             node:draw( force )
 
-            node.canvas:drawTo( canvas, node.X, node.Y )
+            if node.projector then
+                if node.mirrorProjector then
+                    node.canvas:drawTo( canvas, node.X, node.Y )
+                end
+
+                node:updateProjection()
+            else
+                node.canvas:drawTo( canvas, node.X, node.Y )
+            end
+
             node.needsRedraw = false
         end
     end
+    self:updateProjectors()
     self.changed = false
 
     local focusedNode, caretEnabled, caretX, caretY, caretColour = self.focusedNode

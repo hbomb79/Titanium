@@ -17,7 +17,22 @@ function MProjectable:resolveProjector()
     local app, p = self.application, self.projector
     if app and p then
         self.resolvedProjector = app:getProjector( p )
+
+        if self.resolvedProjector then
+            self.resolvedProjector:attachMirror( self )
+        end
     end
+end
+
+--[[
+    WIP
+]]
+function MProjectable:updateProjection()
+    local projector = self.resolvedProjector
+    if not projector then return end
+
+    projector.changed = true
+    self.canvas:drawTo( projector.canvas, self.projectX or self.X, self.projectY or self.Y )
 end
 
 --[[
@@ -33,12 +48,24 @@ function MProjectable:setProjector( projector )
     self:resolveProjector()
 end
 
+--[[
+    @getter
+    WIP
+]]
+function MProjectable:getResolvedProjector()
+    if not self.resolvedProjector then
+        self:resolveProjector()
+    end
+
+    return self.resolvedProjector
+end
+
 configureConstructor {
     argumentTypes = {
         projectX = "number",
         projectY = "number",
 
         projector = "string",
-        mirrorProjector = "projector"
+        mirrorProjector = "boolean"
     }
 }

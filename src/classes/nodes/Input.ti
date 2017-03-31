@@ -290,8 +290,8 @@ end
     @desc When called, returns the state of the caret, its position (absolute) and colour.
     @return <boolean - caretEnabled>, <number - caretX>, <number - caretY>, <colour - caretColour>
 ]]
-function Input:getCaretInfo()
-    local sX, sY = self:getAbsolutePosition()
+function Input:getCaretInfo( parentLimit )
+    local sX, sY = self:getAbsolutePosition( parentLimit )
     local limit = self.limit
 
     return not self.selection and ( limit <= 0 or self.position < limit ), sX + ( self.position - self.scroll ), sY, self.focusedColour

@@ -232,11 +232,11 @@ end
     @desc Returns the absolute X, Y position of a node rather than its position relative to it's parent.
     @return <number - X>, <number - Y>
 ]]
-function Node:getAbsolutePosition()
-    local parent, application = self.parent, self.application
+function Node:getAbsolutePosition( limit )
+    local parent = self.parent
     if parent then
-        if parent == application then
-            return -1 + application.X + self.X, -1 + application.Y + self.Y
+        if limit and parent == limit then
+            return -1 + parent.X + self.X, -1 + parent.Y + self.Y
         end
 
         local pX, pY = self.parent:getAbsolutePosition()

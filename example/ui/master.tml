@@ -1,3 +1,7 @@
+<Container projector="status_mirror" width=7 height=5>
+    <Button text="Close" width="$#self.text + 2" height="$parent.height - 2" Y=2 id="monitor_close"/>
+</Container>
+
 <PageContainer X=1 Y=1 width="$application.width" height="$application.height" projector="main_mirror" mirrorProjector=true>
     <Page id="main" xScrollAllowed="false">
         <Label X=2 Y=2 text="Titanium" class="header"/>

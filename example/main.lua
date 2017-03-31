@@ -276,9 +276,17 @@ Manager:on("mouse_click", function( self, event )
     end
 end)
 
-Manager:addProjector( Projector( "main_mirror", "monitor", "monitor_0" ):set {
+Manager:addProjector( Projector( "main_mirror", "monitor", "monitor_0 top" ):set {
     backgroundColour = 1
 } )
+
+Manager:addProjector( Projector( "status_mirror", "monitor", "right" ):set {
+    backgroundColour = 128
+} )
+
+Manager:query "Container > Button#monitor_close":on("trigger", function()
+    Manager:stop()
+end)
 
 -- We are ready to go. Any code after this function will not be executed until the application closes.
 completeTask()

@@ -39,7 +39,7 @@ function Projector:updateDisplay()
 
     local mode = Projector.static.modes[ self.mode ]
     if not self.resolvedTarget then
-        self.resolvedTarget = mode.targetResolver and mode.targetResolver( self.target ) or self.target
+        self.resolvedTarget = mode.targetResolver and mode.targetResolver( self, self.target ) or self.target
     end
 
     mode.draw( self )

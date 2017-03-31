@@ -35,6 +35,10 @@ function MProjectorManager:addProjector( projector )
 
     ps[ #ps + 1 ] = projector
     projector.application = self
+
+    if self.focusedNode then
+        self.focusedNode:resolveProjectorFocus()
+    end
 end
 
 --[[

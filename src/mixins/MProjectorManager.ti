@@ -10,9 +10,13 @@ abstract class MProjectorManager {
     @desc Iterate over every registered projector, updating them to display more relevant information
 ]]
 function MProjectorManager:updateProjectors()
-    local ps = self.projectors
+    local ps, p = self.projectors
     for i = 1, #ps do
-        ps[ i ]:update()
+        p = ps[ i ]
+        if p.changed then
+            p:updateDisplay()
+            p.changed = false
+        end
     end
 end
 
@@ -28,6 +32,9 @@ function MProjectorManager:addProjector( projector )
             return error( "Failed to register projector instance. Projector name '"..projector.name.."' is already in use" )
         end
     end
+
+    ps[ #ps + 1 ] = projector
+    projector.application = self
 end
 
 --[[
@@ -49,6 +56,7 @@ function MProjectorManager:removeProjector( projector )
         p = ps[ i ]
 
         if ( searchName and p.name == projector ) or ( not searchName and p == projector ) then
+            p.application = false
             table.remove( ps, i )
             return true, p
         end
@@ -64,7 +72,7 @@ end
     @return <Projector Instance - projector>
 ]]
 function MProjectorManager:getProjector( name )
-    local p = self.projectors
+    local ps = self.projectors
     for i = 1, #ps do
         if ps[ i ].name == name then
             return ps[ i ]

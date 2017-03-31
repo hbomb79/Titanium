@@ -1,8 +1,8 @@
 local function resetNode( self, node )
     node:queueAreaReset()
 
-    node.parent = nil
     node.application = nil
+    node.parent = nil
 
     if self.focusedNode == node then
         node.focused = false
@@ -237,7 +237,9 @@ function MNodeContainer:setApplication( app )
 
     local nodes = self.nodes
     for i = 1, #nodes do
-        nodes[ i ].application = app
+        if nodes[ i ] then
+            nodes[ i ].application = app
+        end
     end
 end
 

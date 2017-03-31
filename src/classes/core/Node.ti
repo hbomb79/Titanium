@@ -133,6 +133,7 @@ function Node:setParent( parent )
 
     if parent then
         self.parentEnabled = Titanium.typeOf( parent, "Application" ) or parent.enabled
+        self:resolveProjector()
     end
 end
 

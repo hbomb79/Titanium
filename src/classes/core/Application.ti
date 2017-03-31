@@ -63,6 +63,10 @@ function Application:focusNode( node )
     self.focusedNode = node
     node.changed = true
 
+    local ps = self.projectors
+    for i = 1, #ps do
+        ps[ i ].containsFocus = false
+    end
 
     node:executeCallbacks( "focus", self )
 end
@@ -264,12 +268,15 @@ function Application:draw( force )
             node.needsRedraw = false
         end
     end
-    self:updateProjectors()
     self.changed = false
 
     local focusedNode, caretEnabled, caretX, caretY, caretColour = self.focusedNode
-    if focusedNode and focusedNode:can "getCaretInfo" then
-        caretEnabled, caretX, caretY, caretColour = focusedNode:getCaretInfo()
+    if focusedNode then
+        focusedNode:resolveProjectorFocus()
+
+        if focusedNode:can "getCaretInfo" then
+            caretEnabled, caretX, caretY, caretColour = focusedNode:getCaretInfo()
+        end
     end
 
     term.setCursorBlink( caretEnabled or false )
@@ -279,6 +286,8 @@ function Application:draw( force )
         term.setTextColour( caretColour or self.colour or 32768 )
         term.setCursorPos( caretX or 1, caretY or 1 )
     end
+
+    self:updateProjectors()
 end
 
 --[[

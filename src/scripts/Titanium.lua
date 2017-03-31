@@ -76,23 +76,27 @@ Projector.registerMode {
         -- TODO
     end,
     draw = function( self )
-        local targets = self.resolvedTarget
+        local targets, t = self.resolvedTarget
+        local focused = self.application and self.application.focusedNode and self.containsFocus
+
+        local blink, X, Y, colour
+        if focused then
+            blink, X, Y, colour = focused[ 1 ], focused[ 2 ], focused[ 3 ], focused[ 4 ]
+        end
+
         local old = term.current()
         for i = 1, #targets do
-            --TODO: Remove this wrap function, and wrap all targets somewhere else (once)
-            local m = peripheral.wrap( targets[ i ] )
-            if not m then
-                error("Failed to draw projector (to monitor). Target '"..targets[ i ].."' is invalid (perhipheral doesn't exist)")
-            end
+            t = targets[ i ]
+            term.redirect( t )
+            term.clear()
 
-            if i == 1 then
-                -- Use size of first monitor for projector.
-                --TODO: Remove this for something that makes sense
-                self.canvas.width, self.canvas.height = m.getSize()
-            end
-
-            term.redirect( m )
             self.canvas:draw( true )
+
+            term.setCursorBlink( blink or false )
+            if blink then
+                term.setCursorPos( X or 1, Y or 1 )
+                term.setTextColour( colour or 32768 )
+            end
         end
 
         term.redirect( old )
@@ -107,12 +111,13 @@ Projector.registerMode {
             end
         end
 
-        dispatch( MouseEvent( "mouse_click", 1, event.data[ 3 ], event.data[ 4 ] ) )
+        local X, Y = event.data[ 3 ], event.data[ 4 ]
+        dispatch( MouseEvent( "mouse_click", 1, X, Y ) )
         self.application:schedule( function()
-            dispatch( MouseEvent( "mouse_up", 1, event.data[ 3 ], event.data[ 4 ] ) )
+            dispatch( MouseEvent( "mouse_up", 1, X, Y ) )
         end, 0.1 )
     end,
-    targetResolver = function( target )
+    targetResolver = function( self, target )
         if not type( target ) == "string" then
             return error( "Failed to resolve target '"..tostring( target ).."' for monitor projector mode. Expected number, got '"..type( target ).."'")
         end
@@ -120,10 +125,12 @@ Projector.registerMode {
         local targets = {}
         for t in target:gmatch "%S+" do
             if not targets[ t ] then
-                targets[ #targets + 1 ] = t
+                targets[ #targets + 1 ] = peripheral.wrap( t ) or error("Failed to resolve targets for projector 'monitor'. Invalid target '"..t.."'")
                 targets[ t ] = true
             end
         end
+
+        self.width, self.height = targets[ 1 ].getSize()
 
         return targets
     end

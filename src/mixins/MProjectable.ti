@@ -10,16 +10,40 @@ abstract class MProjectable {
     mirrorProjector = false;
 }
 
+function MProjectable:MProjectable()
+    self:on("focus", function( self, application )
+        self:resolveProjectorFocus()
+    end)
+end
+
 --[[
     WIP
 ]]
 function MProjectable:resolveProjector()
     local app, p = self.application, self.projector
     if app and p then
-        self.resolvedProjector = app:getProjector( p )
+        local res = app:getProjector( p )
+        self.resolvedProjector = res
 
-        if self.resolvedProjector then
-            self.resolvedProjector:attachMirror( self )
+        if res then
+            res:attachMirror( self )
+            self:resolveProjectorFocus()
+        end
+    end
+end
+
+function MProjectable:resolveProjectorFocus()
+    local app = self.application
+    local f = app and app.focusedNode
+    if app and f == self then
+        local last = self
+        while last do
+            if last.resolvedProjector then
+                last.resolvedProjector.containsFocus = { f:getCaretInfo( last ) }
+                last.resolvedProjector.changed = true
+            end
+
+            last = last.parent
         end
     end
 end
@@ -53,6 +77,8 @@ end
     WIP
 ]]
 function MProjectable:getResolvedProjector()
+    if not self.projector then return end
+
     if not self.resolvedProjector then
         self:resolveProjector()
     end

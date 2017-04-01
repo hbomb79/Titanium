@@ -5,7 +5,7 @@
     @instance filter - string (def. false) - If set, only events that match will be handled. If titanium events are enabled, the :is() function will be used.
     @instance exception - string (def. false) - If the thread crashes, coroutine.resume will catch the error and it will be stored inside of this property.
     @instance titaniumEvents - boolean (def. false) - If 'true', events passed to this thread will NOT be converted to CC events and will remain event instances
-    @instance crashSilently - boolean (def. false) - If 'false', errors caused by the thread will propogate out of the thread. If 'true', the error will not propogate
+    @instance crashSilently - boolean (def. false) - If 'false', errors caused by the thread will propagate out of the thread. If 'true', the error will not propagate
 
     The Thread object is a simple class used to wrap a function (chunk) in a coroutine.
 

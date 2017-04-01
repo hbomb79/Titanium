@@ -62,7 +62,7 @@ end
 
 --[[
     @instance
-    @desc Draws the text lines created by 'wrapText' using the selection where apropriate
+    @desc Draws the text lines created by 'wrapText' using the selection where appropriate
 ]]
 function TextContainer:draw()
     if self.changed then
@@ -205,7 +205,7 @@ end
 
 --[[
     @instance
-    @desc Handles a mouse click. If the mouse occured on the vertical scroll bar, the click is sent to the ScrollContainer handle function.
+    @desc Handles a mouse click. If the mouse occurred on the vertical scroll bar, the click is sent to the ScrollContainer handle function.
           Otherwise the selection is removed and the current position is changed.
     @param <MouseEvent Instance - event>, <boolean - handled>, <boolean - within>
 ]]

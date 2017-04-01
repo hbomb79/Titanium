@@ -43,6 +43,18 @@ function Page:setPosition( position )
     self.isPositionTemporary = nil
 end
 
+function Page:getAbsolutePosition( limit )
+    local parent, application = self.parent, self.application
+    if parent then
+        if limit and parent == limit then
+            return -1 + parent.X + self.X - parent.scroll, -1 + parent.Y + self.Y
+        end
+
+        local pX, pY = self.parent:getAbsolutePosition()
+        return -1 + pX + self.X - parent.scroll, -1 + pY + self.Y
+    else return self.X, self.Y end
+end
+
 configureConstructor {
     orderedArguments = { "id" },
     argumentTypes = {

@@ -1,7 +1,7 @@
 local string_sub = string.sub
 
 --[[
-    The EditableTextContainer is a slighty more advanced version of TextContainer, allowing for changes to be made to the displayed text
+    The EditableTextContainer is a slightly more advanced version of TextContainer, allowing for changes to be made to the displayed text
 ]]
 
 class EditableTextContainer extends TextContainer {
@@ -24,7 +24,7 @@ end
 
           The 'offsetPost' (def. 1) will be added to the position when appending the remainder of the string
 
-          'offsetPre' (def. 0) is substracted from the position when creating the section to the prepended to the value. If this is >1, content
+          'offsetPre' (def. 0) is subtracted from the position when creating the section to concatenate to the start of the value. If this is >1, content
           will be lost (ie: backspace).
 
           If there is a selection when this method is called, the selected content will be removed.

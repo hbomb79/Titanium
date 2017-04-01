@@ -129,7 +129,7 @@ end
     @instance
     @desc Calls the super :addNode with all arguments passed to the function, re-caches the content and returns the node (arg #1)
     @param <Node Instance - node>, <... - args>
-    @return <Node Instande - node>
+    @return <Node Instance - node>
 ]]
 function ScrollContainer:addNode( node, ... )
     self.super:addNode( node, ... )
@@ -147,6 +147,11 @@ end
 function ScrollContainer:handle( eventObj )
     local cache, isWithin = self.cache, eventObj.isWithin
     local cloneEv
+
+    if self.projector and not self.mirrorProjector and not eventObj.projectorOrigin then
+        self.resolvedProjector:handleEvent( eventObj )
+        return
+    end
 
     if eventObj.main == "MOUSE" then
         eventObj.isWithin = eventObj:withinParent( self )

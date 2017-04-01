@@ -41,11 +41,13 @@ function MPropertyManager:MPropertyManager()
         end
     end
 
-    -- Destroys local and foreign watcher instructions
-    self:on("remove", function( instance )
-        self:unwatchForeignProperty "*"
-        self:unwatchProperty( "*", false, true )
-    end)
+    if Titanium.mixesIn( self, "MCallbackManager" ) then
+        -- Destroys local and foreign watcher instructions
+        self:on("remove", function( instance )
+            self:unwatchForeignProperty "*"
+            self:unwatchProperty( "*", false, true )
+        end)
+    end
 end
 
 --[[

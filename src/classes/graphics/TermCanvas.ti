@@ -12,7 +12,7 @@ end
     If your object needs to draw to the canvas this class should be used.
 
     Unlike NodeCanvas, TermCanvas has no drawing functions as it's purpose is not to generate the buffer, just draw it to the term object.
-    Nodes generate their content and store it in your buffer (and theirs aswell).
+    Nodes generate their content and store it in your buffer (and theirs as well).
 ]]
 
 class TermCanvas extends Canvas {

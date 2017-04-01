@@ -25,7 +25,7 @@ class Slider extends Container {
 
 --[[
     @constructor
-    @desc Constructs the Slider instance by registering properties for themeing, and creating the slider track and control. See 'Container' for instance arguments
+    @desc Constructs the Slider instance by registering properties for theming, and creating the slider track and control. See 'Container' for instance arguments
 ]]
 function Slider:__init__( ... )
     self:super( ... )

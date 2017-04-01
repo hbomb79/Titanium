@@ -1,0 +1,102 @@
+--[[
+    A mixin used by classes that require the ability to be projected to external sources.
+
+    @instance projectX - number (def. false) - The X location to be used when displaying the projected node, instead of the 'X' property.
+    @instance projectY - number (def. false) - The Y location to be used when displaying the projected node, instead of the 'Y' property.
+    @instance projector - string (def. false) - The name of the projector to use for projection
+    @instance mirrorProjector - boolean (def. false) - If true the node will appear on the parent AND the mirror. If false it will appear only on the projector IF a projector is set, or only the parent if no projector is set.
+]]
+
+abstract class MProjectable {
+    projectX = false;
+    projectY = false;
+
+    projector = false;
+    mirrorProjector = false;
+}
+
+--[[
+    @constructor
+    @desc Resolves the projector focus automatically whenever this instance is focused
+]]
+function MProjectable:MProjectable()
+    self:on("focus", function( self, application )
+        self:resolveProjectorFocus()
+    end)
+end
+
+--[[
+    @instance
+    @desc Resolves the projector by fetching the projector (by name from MProjectorManager), attaching self as a mirror and resolving the focus
+]]
+function MProjectable:resolveProjector()
+    local app, p = self.application, self.projector
+    if app and p then
+        local res = app:getProjector( p )
+        self.resolvedProjector = res
+
+        if res then
+            res:attachMirror( self )
+            self:resolveProjectorFocus()
+        end
+    end
+end
+
+--[[
+    @instance
+    @desc Gets the the caret information for this node IF globally focused for each parent (relative location), and stores it on the projectors found
+]]
+function MProjectable:resolveProjectorFocus()
+    local app = self.application
+    local f = app and app.focusedNode
+    if app and f == self then
+        local last = self
+        while last do
+            if last.resolvedProjector then
+                last.resolvedProjector.containsFocus = { f:getCaretInfo( last ) }
+                last.resolvedProjector.changed = true
+            end
+
+            last = last.parent
+        end
+    end
+end
+
+--[[
+    @setter
+    @desc Sets the projector for this instance, after detaching it from the previous (if any) projector
+    @param [Projector Instance - projector]
+]]
+function MProjectable:setProjector( projector )
+    if self.resolvedProjector then
+        -- Detach this object as a projector mirror
+        self.resolvedProjector:detachMirror( self )
+    end
+
+    self.projector = projector
+    self:resolveProjector()
+end
+
+--[[
+    @getter
+    @desc Gets the resolved projector, resolving the projector if not already resolved
+]]
+function MProjectable:getResolvedProjector()
+    if not self.projector then return end
+
+    if not self.resolvedProjector then
+        self:resolveProjector()
+    end
+
+    return self.resolvedProjector
+end
+
+configureConstructor {
+    argumentTypes = {
+        projectX = "number",
+        projectY = "number",
+
+        projector = "string",
+        mirrorProjector = "boolean"
+    }
+}

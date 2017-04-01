@@ -65,7 +65,7 @@ end
     The MThemeable mixin facilitates the use of themes on objects.
     It allows properties to be registered allowing the object to monitor property changes and apply them correctly.
 
-    The mixin stores all properties set directly on the object in `mainValues`. These values are prioritised over values from themes unless the theme rule is designated as 'important'.
+    The mixin stores all properties set directly on the object in `mainValues`. These values are prioritized over values from themes unless the theme rule is designated as 'important'.
 
     This mixin no longer handles property links as this functionality has been replaced by a more robust system 'MPropertyManager'.
 ]]
@@ -79,7 +79,7 @@ abstract class MThemeable {
     applicableRules = {};
     rules = {};
 
-    mainValues = {}; --TODO: Preserve dynamic values, instead of the dynamic value output so that they can be restored fully
+    mainValues = {};
     defaultValues = {};
 }
 

@@ -20,7 +20,7 @@
     Objects such as labels, buttons and text inputs are nodes.
 ]]
 
-abstract class Node extends Component mixin MThemeable mixin MCallbackManager {
+abstract class Node extends Component mixin MThemeable mixin MCallbackManager mixin MProjectable {
     static = {
         eventMatrix = {
             mouse_click = "onMouseClick",
@@ -133,12 +133,13 @@ function Node:setParent( parent )
 
     if parent then
         self.parentEnabled = Titanium.typeOf( parent, "Application" ) or parent.enabled
+        self:resolveProjector()
     end
 end
 
 --[[
     @setter
-    @desc Sets the node to visible/invisible depending on 'visible' paramater
+    @desc Sets the node to visible/invisible depending on 'visible' parameter
     @param <boolean - visible>
 ]]
 function Node:setVisible( visible )
@@ -147,6 +148,22 @@ function Node:setVisible( visible )
     if not visible then
         self:queueAreaReset()
     end
+end
+
+--[[
+    @setter
+    @desc Sets the application of the node, and updates any attached projectors
+    @param <Application Instance - application>
+]]
+function Node:setApplication( application )
+    if self.application then
+        self.parent:removeNode( self )
+    end
+
+    self.application = application
+    self:resolveProjector()
+
+    self.changed = true
 end
 
 --[[
@@ -178,6 +195,14 @@ end
 function Node:handle( eventObj )
     local main, sub, within = eventObj.main, eventObj.sub, false
     local handled, enabled = eventObj.handled, self.enabled
+
+    if self.projector then
+        self.resolvedProjector:handleEvent( eventObj )
+
+        if not self.mirrorProjector and not eventObj.projectorOrigin then
+            return
+        end
+    end
 
     if main == "MOUSE" then
         if self.allowMouse then
@@ -211,11 +236,11 @@ end
     @desc Returns the absolute X, Y position of a node rather than its position relative to it's parent.
     @return <number - X>, <number - Y>
 ]]
-function Node:getAbsolutePosition()
-    local parent, application = self.parent, self.application
+function Node:getAbsolutePosition( limit )
+    local parent = self.parent
     if parent then
-        if parent == application then
-            return -1 + application.X + self.X, -1 + application.Y + self.Y
+        if limit and parent == limit then
+            return -1 + parent.X + self.X, -1 + parent.Y + self.Y
         end
 
         local pX, pY = self.parent:getAbsolutePosition()

@@ -58,7 +58,7 @@ end
 
 --[[
     @instance
-    @desc If a label which specifies this node as its 'labelFor' paramater is clicked this function will be called, causing the checkbox to toggle
+    @desc If a label which specifies this node as its 'labelFor' parameter is clicked this function will be called, causing the checkbox to toggle
     @param <Label Instance - label>, <MouseEvent - event>, <boolean - handled>, <boolean - within>
 ]]
 function Checkbox:onLabelClicked( label, event, handled, within )

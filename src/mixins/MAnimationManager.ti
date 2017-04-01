@@ -12,7 +12,7 @@ abstract class MAnimationManager {
 }
 
 --[[
-    @desc When the animation timer ticks, update animations attached to this application and requeue the timer if more animations must occur.
+    @desc When the animation timer ticks, update animations attached to this application and re-queue the timer if more animations must occur.
 ]]
 function MAnimationManager:updateAnimations()
     local dt = os.clock() - self.time

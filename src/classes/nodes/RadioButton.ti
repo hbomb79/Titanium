@@ -41,7 +41,7 @@ end
 
 --[[
     @instance
-    @desc If the radio button is active, and the mouse click occured on this node, the radio button is selected (:select)
+    @desc If the radio button is active, and the mouse click occurred on this node, the radio button is selected (:select)
     @param <MouseEvent Instance - event>, <boolean - handled>, <boolean - within>
 ]]
 function RadioButton:onMouseUp( event, handled, within )

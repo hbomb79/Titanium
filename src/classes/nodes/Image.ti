@@ -2,11 +2,21 @@ local function getFileExtension( path )
     return path:match ".+%.(.-)$" or ""
 end
 
+--[[
+    @static imageParsers - table (def. {}) - The parses available for use (extension based)
+    @instance path - string (def. false) - The image path
+
+    A basic class that will load the image at the path provided and display it
+]]
 class Image extends Node {
     static = { imageParsers = {} };
-    imagePath = false;
+    path = false;
 }
 
+--[[
+    @constructor
+    @desc Resolves instance arguments
+]]
 function Image:__init__( ... )
     self:super()
     self:resolve( ... )
@@ -47,11 +57,21 @@ function Image:parseImage()
     self.changed = true
 end
 
+--[[
+    @setter
+    @desc Sets the path of the image and parses the file
+    @param <string - path>
+]]
 function Image:setPath( path )
     self.path = path
     self:parseImage()
 end
 
+--[[
+    @static
+    @desc Sets the parser (function) to be used for the extension provided
+    @param <string - extension>, <function - parserFunction>
+]]
 function Image.static.setImageParser( extension, parserFunction )
     if type( extension ) ~= "string" or type( parserFunction ) ~= "function" then
         return error "Failed to set image parser. Invalid arguments, expected string, function"

@@ -16,7 +16,7 @@ abstract class MKeyHandler {
     @instance
     @desc 'Handles' a key by updating its status in 'keys'. If the event was a key down, it's status will be set to false if not held and true if it is.
           If the event is a key down, the key's status will be set to nil (use this to detect if a key is not pressed).
-          The registered hotkeys will be updated everytime this function is called.
+          The registered hotkeys will be updated every time this function is called.
     @param <KeyEvent - event>
 ]]
 function MKeyHandler:handleKey( event )

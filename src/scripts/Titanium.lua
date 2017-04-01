@@ -23,7 +23,7 @@ Event.static.matrix = {
 
     Titaniums Image class parses image files based on their extension, two popular formats (nfp and default) are supported by default, however this can be expanded like you see here.
     These functions are expected to return the dimensions of the image and, a buffer (2D table) of pixels to be drawn directly to the images canvas. Pixels that do not exist in the image
-    need not be acounted for, Titanium will automatically fill those as 'blank' pixels by setting them as 'transparent'.
+    need not be accounted for, Titanium will automatically fill those as 'blank' pixels by setting them as 'transparent'.
 
     See the default functions below for good examples of image parsing.
 ]]
@@ -51,6 +51,99 @@ Image.setImageParser("", function( stream ) -- Default CC images, no extension
 end).setImageParser("nfp", function( stream ) -- NFP images, .nfp extension
     --TODO: Look into nfp file format and write parser
 end)
+
+--[[
+    Projector Setup
+    ===============
+
+    Before projectors can be used, modes for them must be registered. For example in order to project/mirror a container to a monitor a mode
+    specifically designed to project content to a monitor must be created (see below for the monitor projector mode).
+
+    Every projector mode must be registered via 'Projector.registerMode', passing a table of configuration keys. The table has to contain:
+        - mode (string) - The name of the 'mode' used when creating a projector
+        - init (function) - Executed automatically when this mode is selected inside a projector
+        - draw (function) - Executed when any of the mirrors have changed, requiring a redraw of the projector
+
+    Optional configuration keys:
+        - eventDispatcher (function) - Executed automatically when an event is caught by an attached mirror.
+        - targetResolver (function) - Executed automatically when the mode is changed, or the target is changed. Can be used to parse the target value (return the new target [becomes resolvedTarget])
+
+]]
+
+Projector.registerMode {
+    mode = "monitor",
+    draw = function( self )
+        local targets, t = self.resolvedTarget
+        local focused = self.application and self.application.focusedNode and self.containsFocus
+
+        local scale = self.textScale and XMLParser.convertArgType( self.textScale, "number" ) or 1
+
+        local blink, X, Y, colour
+        if focused then
+            blink, X, Y, colour = focused[ 1 ], focused[ 2 ], focused[ 3 ], focused[ 4 ]
+        end
+
+        local old = term.current()
+        for i = 1, #targets do
+            t = targets[ i ]
+            t.setTextScale( scale )
+
+            term.redirect( t )
+
+            self.canvas:draw( true )
+
+            term.setCursorBlink( blink or false )
+            if blink then
+                term.setCursorPos( X or 1, Y or 1 )
+                term.setTextColour( colour or 32768 )
+            end
+        end
+
+        term.redirect( old )
+    end,
+    eventDispatcher = function( self, event )
+        if event.handled or not self.resolvedTarget[ event.data[ 2 ] ] or event.main ~= "MONITOR_TOUCH" then return end
+
+        local function dispatch( event )
+            event.projectorOrigin = true
+
+            local mirrors = self.mirrors
+            local oX, oY = event.X, event.Y
+            for i = 1, #mirrors do
+                local mirror = mirrors[ i ]
+                local pX, pY = mirror.projectX, mirror.projectY
+                local offset = pX or pY
+
+                if offset then event.X, event.Y = oX + ( mirror.X - ( pX or 0 ) ), oY + ( mirror.Y - ( pY or 0 ) ) end
+                mirror:handle( event )
+                if offset then event.X, event.Y = oX, oY end
+            end
+        end
+
+        local X, Y = event.data[ 3 ], event.data[ 4 ]
+        dispatch( MouseEvent( "mouse_click", 1, X, Y ) )
+        self.application:schedule( function()
+            dispatch( MouseEvent( "mouse_up", 1, X, Y ) )
+        end, 0.1 )
+    end,
+    targetResolver = function( self, target )
+        if not type( target ) == "string" then
+            return error( "Failed to resolve target '"..tostring( target ).."' for monitor projector mode. Expected number, got '"..type( target ).."'")
+        end
+
+        local targets = {}
+        for t in target:gmatch "%S+" do
+            if not targets[ t ] then
+                targets[ #targets + 1 ] = peripheral.wrap( t ) or error("Failed to resolve targets for projector '"..self.name.."'. Invalid target '"..t.."'")
+                targets[ t ] = true
+            end
+        end
+
+        self.width, self.height = targets[ 1 ].getSize()
+
+        return targets
+    end
+}
 
 --[[
     Tween setup

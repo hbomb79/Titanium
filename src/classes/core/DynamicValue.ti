@@ -1,5 +1,13 @@
 --[[
-    WIP
+    @instance target - Instance (def. false) - The instance that 'property' is stored on
+    @instance property - string (def. false) - The property to control
+    @instance equation - string (def. false) - The equation to parse (DynamicEqParser)
+    @instance resolvedStacks - table (def. false) - The stacks resolved after parsing (automatically set, avoid changing manually)
+    @instance cachedValues - table (def. {}) - The values cached from all stacks (ie: the values from the instances depended on by the dynamic equation). Should not be changed manually
+    @instance attached - boolean (def. false) - When true the dynamic value has already hooked itself into all stack instances
+
+    A basic class that facilitates the use of DynamicValues across Titanium. Manages the lexing and parsing of equations, the resolution of stacks
+    and the application of the values.
 ]]
 
 class DynamicValue {
@@ -8,7 +16,6 @@ class DynamicValue {
     equation = false;
     compiledEquation = false;
 
-    parsed = false;
     resolvedStacks = false;
 
     cachedValues = {};
@@ -18,7 +25,7 @@ class DynamicValue {
 
 --[[
     @constructor
-    @desc Initialises the DynamicValue instance. Set's the target (instance), property (string) and equation (string) of the
+    @desc Initializes the DynamicValue instance. Set's the target (instance), property (string) and equation (string) of the
           dynamic value, parses the equation and stores the parser on the instance (eq).
     @param <Instance - target>, <string - property>, <string - equation>
 ]]
@@ -113,7 +120,7 @@ end
 
 --[[
     @instance
-    @desc Refresh the dynamic value by resolving the instance stacks, removing any current property links and re-attaching the dynamic value to it's targets and
+    @desc Refresh the dynamic value by resolving the instance stacks, removing any current property links and re-attaching the dynamic value to it's targets
 ]]
 function DynamicValue:refresh()
     local stacks, newCachedValues = self.eq:resolveStacks( self.target, true ), {}

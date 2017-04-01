@@ -1,0 +1,172 @@
+--[[
+    @static modes - table (def. {}) - The registered modes
+
+    @instance application - Application (def. false) - The application the projector belongs to. Should not be manually adjusted.
+    @instance target - string (def. false) - The target of the projection (eg: the monitors to mirror to, separated by spaces: 'monitor_5 top')
+    @instance mode - string (def. false) - The projector mode to use (eg: 'monitor')
+    @instance mirrors - table (def. {}) - The attached mirrors (the nodes being projected to the targets via the mode specified)
+    @instance name - string (def. false) - The name of the projector. Used when selecting a projector on nodes
+
+    The Projector is a powerful class allowing for entire nodes to be mirrored to other sources (eg: monitors).
+
+    By default the projector comes with a 'monitor' mode. This allows nodes to be mirrored onto connected monitors while retaining functionality. View the projector
+    tutorial for more information regarding mirroring node content to external sources.
+]]
+
+class Projector extends Component {
+    static = {
+        modes = {}
+    };
+
+    application = false;
+
+    target = false;
+    mode = false;
+    mirrors = {};
+
+    name = false;
+}
+
+--[[
+    @constructor
+    @desc Instantiates the Projector instance, resolves properties and creates a blank Canvas.
+]]
+function Projector:__init__( ... )
+    self:resolve( ... )
+
+    self.canvas = TermCanvas( self )
+end
+
+--[[
+    @instance
+    @desc Updates the projector display by resolving the target (if not already resolved), clearing the canvas and drawing the mirror content to the canvas before projecting the canvas
+          to the projector targets
+]]
+function Projector:updateDisplay()
+    if not self.mode then
+        return error "Failed to update projector display. No mode has been set on the Projector"
+    elseif not self.target then
+        return error "Failed to update projector display. No target has been set on the Projector"
+    end
+
+    local mode = Projector.static.modes[ self.mode ]
+    if not self.resolvedTarget then
+        self.resolvedTarget = mode.targetResolver and mode.targetResolver( self, self.target ) or self.target
+    end
+
+    local canvas, mirrors, mirror = self.canvas, self.mirrors
+    canvas:clear()
+
+    for i = 1, #mirrors do
+        mirror = mirrors[ i ]
+        mirror.canvas:drawTo( canvas, mirror.projectX or mirror.X, mirror.projectY or mirror.Y )
+    end
+
+    mode.draw( self )
+end
+
+--[[
+    @instance
+    @desc Handles the event by dispatching the event to the modes eventDispatcher
+    @param <Event Instance - eventObj>
+]]
+function Projector:handleEvent( eventObj )
+    if not self.mode then
+        return error "Failed to handle event. No mode has been set on the Projector"
+    end
+
+    local eventDispatcher = Projector.static.modes[ self.mode ].eventDispatcher
+    if eventDispatcher then
+        eventDispatcher( self, eventObj )
+    end
+end
+
+--[[
+    @setter
+    @desc Sets the target of the projector after checking the type is correct
+    @param <Any - target>
+]]
+function Projector:setTarget( target )
+    self.target = target
+    self.resolvedTarget = nil
+end
+
+--[[
+    @instance
+    @desc Attaches a mirror (MProjectable mixer) to the Projector
+    @param <Instance - mirror>
+]]
+function Projector:attachMirror( mirror )
+    local mirrors = self.mirrors
+    for i = 1, #mirrors do
+        if mirrors[ i ] == mirror then return end
+    end
+
+    mirrors[ #mirrors + 1 ] = mirror
+end
+
+--[[
+    @instance
+    @desc Removes the mirror from the Projector
+    @param <Instance - mirror>
+    @return <Instance - removedMirror> - If a mirror is removed it is returned
+]]
+function Projector:detachMirror( mirror )
+    local mirrors = self.mirrors
+    for i = 1, #mirrors do
+        if mirrors[ i ] == mirror then
+            return table.remove( mirrors, i )
+        end
+    end
+end
+
+--[[
+    @setter
+    @desc Sets the mode of the projector and resets the resolved target
+    @param <string - mode>
+]]
+function Projector:setMode( mode )
+    local md = Projector.modes[ mode ]
+    if not md then
+        return error("Projector mode '"..tostring( mode ).." is invalid (doesn't exist)")
+    end
+
+    self.mode = mode
+    self.resolvedTarget = nil
+
+    if type( md.init ) == "function" then
+        md.init( self )
+    end
+end
+
+--[[
+    @static
+    @desc Registers a projector mode. The given argumentTypes are used when setting variable to ensure valid data is provided.
+
+          The drawFunction is called, and has access to the current buffer. This buffer can then be 'drawn' using any method, such as
+          monitor draw functions, rednet, etc...
+
+          The 'config' table MUST contain 'draw (function)' and 'argumentTypes (table)' keys.
+    @param <table - config>
+]]
+function Projector.static.registerMode( config )
+    if not type( config ) == "table" then
+        return error "Failed to register projector mode. Expected argument table (config)"
+    elseif not ( type( config.mode ) == "string" and type( config.draw ) == "function" ) then
+        return error "Failed to register projector mode. Expected config table to contain 'mode (string)' and 'draw (function)' keys"
+    elseif Projector.modes[ mode ] then
+        return error( "Failed to register projector mode. Mode '"..tostring( mode ) .."' has already been registered" )
+    end
+
+    Projector.modes[ config.mode ] = config
+end
+
+configureConstructor( {
+    orderedArguments = { "name", "mode", "target" },
+    requiredArguments = true,
+    argumentTypes = {
+        name = "string",
+        mode = "string"
+    },
+    useProxy = { "mode" }
+}, true )

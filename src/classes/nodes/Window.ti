@@ -1,5 +1,44 @@
 --[[
-    TODO
+    @static proxyMethods - table (def. { "addNode", ... }) - The proxy methods being automatically created by the window. See 'about' for more information regarding proxy methods.
+
+    @instance title - string (def. nil) - The windows title, displayed inside the title bar (titleBar must be true)
+    @instance titleBar - boolean (def. true) - If true a title bar will be displayed at the top of the window which can be used to drag the window. Stored in 'window.titleBarContent', or can be queried using '#titlebar'
+    @instance titleBarColour - colour (def. 256) - The colour of the title bar
+    @instance titleBarBackgroundColour - colour (def. 128) - The background colour of the title bar
+    @instance closeable - boolean (def. true) - If true a close button will be visible (and enabled) in the top right. Only available when the title bar is enabled
+    @instance closeButtonChar - string (def. "\7") - The text used inside the close button
+    @instance closeButtonColour - colour (def. 16384) - The colour of the close button
+    @instance closeButtonBackgroundColour - colour (def. nil) - The background colour of the close button
+    @instance resizeable - boolean (def. true) - If true the window will be resizeable via the resize handle in the bottom right of the window
+    @instance resizeButtonChar - string (def. "/") - The character used when drawing the resize handle
+    @instance resizeButtonColour - colour (def. 256) - The colour of the resize handle
+    @instance resizeButtonBackgroundColour - colour (def. nil) - The background colour of the resize handle
+    @instance moveable - boolean (def. true) - When true the window can be moved around by clicking and dragging the top of the window
+    @instance shadow - boolean (def. true) - When true, a shadow will be drawn around the window
+    @instance shadowColour - colour (def. 128) - The colour of the shadow
+    @instance transparent - boolean (def. true) - The transparency value of the window. Should be kept 'true' to ensure correct functionality when using a shadow
+    @instance passiveFocus - boolean (def. true) - When true the window will not override global focus (allowing content to be focused for typing). Should be kept 'true'
+
+    The Window is a niche Titanium node that allows entire containers to be dragged and resized on the screen. Titanium does *not* provide built-in management
+    of windows. If you intend to use them for your project it is suggested you keep track of windows and automatically cycle their z-values.
+
+    The 'content' key on the window contains all the nodes INSIDE the window, excluding the window itself. However the 'nodes' key contains every node, including the title bar, the close
+    button, and the actual content scroll container.
+
+    The Window provides 'proxyMethods'. For example, by default :addNode is actually a proxy that adds the node to 'window.content'. If you intend to add the node directly to the window
+    use ':addNodeRaw'. This applies to addNode, removeNode, getNode, query, and clearNodes. Edit Window.static.proxyMethods to change which proxy methods exist.
+
+    By default windows feature a close button, and resize handle, a title bar and a shadow. These can all be adjusted using the Window property OR by
+    directly targeting the nodes.
+
+    *Every* aspect of the window can be changed directly by querying the particular part of the window via ':query' or ':queryRaw'. However, it is preferred that if possible the window
+    is configured using the instance properties provided (ie: window.backgroundColour is preferred instead of window.content.backgroundColour or window:queryRaw "#content":set { ... }).
+
+    However, if you must target the node completely, you can do so via 'queryRaw' and the following target:
+        - The window main content, where the user content will appear: '#content'
+        - The title bar: '#titlebar'
+        - The title content (inside the title bar): '#titlebar > #title'
+        - The close button (inside the title bar): '#titlebar > #close'
 ]]
 
 class Window extends Container mixin MFocusable mixin MInteractable {
@@ -31,7 +70,7 @@ class Window extends Container mixin MFocusable mixin MInteractable {
 
 --[[
     @constructor
-    @desc Creates the default window layout, complete with a titlebar and content container
+    @desc Creates the default window layout, complete with a title bar and content container
 ]]
 function Window:__init__( ... )
     self:resolve( ... )
@@ -49,7 +88,7 @@ function Window:__init__( ... )
         enabled = "$self.visible"
     })
 
-    self.titleBarTitle = self.titleBarContent:addNode( Label( "" ) )
+    self.titleBarTitle = self.titleBarContent:addNode( Label( "" ) ):set( "id", "title" )
 
     local b = self.titleBarContent:addNode( Button( "" ):set( "X", "$parent.width" ) )
     b:set {
@@ -57,7 +96,8 @@ function Window:__init__( ... )
         colour = "$parent.parent.closeButtonColour",
         text = "$parent.parent.closeButtonChar",
         visible = "$parent.parent.closeable",
-        enabled = "$self.visible"
+        enabled = "$self.visible",
+        id = "close"
     }
 
     b:on("trigger", function()
@@ -112,7 +152,7 @@ end
 
 --[[
     @instance
-    @desc TODO
+    @desc Handles a mouse click by checking the location of the click. Depending on the location will either move, resize, focus or unfocus the window.
     @param <MouseEvent Instance - event>, <boolean - handled>, <boolean - within>
 ]]
 function Window:onMouseClick( event, handled, within )
@@ -136,7 +176,7 @@ end
 
 --[[
     @instance
-    @desc TODO
+    @desc Removes the mouse param (used when moving or resizing), preventing further manipulation of the window
     @param <MouseEvent Instance - event>, <boolean - handled>, <boolean - within>
 ]]
 function Window:onMouseUp( event, handled, within )
@@ -145,7 +185,7 @@ end
 
 --[[
     @instance
-    @desc TODO
+    @desc Handles a mouse drag by passing the request to the MInteractable mixin (handleMouseDrag)
     @param <MouseEvent Instance - event>, <boolean - handled>, <boolean - within>
 ]]
 function Window:onMouseDrag( event, handled, within )

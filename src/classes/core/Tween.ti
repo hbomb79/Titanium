@@ -9,8 +9,8 @@
     @instance clock - number (def. 0) - How far through the animation the instance is
     @instance easing - function (def. nil) - The easing function to be used during the animation
 
-    The Tween class is Titaniums animation class (tween meaning inbetween values (from -> to)). However, Tween should not be used
-    to create animations, using :animate (on supporting instances, like any child class of 'Node') is preffered.
+    The Tween class is Titaniums animation class (tween meaning in between values (from -> to)). However, Tween should not be used
+    to create animations, using :animate (on supporting instances, like any child class of 'Node') is preferred.
 
     When animating, an easing can be set. If this easing is a string, it is searched for in 'Tween.static.easing'. All easing functions
     shipped with Titanium are automatically imported via the Titanium starting script (src/scripts/Titanium.lua). Custom easing

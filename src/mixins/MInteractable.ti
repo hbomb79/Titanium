@@ -1,3 +1,9 @@
+--[[
+    @static properties - table (def. { ... }) - A table containing the different properties to manage depending on the mode used when starting interaction. For example, `move = { "X", "Y" }` so that when moving the instance the X and Y of the instance is changed
+    @static callbacks - table (def. { ... }) - A table containing the different callbacks to execute. Format: `mode = { onStart, onFinish }` where mode is the mode used when starting interaction and onStart is called when the mouse is clicked, and onFinish when the mouse is released.
+
+    @instance mouse - table (def. {}) - A table containing information about the button to be used when calculating the position to use when moving, or the size to use when re-sizing
+]]
 abstract class MInteractable {
     static = {
         properties = {
@@ -13,6 +19,14 @@ abstract class MInteractable {
     mouse = false;
 }
 
+--[[
+    @instance
+    @desc Updates the mouse information. If not mode and the instance is currently being manipulated, the current modes finish callback (if set) is executed and the mouse information is reset.
+
+          If a mode is provided, the mouse is updated ( with mode, X and Y ) and the start callback is executed (if set)
+    @param [boolean - false] - Clears mouse information
+    @param <string - mode>, <number - X>, <number - Y> - Updates the mouse information to match
+]]
 function MInteractable:updateMouse( mode, X, Y )
     if not mode and self.mouse then
         local cb = MInteractable.static.callbacks[ self.mouse[ 1 ] ]
@@ -31,6 +45,11 @@ function MInteractable:updateMouse( mode, X, Y )
     end
 end
 
+--[[
+    @instance
+    @desc Handles the mouse drag by changing the two properties set in the 'properties' static for the current mode (mouse[1]) depending on the mouse position at the start of the interaction, and the current position
+    @param <MouseEvent Instance - eventObj>, <boolean - handled>, <boolean - within>
+]]
 function MInteractable:handleMouseDrag( eventObj, handled, within )
     local mouse = self.mouse
     if not mouse or handled then return end

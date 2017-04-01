@@ -199,20 +199,6 @@ function PageContainer:setHeight( height )
     if self.selectedPage then self.scroll = self.selectedPage.X - 1 end
 end
 
---[[
-    @instance
-    @desc Returns the absolute position of the node, with the 'scroll' used as a offset
-    @return <number - absoluteX>, <number - absoluteY>
-]]
-function PageContainer:getAbsolutePosition()
-    local parent, application = self.parent, self.application
-    local X, Y = self.X - self.scroll, self.Y
-    if parent then
-        local pX, pY = self.parent:getAbsolutePosition()
-        return -1 + pX + X, -1 + pY + Y
-    else return X, Y end
-end
-
 configureConstructor {
     argumentTypes = {
         animationDuration = "number",

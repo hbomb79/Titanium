@@ -6,10 +6,6 @@ abstract class MShaderManager {
     static = {
         shaders = {};
     };
-
-    shader = false;
-    shadeText = true;
-    shadeBackground = true;
 }
 
 --[[

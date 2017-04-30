@@ -18,6 +18,10 @@ abstract class Component mixin MPropertyManager {
     changed = true;
 
     backgroundChar = " ";
+
+    shader = false;
+    shadeText = true;
+    shadeBackground = true;
 }
 
 --[[

@@ -62,16 +62,17 @@ function Container:draw( force, offsetX, offsetY )
             node = nodes[ i ]
 
             if force or ( node.needsRedraw and node.visible ) then
+                local shader, shadeText, shadeBackground = node.shader, node.shadeText, node.shadeBackground
                 node:draw( force )
 
                 if node.projector then
                     if node.mirrorProjector then
-                        node.canvas:drawTo( canvas, node.X + offsetX, node.Y + offsetY )
+                        node.canvas:drawTo( canvas, node.X + offsetX, node.Y + offsetY, shader, shadeText, shadeBackground )
                     end
 
                     node.resolvedProjector.changed = true
                 else
-                    node.canvas:drawTo( canvas, node.X + offsetX, node.Y + offsetY )
+                    node.canvas:drawTo( canvas, node.X + offsetX, node.Y + offsetY, shader, shadeText, shadeBackground )
                 end
 
                 node.needsRedraw = false

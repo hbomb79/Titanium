@@ -22,7 +22,7 @@ end
     The Canvas object is abstract. If you need a canvas for your object 'NodeCanvas' and 'TermCanvas' are provided with Titanium and may suite your needs.
 ]]
 
-abstract class Canvas {
+abstract class Canvas mixin MShaderManager {
     buffer = {};
     last = {};
 
@@ -200,7 +200,7 @@ end
     @desc Draws the canvas to the target 'canvas' using the X and Y offsets. Pixel character, foreground and background colours are resolved according to their property values.
     @param <Canvas - canvas>, [number - offsetX], [number - offsetY]
 ]]
-function Canvas:drawTo( canvas, offsetX, offsetY )
+function Canvas:drawTo( canvas, offsetX, offsetY, shader, shaderText, shaderBackground )
     local offsetX = offsetX - 1 or 0
     local offsetY = offsetY - 1 or 0
 
@@ -222,9 +222,9 @@ function Canvas:drawTo( canvas, offsetX, offsetY )
                 bc, bf, bb = bot[ 1 ], bot[ 2 ], bot[ 3 ]
 
                 if tc and ( tf and tf ~= 0 ) and ( tb and tb ~= 0 ) then
-                    tBuffer[ tPos ] = top
+                    tBuffer[ tPos ] = { tc, tf, tb }
                 elseif not tc and tf == 0 and tb == 0 and bc and bf ~= 0 and bb ~= 0 then
-                    tBuffer[ tPos ] = bot
+                    tBuffer[ tPos ] = { bc, bf, bb }
                 else
                     local nc, nf, nb = tc or bc, tf or colour, tb or backgroundColour
 
@@ -234,6 +234,8 @@ function Canvas:drawTo( canvas, offsetX, offsetY )
 
                     tBuffer[ tPos ] = { nc, nf == 0 and bf or nf, nb == 0 and bb or nb }
                 end
+
+                self:shadePixel( tBuffer[ tPos ], shader, shaderText, shaderBackground )
             end
         elseif cY > tHeight then
             break

@@ -29,7 +29,7 @@ class TermCanvas extends Canvas {
           instead (foreground = 1, backgroundColour = 32768)
     @param [boolean - force]
 ]]
-function TermCanvas:draw( force )
+function TermCanvas:draw( force, shader, shaderText, shaderBackground )
     local owner = self.owner
     local buffer, last = self.buffer, self.last
     local X, Y, width, height = owner.X, owner.Y - 1, self.width, self.height
@@ -57,6 +57,8 @@ function TermCanvas:draw( force )
 
             for x = 1, width do
                 pixel = buffer[ position ]
+                self:shadePixel( pixel, shader, shaderText, shaderBackground )
+
                 last[ position ] = pixel
 
                 local c, fg, bg = pixel[1], pixel[2], pixel[3]

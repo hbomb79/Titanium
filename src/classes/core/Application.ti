@@ -280,6 +280,12 @@ function Application:draw( force )
     end
 
     term.setCursorBlink( caretEnabled or false )
+
+    local shader, shadeText, shadeBackground = self.shader, self.shadeText, self.shadeBackground
+    if shader then
+        self:shadePixels( canvas.buffer, shader, shadeText, shadeBackground )
+    end
+
     canvas:draw( force )
 
     if caretEnabled then

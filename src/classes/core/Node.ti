@@ -65,6 +65,7 @@ abstract class Node extends Component mixin MThemeable mixin MCallbackManager mi
 ]]
 function Node:__init__()
     self:register( "X", "Y", "colour", "backgroundColour", "enabled", "visible", "disabledColour", "disabledBackgroundColour" )
+    self:super()
 
     if not self.canvas then self.raw.canvas = NodeCanvas( self ) end
 end

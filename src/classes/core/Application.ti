@@ -32,6 +32,7 @@ class Application extends Component mixin MThemeManager mixin MKeyHandler mixin 
     @return <nil>
 ]]
 function Application:__init__( ... )
+    self:super()
     self:resolve( ... )
     self.canvas = TermCanvas( self )
 

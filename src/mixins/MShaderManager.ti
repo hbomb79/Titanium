@@ -57,6 +57,12 @@ function MShaderManager:shadeColour( colour, shader )
     return shader and shader[ colour ] or colour
 end
 
+function MShaderManager:getShaders( shader, shadeText, shadeBackground )
+    local shaders = MShaderManager.static.shaders
+
+    return shadeText and shaders[ shadeText ~= true and shadeText or shader ], shadeBackground and shaders[ shadeBackground ~= true and shadeBackground or shader ]
+end
+
 --[[
 
 ]]

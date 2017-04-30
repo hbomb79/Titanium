@@ -60,7 +60,7 @@ end
 function MShaderManager:getShaders( shader, shadeText, shadeBackground )
     local shaders = MShaderManager.static.shaders
 
-    return shadeText and shaders[ shadeText ~= true and shadeText or shader ], shadeBackground and shaders[ shadeBackground ~= true and shadeBackground or shader ]
+    return shadeText and shaders[ shadeText ~= true and shadeText or shader ] or false, shadeBackground and shaders[ shadeBackground ~= true and shadeBackground or shader ] or false
 end
 
 --[[

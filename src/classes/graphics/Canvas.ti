@@ -211,6 +211,15 @@ function Canvas:drawTo( canvas, offsetX, offsetY, shader, shaderText, shaderBack
     local colour, backgroundColour, backgroundTextColour = sRaw.colour, sRaw.backgroundColour, sRaw.backgroundTextColour
     local xStart, xEnd = range( 1, offsetX, width, tWidth )
 
+    local shaderT, shaderB = self:getShaders( shader, shaderText, shaderBackground )
+    local function getShadedColour( colour, shader )
+        if shader then
+            return shader[ colour ]
+        end
+
+        return colour
+    end
+
     local cache, tCache, top, tc, tf, tb, bot, bc, bf, bb, tPos = 0, offsetX + ( offsetY * tWidth )
     for y = 1, height do
         local cY = y + offsetY
@@ -222,9 +231,9 @@ function Canvas:drawTo( canvas, offsetX, offsetY, shader, shaderText, shaderBack
                 bc, bf, bb = bot[ 1 ], bot[ 2 ], bot[ 3 ]
 
                 if tc and ( tf and tf ~= 0 ) and ( tb and tb ~= 0 ) then
-                    tBuffer[ tPos ] = { tc, tf, tb }
+                    tBuffer[ tPos ] = { tc, getShadedColour( tf, shaderT ), getShadedColour( tb, shaderB ) }
                 elseif not tc and tf == 0 and tb == 0 and bc and bf ~= 0 and bb ~= 0 then
-                    tBuffer[ tPos ] = { bc, bf, bb }
+                    tBuffer[ tPos ] = { bc, getShadedColour( bf, shaderT ), getShadedColour( bb, shaderB ) }
                 else
                     local nc, nf, nb = tc or bc, tf or colour, tb or backgroundColour
 
@@ -232,11 +241,7 @@ function Canvas:drawTo( canvas, offsetX, offsetY, shader, shaderText, shaderBack
                         nf = backgroundTextColour or bf
                     end
 
-                    tBuffer[ tPos ] = { nc, nf == 0 and bf or nf, nb == 0 and bb or nb }
-                end
-
-                if shader then
-                    self:shadePixel( tBuffer[ tPos ], shader, shaderText, shaderBackground )
+                    tBuffer[ tPos ] = { nc, getShadedColour( nf == 0 and bf or nf, shaderT ), getShadedColour( nb == 0 and bb or nb, shaderB ) }
                 end
             end
         elseif cY > tHeight then

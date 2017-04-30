@@ -514,7 +514,7 @@ local function spawn( target, ... )
                 desiredType = "number"
             end
 
-            if desiredType and type( value ) ~= desiredType then
+            if desiredType and desiredType ~= "ANY" and type( value ) ~= desiredType then
                 return throw("Failed to resolve '"..tostring( target ).."' constructor arguments. Invalid type for argument '"..name.."'. Type "..configTypes[ name ].." expected, "..type( value ).." was received.")
             end
 

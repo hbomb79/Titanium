@@ -235,7 +235,9 @@ function Canvas:drawTo( canvas, offsetX, offsetY, shader, shaderText, shaderBack
                     tBuffer[ tPos ] = { nc, nf == 0 and bf or nf, nb == 0 and bb or nb }
                 end
 
-                self:shadePixel( tBuffer[ tPos ], shader, shaderText, shaderBackground )
+                if shader then
+                    self:shadePixel( tBuffer[ tPos ], shader, shaderText, shaderBackground )
+                end
             end
         elseif cY > tHeight then
             break

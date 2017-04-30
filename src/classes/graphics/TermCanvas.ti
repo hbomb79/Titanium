@@ -32,6 +32,10 @@ class TermCanvas extends Canvas {
 function TermCanvas:draw( force, shader, shaderText, shaderBackground )
     local owner = self.owner
     local buffer, last = self.buffer, self.last
+
+    local shaderT = shaderText ~= true and shaderText or shader
+    local shaderB = shaderBackground ~= true and shaderBackground or shader
+
     local X, Y, width, height = owner.X, owner.Y - 1, self.width, self.height
     local colour, backgroundChar, backgroundTextColour, backgroundColour = self.colour, self.backgroundChar, self.backgroundTextColour, self.backgroundColour
 
@@ -57,21 +61,30 @@ function TermCanvas:draw( force, shader, shaderText, shaderBackground )
 
             for x = 1, width do
                 pixel = buffer[ position ]
-                self:shadePixel( pixel, shader, shaderText, shaderBackground )
 
                 last[ position ] = pixel
 
                 local c, fg, bg = pixel[1], pixel[2], pixel[3]
 
-                rowColour[ x ] = hex[ type(fg) == "number" and fg ~= 0 and fg or colour or 1 ]
-                rowBackground[ x ] = hex[ type(bg) == "number" and bg ~= 0 and bg or backgroundColour or 32768 ]
-                if c then
-                    rowText[ x ] = c or backgroundChar or " "
+                if shader then
+                    if c then
+                        rowColour[ x ] = hex[ self:shadeColour( type(fg) == "number" and fg ~= 0 and fg or colour or 1, shaderT ) ]
+                    else
+                        rowColour[ x ] = hex[ self:shadeColour( backgroundTextColour or 1, shaderT ) ]
+                    end
+
+                    rowBackground[ x ] = hex[ self:shadeColour( type(bg) == "number" and bg ~= 0 and bg or backgroundColour or 32768, shaderB ) ]
                 else
-                    rowText[ x ] = backgroundChar or " "
-                    rowColour[ x ] = hex[ backgroundTextColour or 1 ]
+                    if c then
+                        rowColour[ x ] = hex[ type(fg) == "number" and fg ~= 0 and fg or colour or 1 ]
+                    else
+                        rowColour[ x ] = hex[ backgroundTextColour or 1 ]
+                    end
+
+                    rowBackground[ x ] = hex[ type(bg) == "number" and bg ~= 0 and bg or backgroundColour or 32768 ]
                 end
 
+                rowText[ x ] = c or backgroundChar or " "
                 position = position + 1
             end
 

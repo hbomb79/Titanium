@@ -1,0 +1,75 @@
+--[[
+
+]]
+
+abstract class MShaderManager {
+    static = {
+        shaders = {};
+    };
+
+    shader = false;
+    shadeText = true;
+    shadeBackground = true;
+}
+
+--[[
+
+]]
+function MShaderManager:shadePixels( pixels, shader, shadeText, shadeBackground )
+    local shaders = MShaderManager.static.shaders
+    local shaderT, shaderB
+
+    if shadeText then shaderT = shaders[ shadeText ~= true and shadeText or shader ] end
+    if shadeBackground then shaderB = shaders[ shadeBackground ~= true and shadeBackground or shader ] end
+
+    local colour, backgroundColour = self.colour, self.backgroundColour
+    local pixel, newPixel
+    for i = 1, #pixels do
+        pixel = pixels[ i ]
+        newPixel = { pixel[ 1 ] }
+        newPixel[ 2 ] = shaderT and shaderT[ pixel[ 2 ] or colour ] or pixel[ 2 ]
+        newPixel[ 3 ] = shaderB and shaderB[ pixel[ 3 ] or backgroundColour ] or pixel[ 3 ]
+
+        pixels[ i ] = newPixel
+    end
+
+    return pixels
+end
+
+--[[
+
+]]
+function MShaderManager:shadePixel( pixel, shader, shadeText, shadeBackground )
+    local shaders = MShaderManager.static.shaders
+    local shaderT, shaderB
+
+    if shadeText then shaderT = shaders[ shadeText ~= true and shadeText or shader ] end
+    if shadeBackground then shaderB = shaders[ shadeBackground ~= true and shadeBackground or shader ] end
+
+    pixel[ 2 ] = shaderT and shaderT[ pixel[ 2 ] ] or pixel[ 2 ]
+    pixel[ 3 ] = shaderB and shaderB[ pixel[ 3 ] ] or pixel[ 3 ]
+
+    return pixel
+end
+
+--[[
+
+]]
+function MShaderManager:shadeColour( colour, shader )
+    shader = MShaderManager.static.shaders[ shader ]
+
+    return shader and shader[ colour ] or colour
+end
+
+--[[
+
+]]
+function MShaderManager.static.registerShader( name, lookup )
+    if not ( type( name ) == "string" and type( lookup ) == "table" ) then
+        return error("Failed to register shader. Expected string, table; got " .. type( name ) .. ", " .. type( lookup ).."'")
+    elseif MShaderManager.static.shaders[ name ] then
+        return error("Failed to register shader '"..tostring( name ).."'. Shader already registered")
+    end
+
+    MShaderManager.static.shaders[ name ] = lookup
+end

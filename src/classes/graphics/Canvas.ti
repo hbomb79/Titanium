@@ -63,7 +63,7 @@ end
     @param [number - colour]
 ]]
 function Canvas:clear( colour )
-    local pixel, buffer = { not self.transparent and self.backgroundChar, self.colour, self.transparent and 0 or colour or self.backgroundColour }, self.buffer
+    local pixel, buffer = { not self.transparent and self.backgroundChar, self.transparent and 0 or self.colour, self.transparent and 0 or colour or self.backgroundColour }, self.buffer
 
     for index = 1, self.width * self.height do
         buffer[ index ] = pixel

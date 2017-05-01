@@ -187,10 +187,11 @@ function Node:setChanged( changed )
             if nodes then
                 local boundaryX1, boundaryY1 = self.X, self.Y
                 local boundaryX2, boundaryY2 = boundaryX1 + self.width, boundaryY1 + self.height
+                local Z = self.Z
                 for i = 1, #nodes do
                     node = nodes[ i ]
 
-                    if node ~= self and not node.needsRedraw and not ( node.X + node.width - 1 < boundaryX1 or node.X > boundaryX2 or node.Y + node.height - 1 < boundaryY1 or node.Y > boundaryY2 ) then
+                    if node ~= self and not node.needsRedraw and node.Z >= Z and not ( node.X + node.width - 1 < boundaryX1 or node.X > boundaryX2 or node.Y + node.height - 1 < boundaryY1 or node.Y > boundaryY2 ) then
                         node.needsRedraw = true
                     end
                 end

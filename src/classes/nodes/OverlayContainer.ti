@@ -1,0 +1,13 @@
+class OverlayContainer extends Container {
+    shader = "greyscale"
+}
+
+function OverlayContainer:__init__( ... )
+    self:resolve( ... )
+    self:super()
+
+    self.canvas.transparent = true
+
+    self.colour = 0
+    self.canvas.onlyShadeBottom = true
+end

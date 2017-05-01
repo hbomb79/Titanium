@@ -102,7 +102,7 @@ function Window:__init__( ... )
 
     b:on("trigger", function()
         self:executeCallbacks "close"
-        self.parent:removeNode( self )
+        self:remove()
     end)
 
     self.content = self:addNode( ScrollContainer():set {

@@ -79,6 +79,15 @@ function Node:__postInit__()
 end
 
 --[[
+    @instance
+]]
+function Node:remove()
+    if not self.parent then return end
+
+    self.parent:removeNode( self )
+end
+
+--[[
     @setter
     @desc Sets 'parentEnabled' and sets 'changed' to true
     @param <boolean - parentEnabled>

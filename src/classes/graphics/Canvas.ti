@@ -22,7 +22,11 @@ end
     The Canvas object is abstract. If you need a canvas for your object 'NodeCanvas' and 'TermCanvas' are provided with Titanium and may suite your needs.
 ]]
 
-abstract class Canvas mixin MShaderManager {
+abstract class Canvas {
+    static = {
+        shaders = {};
+    };
+
     buffer = {};
     last = {};
 
@@ -256,4 +260,21 @@ function Canvas:drawTo( canvas, offsetX, offsetY, shader, shaderText, shaderBack
         cache = cache + width
         tCache = tCache + tWidth
     end
+end
+
+function Canvas:getShaders( shader, shadeText, shadeBackground )
+    local shaders = Canvas.static.shaders
+
+    return shadeText and shaders[ shadeText ~= true and shadeText or shader ] or false, shadeBackground and shaders[ shadeBackground ~= true and shadeBackground or shader ] or false
+end
+
+
+function Canvas.static.registerShader( name, lookup )
+    if not ( type( name ) == "string" and type( lookup ) == "table" ) then
+        return error("Failed to register shader. Expected string, table; got " .. type( name ) .. ", " .. type( lookup ).."'")
+    elseif Canvas.static.shaders[ name ] then
+        return error("Failed to register shader '"..tostring( name ).."'. Shader already registered")
+    end
+
+    Canvas.static.shaders[ name ] = lookup
 end

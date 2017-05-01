@@ -201,6 +201,7 @@ end
     @param <Canvas - canvas>, [number - offsetX], [number - offsetY]
 ]]
 function Canvas:drawTo( canvas, offsetX, offsetY, shader, shaderText, shaderBackground )
+    local onlyShadeBottom = self.onlyShadeBottom
     local offsetX = offsetX - 1 or 0
     local offsetY = offsetY - 1 or 0
 
@@ -231,7 +232,7 @@ function Canvas:drawTo( canvas, offsetX, offsetY, shader, shaderText, shaderBack
                 bc, bf, bb = bot[ 1 ], bot[ 2 ], bot[ 3 ]
 
                 if tc and ( tf and tf ~= 0 ) and ( tb and tb ~= 0 ) then
-                    tBuffer[ tPos ] = { tc, getShadedColour( tf, shaderT ), getShadedColour( tb, shaderB ) }
+                    tBuffer[ tPos ] = onlyShadeBottom and top or { tc, getShadedColour( tf, shaderT ), getShadedColour( tb, shaderB ) }
                 elseif not tc and tf == 0 and tb == 0 and bc and bf ~= 0 and bb ~= 0 then
                     tBuffer[ tPos ] = { bc, getShadedColour( bf, shaderT ), getShadedColour( bb, shaderB ) }
                 else
@@ -241,7 +242,11 @@ function Canvas:drawTo( canvas, offsetX, offsetY, shader, shaderText, shaderBack
                         nf = backgroundTextColour or bf
                     end
 
-                    tBuffer[ tPos ] = { nc, getShadedColour( nf == 0 and bf or nf, shaderT ), getShadedColour( nb == 0 and bb or nb, shaderB ) }
+                    if onlyShadeBottom then
+                        tBuffer[ tPos ] = { nc, nf == 0 and bf or nf, nb == 0 and bb or nb }
+                    else
+                        tBuffer[ tPos ] = { nc, getShadedColour( nf == 0 and bf or nf, shaderT ), getShadedColour( nb == 0 and bb or nb, shaderB ) }
+                    end
                 end
             end
         elseif cY > tHeight then

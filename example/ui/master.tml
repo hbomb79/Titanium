@@ -1,4 +1,11 @@
-<PageContainer X=1 Y=1 width="$application.width" height="$application.height">
+<OverlayContainer Z=2 width="$application.width" height="$application.height">
+    <Window Z=5 X=6 Y=3 width=25 height=6 backgroundColour="256" title="Example Window" focusedBackgroundColour="lightBlue" minHeight="7" id="dialog">
+        <Label text="Drag me around!" class="centre" Y=2 colour=128/>
+        <Input width="$parent.width - 2" backgroundColour="red" X=2 Y=4/>
+    </Window>
+</OverlayContainer>
+
+<PageContainer Z=1 X=1 Y=1 width="$application.width" height="$application.height">
     <Page id="main" xScrollAllowed="false">
         <Label X=2 Y=2 text="Titanium" class="header"/>
         <Label X=2 Y=3 text="Test Application" class="sub"/>

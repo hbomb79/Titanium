@@ -247,6 +247,11 @@ completeTask()
 -- the shell and we can use it just like a normal shell
 Manager:query "Terminal#shell":set { chunk = function() select( 1, loadfile "/rom/programs/shell" )() end }
 
+
+Manager:query "#dialog":on("close", function()
+    Manager:query "OverlayContainer".result[ 1 ]:remove()
+end)
+
 --[[
     Another way of waiting for events is using the ':on' function. Simply provide the CC event name (mouse_click, key_up, char, paste) as the first argument
     and a function to run as the second.

@@ -31,9 +31,10 @@ function Component:__init__()
     self.shadeBackground = shadeBackground == "true" and true or ( shadeBackground ~= "false" and shadeBackground ) or false
     self.shader = shader == "true" and true or ( shader ~= "false" and shader ) or false
 
-    self:watchProperty( "shadeText", function( self, key, value ) return value == "true" and true or ( value ~= "false" and value ) or false end )
-    self:watchProperty( "shadeBackground", function( self, key, value ) return value == "true" and true or ( value ~= "false" and value ) or false end )
-    self:watchProperty( "shader", function( self, key, value ) return value == "true" and true or ( value ~= "false" and value ) or false end )
+    local function fix( self, key, value ) return value == "true" and true or ( value ~= "false" and value ) or false end
+    self:watchProperty( "shadeText", fix )
+    self:watchProperty( "shadeBackground", fix )
+    self:watchProperty( "shader", fix )
 end
 
 --[[

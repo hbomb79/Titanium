@@ -56,10 +56,9 @@ function Dropdown:__init__( ... )
     self:super( ... )
 
     self.optionDisplay = self:addNode( Button "":linkProperties( self, "horizontalAlign", "disabledColour", "disabledBackgroundColour", "activeColour", "activeBackgroundColour" ):on("trigger", function() self:toggleOptionDisplay() end) )
-    self.optionContainer = self:addNode( ScrollContainer( 1, 2, self.width ):set{ xScrollAllowed = false, consumeWhenDisabled = false } )
+    self.optionContainer = self:addNode( ScrollContainer( 1, 2, self.width ):set{ xScrollAllowed = false, consumeWhenDisabled = false, consumeAll = false } )
 
     self:closeOptionDisplay()
-    self.consumeAll = false --TODO: Is this really needed - I think it would almost be better to have it as 'true' (default)
 end
 
 --[[

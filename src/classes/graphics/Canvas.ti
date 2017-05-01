@@ -232,9 +232,9 @@ function Canvas:drawTo( canvas, offsetX, offsetY, shader, shaderText, shaderBack
                 bc, bf, bb = bot[ 1 ], bot[ 2 ], bot[ 3 ]
 
                 if tc and ( tf and tf ~= 0 ) and ( tb and tb ~= 0 ) then
-                    tBuffer[ tPos ] = onlyShadeBottom and top or { tc, getShadedColour( tf, shaderT ), getShadedColour( tb, shaderB ) }
+                    tBuffer[ tPos ] = ( not shader or onlyShadeBottom ) and top or { tc, getShadedColour( tf, shaderT ), getShadedColour( tb, shaderB ) }
                 elseif not tc and tf == 0 and tb == 0 and bc and bf ~= 0 and bb ~= 0 then
-                    tBuffer[ tPos ] = { bc, getShadedColour( bf, shaderT ), getShadedColour( bb, shaderB ) }
+                    tBuffer[ tPos ] = shader and { bc, getShadedColour( bf or colour or 32768, shaderT ), getShadedColour( bb or backgroundColour or 1, shaderB ) } or bot
                 else
                     local nc, nf, nb = tc or bc, tf or colour, tb or backgroundColour
 
@@ -242,7 +242,7 @@ function Canvas:drawTo( canvas, offsetX, offsetY, shader, shaderText, shaderBack
                         nf = backgroundTextColour or bf
                     end
 
-                    if onlyShadeBottom then
+                    if not shader or onlyShadeBottom then
                         tBuffer[ tPos ] = { nc, nf == 0 and bf or nf, nb == 0 and bb or nb }
                     else
                         tBuffer[ tPos ] = { nc, getShadedColour( nf == 0 and bf or nf, shaderT ), getShadedColour( nb == 0 and bb or nb, shaderB ) }

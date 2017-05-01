@@ -1,5 +1,6 @@
 class OverlayContainer extends Container {
-    shader = "greyscale"
+    shader = "greyscale";
+    backgroundColour = 1;
 }
 
 function OverlayContainer:__init__( ... )

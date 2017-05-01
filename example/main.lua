@@ -249,7 +249,7 @@ Manager:query "Terminal#shell":set { chunk = function() select( 1, loadfile "/ro
 
 
 Manager:query "#dialog":on("close", function()
-    Manager:query "OverlayContainer".result[ 1 ]:remove()
+    Manager:query "OverlayContainer":remove()
 end)
 
 --[[

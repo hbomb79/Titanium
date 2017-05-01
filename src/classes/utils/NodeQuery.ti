@@ -73,7 +73,7 @@ end
 ]]
 
 class NodeQuery {
-    static = { supportedMethods = { "addClass", "removeClass", "setClass", "set", "animate", "on", "off" } };
+    static = { supportedMethods = { "addClass", "removeClass", "setClass", "set", "animate", "on", "off", "remove" } };
     result = false;
 
     parent = false;

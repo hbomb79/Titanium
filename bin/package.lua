@@ -17,7 +17,6 @@ local SETTINGS, FLAGS = {
         INSTALL = false,
         DISABLE_CHECK = false,
         VERSION = "latest",
-        MANAGER_PATH = "/tpm",
         MINIFY = false,
         SILENT = false
     },
@@ -48,7 +47,7 @@ local SETTINGS, FLAGS = {
 
     INIT_FILE = false,
 
-    OUTPUT_LOCATION = "titanium-project.tpkg"
+    OUTPUT_LOCATION = false
 }
 
 FLAGS = {
@@ -619,20 +618,17 @@ local titanium = SETTINGS.TITANIUM.INSTALL
 if titanium then
     local VERSION = SETTINGS.TITANIUM.VERSION
     output = output .. [[
-local managerPath = fs.combine( exportDirectory, "]] .. SETTINGS.TITANIUM.MANAGER_PATH .. [[")
-
-if not fs.exists( managerPath ) then
-    if not http then return error "HTTP API required" end
+if not fs.exists( "/.tpm/bin/tpm" ) then
     local h = http.get "https://gitlab.com/hbomb79/Titanium-Package-Manager/raw/master/tpm"
     if not h then return error "Failed to download TPM" end
 
-    local f = fs.open( managerPath, "w" )
+    local f = fs.open( "/.tpm/bin/tpm", "w" )
     f.write( h.readAll() )
     h.close()
     f.close()
 end
 
-local ok, err = loadfile( managerPath )
+local ok, err = loadfile "/.tpm/bin/tpm"
 if not ok then return error("Failed to load TPM '"..tostring( err ).."'") end
 
 ok "fetch"

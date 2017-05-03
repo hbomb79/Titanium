@@ -655,19 +655,16 @@ end
     output = output .. "if not VFS_ENV.Titanium then VFS_ENV.dofile( \"/.tpm/packages/Titanium/"..( VERSION == "latest" and "\"..cache.Titanium[1]" or VERSION .. "\"" ).." ) end\n"
 end
 
-output = output .. [[
-local ti = VFS_ENV.Titanium
-if not ti then
-    return error "Failed to execute Titanium package. Titanium is not loaded. Please load Titanium before executing this package, or repackage this application using the --titanium flag."
-end
-]]
-
 if SETTINGS.SOURCE.POST then
     runFile( SETTINGS.SOURCE.POST )
 end
 
 if next( class_assets ) then
     output = output .. [[
+local ti = VFS_ENV.Titanium
+if not ti then
+    return error "Failed to execute Titanium package. Titanium is not loaded. Please load Titanium before executing this package (or use a --titanium-init), or repackage this application using the --titanium flag."
+end
 
 local loaded = {}
 local function loadClass( name, source )

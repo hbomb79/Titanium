@@ -491,9 +491,9 @@ function VFS.open( path, mode )
         handle.readLine = function()
             if #content == 0 then return end
 
-            local line, rest = content:match "^([^\n\r]*)[\n\r](.*)$"
+            local line, rest = content:match "^([^\n\r]*)(.*)$"
 
-            content = rest or ""
+            content = rest and rest:gsub("^[\n\r]", "") or ""
             return line or content
         end
 

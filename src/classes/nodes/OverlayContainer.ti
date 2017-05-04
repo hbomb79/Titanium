@@ -8,7 +8,28 @@ function OverlayContainer:__init__( ... )
     self:super()
 
     self.canvas.transparent = true
+    self.consumeAll = false
 
     self.colour = 0
     self.canvas.onlyShadeBottom = true
+end
+
+function OverlayContainer:handle( eventObj )
+    if not self.super.super:handle( eventObj ) then return end
+
+    local clone
+    if eventObj.main == "MOUSE" then
+        clone = eventObj:clone( self )
+        clone.isWithin = clone.isWithin and eventObj:withinParent( self ) or false
+    end
+
+    self:shipEvent( clone or eventObj )
+    if clone and clone.isWithin then
+        if not clone.handled then
+            self:executeCallbacks "miss"
+        end
+
+        eventObj.handled = true
+    end
+    return true
 end

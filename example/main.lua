@@ -248,8 +248,24 @@ completeTask()
 Manager:query "Terminal#shell":set { chunk = function() select( 1, loadfile "/rom/programs/shell" )() end }
 
 
+local overlay = Manager:query "OverlayContainer".result[ 1 ]
 Manager:query "#dialog":on("close", function()
-    Manager:query "OverlayContainer":remove()
+    overlay:remove()
+end)
+
+
+local flashing
+overlay:on("miss", function()
+    if flashing then return end
+    flashing = true
+
+    for i = 1, 6 do
+        Manager:schedule( function()
+            overlay.canvas.bottomLayer = not overlay.canvas.bottomLayer and "\129" or false
+
+            if i == 6 then flashing = false end
+        end, 0.05 * i )
+    end
 end)
 
 --[[

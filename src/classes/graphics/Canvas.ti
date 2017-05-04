@@ -206,6 +206,7 @@ end
 ]]
 function Canvas:drawTo( canvas, offsetX, offsetY, shader, shaderText, shaderBackground )
     local onlyShadeBottom = self.onlyShadeBottom
+    local bottomLayer = self.bottomLayer
     local offsetX = offsetX - 1 or 0
     local offsetY = offsetY - 1 or 0
 
@@ -238,7 +239,7 @@ function Canvas:drawTo( canvas, offsetX, offsetY, shader, shaderText, shaderBack
                 if tc and ( tf and tf ~= 0 ) and ( tb and tb ~= 0 ) then
                     tBuffer[ tPos ] = ( not shader or onlyShadeBottom ) and top or { tc, getShadedColour( tf, shaderT ), getShadedColour( tb, shaderB ) }
                 elseif not tc and tf == 0 and tb == 0 and bc and bf ~= 0 and bb ~= 0 then
-                    tBuffer[ tPos ] = shader and { bc, getShadedColour( bf or colour or 32768, shaderT ), getShadedColour( bb or backgroundColour or 1, shaderB ) } or bot
+                    tBuffer[ tPos ] = shader and { bottomLayer or bc, getShadedColour( bf or colour or 32768, shaderT ), getShadedColour( bb or backgroundColour or 1, shaderB ) } or bot
                 else
                     local nc, nf, nb = tc or bc, tf or colour, tb or backgroundColour
 

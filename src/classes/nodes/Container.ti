@@ -112,7 +112,7 @@ end
 function Container:shipEvent( event )
     local nodes = self.nodes
     for i = #nodes, 1, -1 do
-        nodes[ i ]:handle( event )
+        if nodes[ i ] then nodes[ i ]:handle( event ) end
     end
 end
 

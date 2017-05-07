@@ -14,7 +14,7 @@
 ]]
 
 class Slider extends Container {
-    trackCharacter = "\140";
+    trackCharacter = _CC_SPECIAL_CHAR_SUPPORT and "\140" or "-";
     trackColour = 128;
 
     slideCharacter = " ";

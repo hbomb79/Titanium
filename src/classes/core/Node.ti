@@ -299,5 +299,5 @@ function Node:setZ( Z )
 end
 
 configureConstructor {
-    argumentTypes = { enabled = "boolean", visible = "boolean", disabledColour = "colour", disabledBackgroundColour = "colour", consumeWhenDisabled = "boolean", Z = "number" }
+    argumentTypes = { enabled = "boolean", visible = "boolean", disabledColour = "colour", disabledBackgroundColour = "colour", consumeWhenDisabled = "boolean", Z = "number"; allowMouse = "boolean"; allowChar = "boolean"; allowKey = "boolean" }
 }

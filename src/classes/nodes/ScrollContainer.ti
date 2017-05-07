@@ -145,8 +145,10 @@ end
     @return <boolean - propagate>
 ]]
 function ScrollContainer:handle( eventObj )
-    local cache, isWithin = self.cache, eventObj.isWithin
+    local cache = self.cache
     local cloneEv
+
+    if not self.super.super:handle( eventObj ) then return end
 
     if self.projector and not self.mirrorProjector and not eventObj.projectorOrigin then
         self.resolvedProjector:handleEvent( eventObj )
@@ -154,23 +156,24 @@ function ScrollContainer:handle( eventObj )
     end
 
     if eventObj.main == "MOUSE" then
-        eventObj.isWithin = eventObj:withinParent( self )
+        -- eventObj.isWithin = eventObj:withinParent( self )
         if ( not cache.yScrollActive or ( eventObj.X - self.X + 1 ) ~= self.width ) and ( not cache.xScrollActive or ( eventObj.Y - self.Y + 1 ) ~= self.height ) then
             cloneEv = eventObj:clone( self )
+            cloneEv.isWithin = cloneEv.isWithin and eventObj:withinParent( self ) or false
             cloneEv.Y = cloneEv.Y + self.yScroll
             cloneEv.X = cloneEv.X + self.xScroll
         end
     else cloneEv = eventObj end
 
     if cloneEv then self:shipEvent( cloneEv ) end
-    local r = self.super.super:handle( eventObj )
+    -- local r = self.super.super:handle( eventObj )
 
-    eventObj.isWithin = isWithin
+    -- eventObj.isWithin = isWithin
     if cloneEv and cloneEv.isWithin and ( self.consumeAll or cloneEv.handled ) then
         eventObj.handled = true
     end
 
-    return r == nil and true or r
+    -- return r
 end
 
 --[[

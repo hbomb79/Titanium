@@ -146,6 +146,7 @@ end
 configureConstructor({
     orderedArguments = { "X", "Y", "width", "height", "nodes", "backgroundColour" },
     argumentTypes = {
-        nodes = "table"
+        nodes = "table";
+        consumeAll = "boolean";
     }
 }, true)

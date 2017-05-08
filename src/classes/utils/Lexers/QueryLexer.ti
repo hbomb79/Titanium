@@ -19,6 +19,8 @@ function QueryLexer:tokenize()
 
     if self.inCondition then
         self:tokenizeCondition( stream )
+    elseif stream:find "^~" then
+        self:pushToken { type = "QUERY_TYPEOF", value = self:consumePattern "^~" }
     elseif stream:find "^%b[]" then
         self:pushToken { type = "QUERY_COND_OPEN" }
         self:consume( 1 )

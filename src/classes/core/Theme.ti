@@ -8,7 +8,7 @@ local function splitXMLTheme( queue, tree )
         if children then
             for n = 1, #children do
                 local type = tree[ i ].type
-                queue[ #queue + 1 ] = { ( type == "Any" and "*" or type ) .. getTagDetails( tree[ i ] ), children[ n ], tree[ i ] }
+                queue[ #queue + 1 ] = { ( tree[ i ].arguments.typeOf and "~" or "" ) .. ( type == "Any" and "*" or type ) .. getTagDetails( tree[ i ] ), children[ n ], tree[ i ] }
             end
         end
     end

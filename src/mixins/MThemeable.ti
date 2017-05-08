@@ -1,9 +1,10 @@
 local function doesLevelMatch( target, criteria, noAttr )
-    if ( ( criteria.type and target.__type == criteria.type ) or criteria.type == "*" or not criteria.type ) and noAttr then
+    local doesTypeMatch = criteria.ambiguous and Titanium.typeOf( target, criteria.type ) or target.__type == criteria.type
+    if ( criteria.type == "*" or not criteria.type or doesTypeMatch ) and noAttr then
         return true
     end
 
-    if ( criteria.type and target.__type ~= criteria.type and criteria.type ~= "*" ) or ( criteria.id and target.id ~= criteria.id ) or ( criteria.classes and not target:hasClass( criteria.classes ) ) then
+    if ( criteria.type and not doesTypeMatch and criteria.type ~= "*" ) or ( criteria.id and target.id ~= criteria.id ) or ( criteria.classes and not target:hasClass( criteria.classes ) ) then
         return false
     end
 

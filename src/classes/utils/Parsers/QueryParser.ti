@@ -41,7 +41,10 @@ function QueryParser:parse()
 
     local token = self:stepForward()
     while token do
-        if token.type == "QUERY_TYPE" then
+        if token.type == "QUERY_TYPEOF" then
+            if currentStep.ambiguous then self:throw "Attempted to set query section as 'ambiguous' using typeof operator (~). Already set as ambiguous (trailing ~)" end
+            currentStep.ambiguous = true
+        elseif token.type == "QUERY_TYPE" then
             if currentStep.type then self:throw( "Attempted to set query type to '"..token.value.."' when already set as '"..currentStep.type.."'" ) end
 
             currentStep.type = token.value

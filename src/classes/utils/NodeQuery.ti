@@ -20,7 +20,7 @@ local function queryScope( scope, section, results )
         node = scope[ i ]
 
         if ( not section.id or node.id == section.id ) and
-        ( not section.type or section.type == "*" or node.__type == section.type ) and
+        ( not section.type or section.type == "*" or ( section.ambiguous and Titanium.typeOf( node, section.type ) or node.__type == section.type ) ) and
         ( not section.classes or node:hasClass( section.classes ) ) then
             local condition, failed = section.condition
             if condition then

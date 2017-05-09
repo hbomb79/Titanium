@@ -26,7 +26,15 @@ function MPropertyManager:MPropertyManager()
             if type( value ) == "string" then
                 local escaped, rest = value:match "^(%%*)%$(.*)$"
                 if escaped and #escaped % 2 == 0 then
-                    self:setDynamicValue( DynamicValue( self, property, rest ), true )
+                    self:setDynamicValue( DynamicValue( self, property, rest, function( dyn, target, property, value )
+                        -- Because the dynamic value has been created INSIDE a setter, Titanium will NOT automatically call the setter when
+                        -- the property is changed when this dynamic value solves itself.
+
+                        -- To solve the problem, this temporary setter will be used by the dynamic value instead ensuring the setter (below) is called before
+                        -- exiting the function. It can only be used once, so recursion is not a problem
+                        target[ setterName ]( target, value )
+                        dyn.manualSetter = nil
+                    end ), true )
 
                     return
                 end

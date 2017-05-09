@@ -40,6 +40,8 @@ function MTextDisplay:wrapText( width )
     local text, width, lines = self.text, width or self.width, {}
     local align, halfWidth = self.horizontalAlign, width / 2
 
+    if width == 0 then return end
+
     local current = 1
     while text and string_len( text ) > 0 do
         local section, pre, post = string_sub( text, 1, width )

@@ -37,11 +37,11 @@ function DynamicEqLexer:tokenize()
     elseif not self:lexNumber() then
         if first == "'" or first == '"' then
             self:pushToken { type = "STRING", value = self:consumeString( first ), surroundedBy = first }
-        elseif stream:find "^and" then
+        elseif stream:find "^and%s" then
             self:pushToken { type = "OPERATOR", value = self:consumePattern "^and", binary = true }
-        elseif stream:find "^or" then
+        elseif stream:find "^or%s" then
             self:pushToken { type = "OPERATOR", value = self:consumePattern "^or", binary = true }
-        elseif stream:find "^not" then
+        elseif stream:find "^not%s" then
             self:pushToken { type = "OPERATOR", value = self:consumePattern "^not", unary = true }
         elseif stream:find "^[#]" then
             self:pushToken { type = "OPERATOR", value = self:consumePattern "^[#]", unary = true }

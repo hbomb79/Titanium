@@ -300,6 +300,9 @@ end
 function ScrollContainer:cacheContent()
     self:cacheContentSize()
     self:cacheActiveScrollbars()
+
+    local cache = self.cache
+    self.xScroll, self.yScroll = math.max( 0, math.min( cache.contentWidth - cache.displayWidth, self.xScroll ) ), math.max( 0, math.min( cache.contentHeight - cache.displayHeight, self.yScroll ) )
 end
 
 --[[

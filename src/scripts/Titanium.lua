@@ -163,7 +163,7 @@ Projector.registerMode {
     through `Tween.static.easing.<easingType>`.
 ]]
 
-local abs, pow, asin, sin, sqrt, pi = math.abs, math.pow, math.asin, math.sin, math.sqrt, math.pi
+local abs, pow, asin, sin, cos, sqrt, pi = math.abs, math.pow, math.asin, math.sin, math.cos, math.sqrt, math.pi
 local easing = Tween.static.easing
 -- Linear easing function
 Tween.addEasing("linear", function( clock, initial, change, duration )

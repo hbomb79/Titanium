@@ -49,7 +49,7 @@ end
     @param <NodeContainer - parent>
 ]]
 function MouseEvent:withinParent( parent )
-    return self:within( parent.X, parent.Y, parent.width, parent.height )
+    return self.isWithin and self:within( parent.X, parent.Y, parent.width, parent.height )
 end
 
 --[[

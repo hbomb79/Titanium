@@ -65,6 +65,7 @@ abstract class Node extends Component mixin MThemeable mixin MCallbackManager mi
 ]]
 function Node:__init__()
     self:register( "X", "Y", "colour", "backgroundColour", "enabled", "visible", "disabledColour", "disabledBackgroundColour" )
+    self:super()
 
     if not self.canvas then self.raw.canvas = NodeCanvas( self ) end
 end
@@ -75,6 +76,15 @@ end
 ]]
 function Node:__postInit__()
     self:hook()
+end
+
+--[[
+    @instance
+]]
+function Node:remove()
+    if not self.parent then return end
+
+    self.parent:removeNode( self )
 end
 
 --[[
@@ -176,8 +186,25 @@ function Node:setChanged( changed )
 
     if changed then
         local parent = self.parent
-        if parent and not parent.changed then
-            parent.changed = true
+        if parent then
+            if not parent.changed then
+                parent.changed = true
+            end
+
+            -- Perform intersection checks with this node and any siblings (ie: parent.nodes)
+            local nodes, node = parent.nodes
+            if nodes then
+                local boundaryX1, boundaryY1 = self.X, self.Y
+                local boundaryX2, boundaryY2 = boundaryX1 + self.width, boundaryY1 + self.height
+                local Z = self.Z
+                for i = 1, #nodes do
+                    node = nodes[ i ]
+
+                    if node ~= self and not node.needsRedraw and node.Z >= Z and not ( node.X + node.width - 1 < boundaryX1 or node.X > boundaryX2 or node.Y + node.height - 1 < boundaryY1 or node.Y > boundaryY2 ) then
+                        node.needsRedraw = true
+                    end
+                end
+            end
         end
 
         self.needsRedraw = true

@@ -114,6 +114,8 @@ end
     *Note: desiredType is passed as type string, however the return is the value type defined inside the string. eg: desiredType: "number" will return a number, not a string.
 ]]
 function XMLParser.static.convertArgType( argumentValue, desiredType )
+    if desiredType == "ANY" then return argumentValue end
+
     local vType = type( argumentValue )
 
     if not desiredType or not argumentValue or vType == desiredType then

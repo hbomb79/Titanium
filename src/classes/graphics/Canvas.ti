@@ -23,6 +23,10 @@ end
 ]]
 
 abstract class Canvas {
+    static = {
+        shaders = {};
+    };
+
     buffer = {};
     last = {};
 
@@ -63,7 +67,7 @@ end
     @param [number - colour]
 ]]
 function Canvas:clear( colour )
-    local pixel, buffer = { not self.transparent and self.backgroundChar, self.colour, self.transparent and 0 or colour or self.backgroundColour }, self.buffer
+    local pixel, buffer = { not self.transparent and self.backgroundChar, self.transparent and 0 or self.colour, self.transparent and 0 or colour or self.backgroundColour }, self.buffer
 
     for index = 1, self.width * self.height do
         buffer[ index ] = pixel
@@ -200,7 +204,9 @@ end
     @desc Draws the canvas to the target 'canvas' using the X and Y offsets. Pixel character, foreground and background colours are resolved according to their property values.
     @param <Canvas - canvas>, [number - offsetX], [number - offsetY]
 ]]
-function Canvas:drawTo( canvas, offsetX, offsetY )
+function Canvas:drawTo( canvas, offsetX, offsetY, shader, shaderText, shaderBackground )
+    local onlyShadeBottom = self.onlyShadeBottom
+    local bottomLayer = self.bottomLayer
     local offsetX = offsetX - 1 or 0
     local offsetY = offsetY - 1 or 0
 
@@ -210,6 +216,15 @@ function Canvas:drawTo( canvas, offsetX, offsetY )
 
     local colour, backgroundColour, backgroundTextColour = sRaw.colour, sRaw.backgroundColour, sRaw.backgroundTextColour
     local xStart, xEnd = range( 1, offsetX, width, tWidth )
+
+    local shaderT, shaderB = self:getShaders( shader, shaderText, shaderBackground )
+    local function getShadedColour( colour, shader )
+        if shader then
+            return shader[ colour ]
+        end
+
+        return colour
+    end
 
     local cache, tCache, top, tc, tf, tb, bot, bc, bf, bb, tPos = 0, offsetX + ( offsetY * tWidth )
     for y = 1, height do
@@ -222,9 +237,9 @@ function Canvas:drawTo( canvas, offsetX, offsetY )
                 bc, bf, bb = bot[ 1 ], bot[ 2 ], bot[ 3 ]
 
                 if tc and ( tf and tf ~= 0 ) and ( tb and tb ~= 0 ) then
-                    tBuffer[ tPos ] = top
+                    tBuffer[ tPos ] = ( not shader or onlyShadeBottom ) and top or { tc, getShadedColour( tf, shaderT ), getShadedColour( tb, shaderB ) }
                 elseif not tc and tf == 0 and tb == 0 and bc and bf ~= 0 and bb ~= 0 then
-                    tBuffer[ tPos ] = bot
+                    tBuffer[ tPos ] = shader and { bottomLayer or bc, getShadedColour( bf or colour or 32768, shaderT ), getShadedColour( bb or backgroundColour or 1, shaderB ) } or bot
                 else
                     local nc, nf, nb = tc or bc, tf or colour, tb or backgroundColour
 
@@ -232,7 +247,11 @@ function Canvas:drawTo( canvas, offsetX, offsetY )
                         nf = backgroundTextColour or bf
                     end
 
-                    tBuffer[ tPos ] = { nc, nf == 0 and bf or nf, nb == 0 and bb or nb }
+                    if not shader or onlyShadeBottom then
+                        tBuffer[ tPos ] = { nc, nf == 0 and bf or nf, nb == 0 and bb or nb }
+                    else
+                        tBuffer[ tPos ] = { nc, getShadedColour( nf == 0 and bf or nf, shaderT ), getShadedColour( nb == 0 and bb or nb, shaderB ) }
+                    end
                 end
             end
         elseif cY > tHeight then
@@ -242,4 +261,21 @@ function Canvas:drawTo( canvas, offsetX, offsetY )
         cache = cache + width
         tCache = tCache + tWidth
     end
+end
+
+function Canvas:getShaders( shader, shadeText, shadeBackground )
+    local shaders = Canvas.static.shaders
+
+    return shadeText and shaders[ shadeText ~= true and shadeText or shader ] or false, shadeBackground and shaders[ shadeBackground ~= true and shadeBackground or shader ] or false
+end
+
+
+function Canvas.static.registerShader( name, lookup )
+    if not ( type( name ) == "string" and type( lookup ) == "table" ) then
+        return error("Failed to register shader. Expected string, table; got " .. type( name ) .. ", " .. type( lookup ).."'")
+    elseif Canvas.static.shaders[ name ] then
+        return error("Failed to register shader '"..tostring( name ).."'. Shader already registered")
+    end
+
+    Canvas.static.shaders[ name ] = lookup
 end

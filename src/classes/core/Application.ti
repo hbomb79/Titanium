@@ -14,7 +14,7 @@
     event-loop.
 ]]
 
-class Application extends Component mixin MThemeManager mixin MKeyHandler mixin MCallbackManager mixin MAnimationManager mixin MNodeContainer mixin MProjectorManager {
+class Application extends Component mixin MThemeManager mixin MKeyHandler mixin MCallbackManager mixin MAnimationManager mixin MNodeContainer mixin MProjectorManager mixin MDialogManager {
     width = 51;
     height = 19;
 
@@ -32,6 +32,7 @@ class Application extends Component mixin MThemeManager mixin MKeyHandler mixin 
     @return <nil>
 ]]
 function Application:__init__( ... )
+    self:super()
     self:resolve( ... )
     self.canvas = TermCanvas( self )
 
@@ -253,16 +254,17 @@ function Application:draw( force )
     for i = 1, #nodes do
         node = nodes[ i ]
         if force or ( node.needsRedraw and node.visible ) then
+            local shader, shadeText, shadeBackground = node.shader, node.shadeText, node.shadeBackground
             node:draw( force )
 
             if node.projector then
                 if node.mirrorProjector then
-                    node.canvas:drawTo( canvas, node.X, node.Y )
+                    node.canvas:drawTo( canvas, node.X, node.Y, shader, shadeText, shadeBackground )
                 end
 
                 node.resolvedProjector.changed = true
             else
-                node.canvas:drawTo( canvas, node.X, node.Y )
+                node.canvas:drawTo( canvas, node.X, node.Y, shader, shadeText, shadeBackground )
             end
 
             node.needsRedraw = false
@@ -280,7 +282,7 @@ function Application:draw( force )
     end
 
     term.setCursorBlink( caretEnabled or false )
-    canvas:draw( force )
+    canvas:draw( force, self.shader, self.shadeText, self.shadeBackground )
 
     if caretEnabled then
         term.setTextColour( caretColour or self.colour or 32768 )

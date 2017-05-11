@@ -18,7 +18,24 @@ abstract class Component mixin MPropertyManager {
     changed = true;
 
     backgroundChar = " ";
+
+    shader = false;
+    shadeText = true;
+    shadeBackground = true;
 }
+
+function Component:__init__()
+    local shadeText, shadeBackground, shader = self.shadeText, self.shadeBackground, self.shader
+
+    self.shadeText = shadeText == "true" and true or ( shadeText ~= "false" and shadeText ) or false
+    self.shadeBackground = shadeBackground == "true" and true or ( shadeBackground ~= "false" and shadeBackground ) or false
+    self.shader = shader == "true" and true or ( shader ~= "false" and shader ) or false
+
+    local function fix( self, key, value ) return value == "true" and true or ( value ~= "false" and value ) or false end
+    self:watchProperty( "shadeText", fix )
+    self:watchProperty( "shadeBackground", fix )
+    self:watchProperty( "shader", fix )
+end
 
 --[[
     @instance
@@ -163,7 +180,7 @@ end
 
 configureConstructor {
     orderedArguments = { "X", "Y", "width", "height" },
-    argumentTypes = { X = "number", Y = "number", width = "number", height = "number", colour = "colour", backgroundColour = "colour", backgroundTextColour = "colour", transparent = "boolean" }
+    argumentTypes = { X = "number", Y = "number", width = "number", height = "number", colour = "colour", backgroundColour = "colour", backgroundTextColour = "colour", transparent = "boolean", shader = "ANY", shadeText="ANY", shadeBackground="ANY" }
 } alias {
     color = "colour",
     backgroundColor = "backgroundColour"

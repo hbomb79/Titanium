@@ -100,10 +100,7 @@ function Window:__init__( ... )
         id = "close"
     }
 
-    b:on("trigger", function()
-        self:executeCallbacks "close"
-        self.parent:removeNode( self )
-    end)
+    b:on("trigger", function() self:remove() end)
 
     self.content = self:addNode( ScrollContainer():set {
         Y = "$parent.titleBar and 2 or 1",
@@ -127,6 +124,7 @@ function Window:__init__( ... )
         end
     end
 
+    self:on("remove", function() self:executeCallbacks "close" end)
     self:watchProperty( "width", function( _, __, value )
         return self:updateWidth( value )
     end, "WINDOW_MIN_MAX_WIDTH_CHECK" )
@@ -159,6 +157,7 @@ function Window:onMouseClick( event, handled, within )
     if within then
         if not handled and event.button == 1 then
             self:focus()
+            self:executeCallbacks "windowFocus"
 
             local X, Y = event.X - self.X + 1, event.Y - self.Y + 1
             if self.moveable and Y == 1 and ( X >= 1 and X <= self.titleBarContent.width - ( self.closeable and 1 or 0 ) ) then
@@ -171,6 +170,7 @@ function Window:onMouseClick( event, handled, within )
         end
     else
         self:unfocus()
+        self:executeCallbacks "windowUnfocus"
     end
 end
 

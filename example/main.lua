@@ -247,6 +247,38 @@ completeTask()
 -- the shell and we can use it just like a normal shell
 Manager:query "Terminal#shell":set { chunk = function() select( 1, loadfile "/rom/programs/shell" )() end }
 
+Manager:schedule( function()
+    Manager:addDialog( Window():set {
+        X = 6,
+        Y = 3,
+        width = 25,
+        height = 6,
+        backgroundColour = 256,
+        title = "Example Window"
+    } )
+
+    Manager:addDialog( Window():set {
+        X = 1,
+        Y = 3,
+        width = 50,
+        height = 4,
+        backgroundColour = colours.orange,
+    } )
+end, 2)
+
+
+local overlay, flashing = Manager.dialogContainer
+overlay:on("miss", function()
+    if flashing then return else flashing = true end
+
+    for i = 1, 6 do
+        Manager:schedule( function()
+            overlay.canvas.bottomLayer = not overlay.canvas.bottomLayer and ( _CC_SPECIAL_CHAR_SUPPORT and "\129" or "X" ) or false
+            flashing = i ~= 6
+        end, 0.05 * i )
+    end
+end)
+
 --[[
     Another way of waiting for events is using the ':on' function. Simply provide the CC event name (mouse_click, key_up, char, paste) as the first argument
     and a function to run as the second.

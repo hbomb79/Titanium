@@ -73,9 +73,9 @@ function MNodeContainer:removeNode( target )
         node = nodes[ i ]
 
         if ( searchName and node.id == target ) or ( not searchName and node == target ) then
+            table.remove( nodes, i )
             resetNode( self, node )
 
-            table.remove( nodes, i )
             return true, node
         end
     end

@@ -44,9 +44,10 @@ function MNodeContainer:addNode( node )
     self:clearCollatedNodes()
 
     table.insert( self.nodes, node )
-    node:updateZ()
+
     node:retrieveThemes()
     node:refreshDynamicValues()
+    node:updateZ()
 
     if node.focused then node:focus() end
     return node

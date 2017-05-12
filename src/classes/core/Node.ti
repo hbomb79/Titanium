@@ -303,7 +303,7 @@ function Node:updateZ()
                 if before and before.Z > targetZ then
                     nodes[ i ], nodes[ i - 1 ] = nodes[ i - 1 ], self
                     i = i - 1
-                elseif after and after.X < targetZ then
+                elseif after and after.Z < targetZ then
                     nodes[ i ], nodes[ i + 1 ] = nodes[ i + 1 ], self
                     i = i + 1
                 else break end

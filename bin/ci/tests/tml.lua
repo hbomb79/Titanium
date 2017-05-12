@@ -26,7 +26,7 @@ end)
 
 runTask("COLLATED_NODES_COUNT", function()
     local collated = TestApplication.collatedNodes
-    return #collated == 8 or #collated
+    return #collated == 9 or #collated
 end)
 
 runTask("TML_STRING_ASSIGN", function()

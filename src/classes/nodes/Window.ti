@@ -97,7 +97,8 @@ function Window:__init__( ... )
         text = "$parent.parent.closeButtonChar",
         visible = "$parent.parent.closeable",
         enabled = "$self.visible",
-        id = "close"
+        id = "close",
+        width = 1
     }
 
     b:on("trigger", function() self:remove() end)

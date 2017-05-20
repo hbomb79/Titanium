@@ -97,11 +97,11 @@ function XMLParser:parse()
 
     if isTagOpen then
         self:throw("Expected '"..tostring( top.type ).."' tag close, but found none")
-    elseif top.type then
+    elseif top and top.type then
         self:throw("Expected ending tag for '"..top.type.."', but found none")
     end
 
-    self.tree = stack[ 1 ].children
+    self.tree = stack[ 1 ].children or {}
 end
 
 --[[

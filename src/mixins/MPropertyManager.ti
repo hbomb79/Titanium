@@ -235,7 +235,7 @@ function MPropertyManager:unlinkProperties( target, ... )
     local properties, links, dynamics = { ... }, self.links, self.dynamicValues
     for i = 1, #properties do
         local prop = properties[ i ]
-        if not self:removedDynamicValue( prop )then
+        if not self:removeDynamicValue( prop ) then
             self:unwatchForeignProperty( prop, target, "PROPERTY_LINK_" .. self.__ID )
 
             if links[ prop ] == target then

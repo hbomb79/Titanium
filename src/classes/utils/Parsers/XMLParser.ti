@@ -88,10 +88,6 @@ function XMLParser:parse()
             isTagOpen = false
         end
 
-        if top.content and top.children then
-            self:throw "XML layers cannot contain child nodes and XML_CONTENT at the same time"
-        end
-
         token = self:stepForward()
     end
 

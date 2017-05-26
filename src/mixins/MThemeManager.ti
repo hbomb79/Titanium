@@ -1,3 +1,10 @@
+local t = os.clock()
+local function themeYield()
+    os.queueEvent "themeYield"; os.pullEvent "themeYield";
+
+    t = os.clock()
+end
+
 --[[
     The MThemeManager mixin should be used by classes that want to manage objects which are themeable, the main example being the 'Application' class.
 ]]
@@ -82,5 +89,11 @@ end
 ]]
 function MThemeManager:dispatchThemeRules()
     local nodes = self.collatedNodes
-    for i = 1, #nodes do nodes[ i ]:retrieveThemes() end
+
+    themeYield()
+    for i = 1, #nodes do
+        if os.clock() - t > 8 then themeYield() end
+
+        nodes[ i ]:retrieveThemes()
+    end
 end

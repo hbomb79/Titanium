@@ -7,33 +7,33 @@
 
 <PageContainer Z=1 X=1 Y=1 width="$application.width" height="$application.height">
     <Page id="main" xScrollAllowed="false">
-        <Label X=2 Y=2 text="Titanium" class="header"/>
-        <Label X=2 Y=3 text="Test Application" class="sub"/>
+        <Label X=2 Y=2 class="header">Titanium</Label>
+        <Label X=2 Y=3 class="sub">Test Application</Label>
 
-        <Label X=41 Y=15 text="Allow Exit"/>
-        <Label X=41 Y=16 text="Yes" class="sub" labelFor="yes_rating"/>
+        <Label X=41 Y=15>Allow Exit</Label>
+        <Label X=41 Y=16 class="sub" labelFor="yes_rating">Yes</Label>
         <RadioButton value="yes" X=45 Y=16 group="rating" id="yes_rating"/>
 
-        <Label X=47 Y=16 text="No" class="sub" labelFor="no_rating"/>
+        <Label X=47 Y=16 class="sub" labelFor="no_rating">No</Label>
         <RadioButton value="no" X=50 Y=16 group="rating" id="no_rating" toggled/>
 
-        <Label text="Name" X=2 Y=6 labelFor="name_input"/>
+        <Label X=2 Y=6 labelFor="name_input">Name</Label>
         <Input X=2 Y=7 width=18 id="name_input" placeholder="Your Name" focused="true"/>
-        <Label X=2 Y=8 text="Enter your name" id="name_display" class="sub"/>
-        <Label X=2 Y=10 text="No selected text" id="selected_name_display" class="sub"/>
+        <Label X=2 Y=8 id="name_display" class="sub">Enter your name</Label>
+        <Label X=2 Y=10 id="selected_name_display" class="sub">No selected text</Label>
 
-        <Button text="Exit" X=41 Y=18 width=10 id="exit_button" enabled="false"/>
-        <Button text="Toggle Theme" X=2 Y=18 height=1 width=14 id="toggle"/>
+        <Button X=41 Y=18 width=10 id="exit_button" enabled="false">Exit</Button>
+        <Button X=2 Y=18 height=1 width=14 id="toggle">Toggle Theme</Button>
 
-        <Button text="Toggle Pane" X=2 Y=15 height=1 width=13 id="pane_toggle"/>
+        <Button X=2 Y=15 height=1 width=13 id="pane_toggle">Toggle Pane</Button>
 
-        <Label text="ctrl" id="left" X=5 Y=16 class="sub hotkey_part"/>
-        <Label text="-" X=9 Y=16 class="sub hotkey_part" id="hyphen_seperator"/>
-        <Label text="p" id="right" X=10 Y=16 class="sub hotkey_part"/>
+        <Label id="left" X=5 Y=16 class="sub hotkey_part">ctrl</Label>
+        <Label X=9 Y=16 class="sub hotkey_part" id="hyphen_seperator">-</Label>
+        <Label id="right" X=10 Y=16 class="sub hotkey_part">p</Label>
 
-        <Button text="Shell" width=7 height=1 X="${Container#pane}.X - 2 - self.width" Y=2 class="page_change" targetPage="console" id="shell_link"/>
-        <Button text="Text" width=6 height=1 X="${#shell_link}.X - 2 - self.width" Y=2 class="page_change" targetPage="text" id="button_link"/>
-        <Button text="Windows" width="$#self.text + 2" height=1 X="${#button_link}.X - 2 - self.width" Y=2 class="page_change" targetPage="windows"/>
+        <Button width=7 height=1 X="${Container#pane}.X - 2 - self.width" Y=2 class="page_change" targetPage="console" id="shell_link">Shell</Button>
+        <Button width=6 height=1 X="${#shell_link}.X - 2 - self.width" Y=2 class="page_change" targetPage="text" id="button_link">Text</Button>
+        <Button width="$#self.text + 2" height=1 X="${#button_link}.X - 2 - self.width" Y=2 class="page_change" targetPage="windows">Windows</Button>
 
         <Dropdown X=23 Y=6 width=25 maxHeight=7 Z=2>
             <Option value="1">Example Option 1</Option>
@@ -48,62 +48,62 @@
             <Option value="10">Example Option 10</Option>
         </Dropdown>
 
-        <Label X="${#animationSlider}.X" text="Animation Duration" Y=10/>
+        <Label X="${#animationSlider}.X" Y=10>Animation Duration</Label>
         <Slider X=23 width=15 Y=11 id="animationSlider" value=2/>
-        <Label X="${#animationSlider}.X + ( {#animationSlider}.width / 2 ) - self.width / 2" Y=12 text="${#animationSlider}.value * 0.15 .. 's'" id="animationD" class="sub"/>
+        <Label X="${#animationSlider}.X + ( {#animationSlider}.width / 2 ) - self.width / 2" Y=12 id="animationD" class="sub">${#animationSlider}.value * 0.15 .. 's'</Label>
 
         <Container id="pane" width=21 height=19 X=52 backgroundColour="grey" Z=3>
-            <Label text="Settings" colour=1 X=2 Y=2/>
+            <Label colour=1 X=2 Y=2>Settings</Label>
 
             <ScrollContainer X=2 Y=4 width=20 height=10>
-                <Label text="Config 1" labelFor="config_1" Y=1/>
+                <Label labelFor="config_1" Y=1>Config 1</Label>
                 <Checkbox Y=1 id="config_1"/>
 
-                <Label text="Config 2" labelFor="config_2" Y=3/>
+                <Label labelFor="config_2" Y=3>Config 2</Label>
                 <Checkbox Y=3 id="config_2"/>
 
-                <Label text="Config 3" labelFor="config_3" Y=5/>
+                <Label labelFor="config_3" Y=5>Config 3</Label>
                 <Checkbox Y=5 id="config_3"/>
 
-                <Label text="Config 4" labelFor="config_4" Y=7/>
+                <Label labelFor="config_4" Y=7>Config 4</Label>
                 <Checkbox Y=7 id="config_4"/>
 
-                <Label text="Config 5" labelFor="config_5" Y=9/>
+                <Label labelFor="config_5" Y=9>Config 5</Label>
                 <Checkbox Y=9 id="config_5"/>
 
-                <Label text="Config 6" labelFor="config_6" Y=11/>
+                <Label labelFor="config_6" Y=11>Config 6</Label>
                 <Checkbox Y=11 id="config_6"/>
 
-                <Label text="Config 7" labelFor="config_7" Y=13/>
+                <Label labelFor="config_7" Y=13>Config 7</Label>
                 <Checkbox Y=13 id="config_7"/>
 
-                <Label text="Config 8" labelFor="config_8" Y=15/>
+                <Label labelFor="config_8" Y=15>Config 8</Label>
                 <Checkbox Y=15 id="config_8"/>
             </ScrollContainer>
 
-            <Button text="Save Settings" width=17 height=3 X=3 Y=16 id="config_save"/>
+            <Button width=17 height=3 X=3 Y=16 id="config_save">Save Settings</Button>
         </Container>
     </Page>
 
     <Page id="console" xScrollAllowed="false">
         <Terminal X=2 Y=2 width=49 height=15 id="shell"/>
-        <Button class="page_change" text="Back" X=18 Y=18 width=6 targetPage="main"/>
-        <Button class="page_change" text="Next" X=26 Y=18 width=6 targetPage="text"/>
+        <Button class="page_change" X=18 Y=18 width=6 targetPage="main">Back</Button>
+        <Button class="page_change" X=26 Y=18 width=6 targetPage="text">Next</Button>
     </Page>
 
     <Page id="text" xScrollAllowed="false">
         <EditableTextContainer X=2 Y=2 width="$parent.width - 2" height="$parent.height - 4" horizontalAlign="right" colour="256" focusedColour="white" backgroundColour="grey"/>
 
-        <Button class="page_change" text="Back" X=18 Y=18 width=6 targetPage="console"/>
-        <Button class="page_change" text="Home" X=26 Y=18 width=6 targetPage="main"/>
+        <Button class="page_change" X=18 Y=18 width=6 targetPage="console">Back</Button>
+        <Button class="page_change" X=26 Y=18 width=6 targetPage="main">Home</Button>
     </Page>
 
     <Page id="windows" xScrollAllowed="false" position=1>
         <Window Z=5 X=6 Y=3 width=25 height=6 backgroundColour="256" title="Example Window" focusedBackgroundColour="lightBlue" minHeight="7">
-            <Label text="Drag me around!" class="centre" Y=2 colour=128/>
+            <Label class="centre" Y=2 colour=128>Drag me around!</Label>
             <Input width="$parent.width - 2" backgroundColour="red" X=2 Y=4/>
         </Window>
 
-        <Button class="page_change" text="Home" X=23 Y=18 width=6 targetPage="main"/>
+        <Button class="page_change" X=23 Y=18 width=6 targetPage="main">Home</Button>
     </Page>
 </PageContainer>

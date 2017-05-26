@@ -120,6 +120,13 @@ function MTextDisplay:drawText( bg, tc )
     end
 end
 
+function MTextDisplay:setText( text )
+    if text == self.text then return end
+
+    self.changed = true
+    self.text = text
+end
+
 configureConstructor {
     argumentTypes = {
         verticalPadding = "number",
@@ -129,5 +136,7 @@ configureConstructor {
         horizontalAlign = "string",
 
         text = "string"
-    }
+    },
+
+    tmlContent = "text"
 }

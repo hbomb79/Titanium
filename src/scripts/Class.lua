@@ -321,6 +321,8 @@ local function compileCurrent()
                 target = constructorTargets[ i ]
                 cConstructor[ target ] = mergeValues( cConstructor[ target ], constructor and constructor[ target ] )
             end
+
+            cConstructor.tmlContent = cConstructor.tmlContent or constructor.tmlContent
         end
     end
 

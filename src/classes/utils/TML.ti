@@ -11,8 +11,12 @@ local function formArguments( class, target )
     local returnArguments, trailingTable, dynamics = {}, {}, {}
 
     if not constructor then return nil end
-    local argumentTypes = constructor.argumentTypes
 
+    if constructor.tmlContent and target.content then
+        args[ constructor.tmlContent ] = target.content
+    end
+
+    local argumentTypes = constructor.argumentTypes
     local function handleArgument( val, target )
         if type( val ) ~= "string" then
             return false

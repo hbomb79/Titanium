@@ -2,7 +2,7 @@
     A Label is a node which displays a single line of text. The text cannot be changed by the user directly, however the text can be changed by the program.
 ]]
 
-class Label extends Node {
+class Label extends Node mixin MTextDisplay {
     labelFor = false;
 
     allowMouse = true;
@@ -19,6 +19,10 @@ function Label:__init__( ... )
 
     self:super()
     self:register "text"
+
+    self:watchProperty( "text", function( self, key, value )
+        self.width = #value
+    end )
 end
 
 --[[
@@ -58,18 +62,6 @@ function Label:draw( force )
 
         raw.changed = false
     end
-end
-
---[[
-    @instance
-    @desc Sets the text of a node. Once set, the nodes 'changed' status is set to true along with its parent(s)
-    @param <string - text>
-]]
-function Label:setText( text )
-    if self.text == text then return end
-
-    self.text = text
-    self.width = #text
 end
 
 configureConstructor({

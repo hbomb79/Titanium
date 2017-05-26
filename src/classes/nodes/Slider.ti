@@ -35,6 +35,7 @@ function Slider:__init__( ... )
     self.slide = self:addNode( Button( self.slideCharacter ) ):set {
         backgroundColour = "$parent.slideBackgroundColour";
         X = "$parent.value";
+        width = 1;
     }
 end
 

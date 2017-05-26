@@ -1,19 +1,46 @@
+--[[
+    @instance shader - string (def. "greyscale") - The shader to use when shading background pixels
+
+    A simple class that can contain nodes while also applying a shader to the background of the node. This means any pixel that is behind the OverlayContainer, but not a node inside the container
+    is shaded using the 'shader' provided
+]]
+
 class OverlayContainer extends Container {
     shader = "greyscale";
     backgroundColour = 1;
 }
 
+--[[
+    @constructor
+    @desc Constructs the OverlayContainer instance by setting the node to transparent, and allowing events to pass through the node.
+]]
 function OverlayContainer:__init__( ... )
     self:resolve( ... )
     self:super()
 
-    self.canvas.transparent = true
+    self.transparent = true
     self.consumeAll = false
 
-    self.colour = 0
     self.canvas.onlyShadeBottom = true
 end
 
+--[[
+    @constructor
+    @desc Calls the super post init constructor and then sets the colour of the node to 0 to allow full nil-pixel transparency.
+          this is done here to make sure MThemeable accepts it as a mainValue, and not a default.
+]]
+function OverlayContainer:__postInit__()
+    self.super:__postInit__()
+    self.colour = 0
+end
+
+--[[
+    @instance
+    @desc A modified version of Container:handle that alerts the developer of miss clicks with the 'miss' callback (for example, the user clicked off of a dialog box,
+          allowing the developer to flash the dialog for attention).
+    @param <Event Instance - eventObj>
+    @return [boolean - propagate]
+]]
 function OverlayContainer:handle( eventObj )
     if not self.super.super:handle( eventObj ) then return end
 

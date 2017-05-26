@@ -77,10 +77,10 @@ function Checkbox:draw( force )
         local toggled, tc, bg = self.toggled
         if not self.enabled then
             tc, bg = raw.disabledColour, raw.disabledBackgroundColour
-        elseif toggled then
-            tc, bg = raw.toggledColour, raw.toggledBackgroundColour
         elseif self.active then
             tc, bg = raw.activeColour, raw.activeBackgroundColour
+        elseif toggled then
+            tc, bg = raw.toggledColour, raw.toggledBackgroundColour
         end
 
         raw.canvas:drawPoint( 1, 1, toggled and raw.checkedMark or raw.uncheckedMark, tc, bg )

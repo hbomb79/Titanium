@@ -160,5 +160,5 @@ function EditableTextContainer:getCaretInfo()
     if x < 0 or x > self.width or y < 1 or y > self.height then return false end
 
     local sX, sY = self:getAbsolutePosition()
-    return self.focused and not self.selection and true, x + sX, y + sY - 1, self.focusedColour or self.colour
+    return self.focused and not self.selection and true, x + sX - 1, y + sY - 1, self.focusedColour or self.colour
 end

@@ -58,6 +58,12 @@ function Image:parseImage()
 end
 
 --[[
+    @instance
+    @desc Empty draw function. The Image node need not draw it's content as the image content is placed directly into the canvas by 'Image:parseImage'
+]]
+function Image:draw() end
+
+--[[
     @setter
     @desc Sets the path of the image and parses the file
     @param <string - path>
@@ -82,7 +88,6 @@ function Image.static.setImageParser( extension, parserFunction )
     return Image
 end
 
-function Image:draw() end
 configureConstructor {
     orderedArguments = { "path" },
     requiredArguments = { "path" },

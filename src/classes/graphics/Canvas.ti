@@ -202,7 +202,13 @@ end
 --[[
     @instance
     @desc Draws the canvas to the target 'canvas' using the X and Y offsets. Pixel character, foreground and background colours are resolved according to their property values.
-    @param <Canvas - canvas>, [number - offsetX], [number - offsetY]
+
+          If the canvas is to be shaded (shader argument), the shaderText and shaderBackground will be used to shade the foreground and background respectively. shaderText and
+          shaderBackground will default to 'shader' if they are not set. See canvas:getShaders for more information regarding how shaders are determined.
+
+          If the canvas 'onlyShadeBottom' property is set, only 'bottom' pixels (pixels behind this canvas) will be shaded, not foreground pixels (OverlayContainer uses this to shade
+          background and not foreground pixels)
+    @param <Canvas - canvas>, [number - offsetX], [number - offsetY], [string - shader], [string - shaderText], [string - shaderBackground]
 ]]
 function Canvas:drawTo( canvas, offsetX, offsetY, shader, shaderText, shaderBackground )
     local onlyShadeBottom = self.onlyShadeBottom
@@ -263,13 +269,29 @@ function Canvas:drawTo( canvas, offsetX, offsetY, shader, shaderText, shaderBack
     end
 end
 
+--[[
+    @instance
+    @desc Accepts 1-3 properties are returns two shaders -- one for the foreground, and one for the background of the pixels.
+
+          For the foreground shader, the shader 'shadeText' will be returned if 'shadeText' is NOT boolean true (ie: an actual shader value [string]). If shadeText is 'true', the
+          value of 'shader' will be used to determine the shader. If 'shadeText' is false, no shader is returned for the foreground (false)
+
+          The same applies for shadeBackground.
+    @param [string - shader], [string | boolean - shadeText], [string | boolean - shadeBackground]
+    @return [table - foregroundShader], [table - backgroundShader]
+]]
 function Canvas:getShaders( shader, shadeText, shadeBackground )
     local shaders = Canvas.static.shaders
 
     return shadeText and shaders[ shadeText ~= true and shadeText or shader ] or false, shadeBackground and shaders[ shadeBackground ~= true and shadeBackground or shader ] or false
 end
 
-
+--[[
+    @static
+    @desc Registers the shader 'name' with the table 'lookup'. The 'lookup' argument should be a table containing a key entry for every CC colour, and a associatted value
+          dictating the shaded version of that colour (ie: 256 [key] -> 128 [value])
+    @param <string - name>, <table - lookup>
+]]
 function Canvas.static.registerShader( name, lookup )
     if not ( type( name ) == "string" and type( lookup ) == "table" ) then
         return error("Failed to register shader. Expected string, table; got " .. type( name ) .. ", " .. type( lookup ).."'")

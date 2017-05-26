@@ -80,6 +80,7 @@ end
 
 --[[
     @instance
+    @desc Removes the node from it's parent (if it has one). Do note, this doesn't destroy the instance (allowing it to be added to a different parent later).
 ]]
 function Node:remove()
     if not self.parent then return end
@@ -260,7 +261,8 @@ end
 
 --[[
     @instance
-    @desc Returns the absolute X, Y position of a node rather than its position relative to it's parent.
+    @desc Returns the absolute X, Y position of a node rather than its position relative to it's parent (limited to 'limit')
+    @param [Node Instance - limit]
     @return <number - X>, <number - Y>
 ]]
 function Node:getAbsolutePosition( limit )

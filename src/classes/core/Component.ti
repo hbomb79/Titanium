@@ -24,6 +24,10 @@ abstract class Component mixin MPropertyManager {
     shadeBackground = true;
 }
 
+--[[
+    @constructor
+    @desc Instantiates the Component instance and creates property watchers for 'shadeText', 'shadeBackground' and 'shader' to allow for more dynamic property assignment
+]]
 function Component:__init__()
     local shadeText, shadeBackground, shader = self.shadeText, self.shadeBackground, self.shader
 

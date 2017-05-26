@@ -43,6 +43,12 @@ function Page:setPosition( position )
     self.isPositionTemporary = nil
 end
 
+--[[
+    @instance
+    @desc Returns the absolute position of the page, limited to 'limit'.
+    @param [Node Instance - limit]
+    @return <number - X>, <number - Y>
+]]
 function Page:getAbsolutePosition( limit )
     local parent, application = self.parent, self.application
     if parent then

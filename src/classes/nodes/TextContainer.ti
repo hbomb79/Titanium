@@ -114,7 +114,7 @@ function TextContainer:drawLines( lines, selectionStart, selectionStop )
     local isSelection = selectionStart and selectionStop
 
     canvas:clear( bg )
-    local cacheX, cacheY, cacheSelX, cacheSelY = ( hAlign == "centre" and width / 2 or ( hAlign == "right" and width ) or 0 ), 1, false, false
+    local cacheX, cacheY, cacheSelX, cacheSelY = ( hAlign == "centre" and width / 2 or ( hAlign == "right" and width ) or 1 ), 1, false, false
     for i = self.yScroll + 1, #lines do
         local Y, line = yOffset + i - self.yScroll, lines[ i ]
         local lineContent, lineStart, lineEnd = line[ 1 ], line[ 2 ], line[ 3 ]
@@ -165,7 +165,7 @@ function TextContainer:drawLines( lines, selectionStart, selectionStop )
             if pos == lineEnd and self.lineConfig.lines[ i + 1 ] then
                 cacheY = i + 1
             else
-                cacheX, cacheY = pos - lineStart + xOffset, i
+                cacheX, cacheY = pos - lineStart + xOffset + 1, i
             end
         end
         if sel and sel >= lineStart and sel <= lineEnd then

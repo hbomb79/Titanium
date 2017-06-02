@@ -270,6 +270,7 @@ end
 --[[
     @setter
     @desc Updates the TextContainer by re-wrapping the text, and re-aligning the scroll bars when new text is set
+    @param <string - text>
 ]]
 function TextContainer:setText( text )
     self.text = text
@@ -279,6 +280,19 @@ function TextContainer:setText( text )
     self.yScroll = math.min( self.yScroll, self.cache.contentHeight - self.cache.displayHeight )
 end
 
+--[[
+    @instance
+    @desc Sets the width using the Container setter, re-caches the content to fit the new width.
+    @param <number - width>
+]]
+function TextContainer:setWidth( width )
+    self.super.super:setWidth( width )
+    self:wrapText( width )
+    self:cacheContent()
+
+    local cache = self.cache
+    self.xScroll = math.max( 0, math.min( cache.contentWidth - cache.displayWidth, self.xScroll ) )
+end
 
 configureConstructor({
     orderedArguments = { "text", "X", "Y", "width", "height" },

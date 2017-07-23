@@ -155,12 +155,12 @@ end
     @param <MouseEvent Instance - event>, <boolean - handled>, <boolean - within>
 ]]
 function Window:onMouseClick( event, handled, within )
-    if within then
-        if not handled and event.button == 1 then
+    local X, Y = event.X - self.X + 1, event.Y - self.Y + 1
+    if within and not ( self.shadow and ( X == self.width or Y == self.height ) ) and not handled then
+        if event.button == 1 then
             self:focus()
             self:executeCallbacks "windowFocus"
 
-            local X, Y = event.X - self.X + 1, event.Y - self.Y + 1
             if self.moveable and Y == 1 and ( X >= 1 and X <= self.titleBarContent.width - ( self.closeable and 1 or 0 ) ) then
                 self:updateMouse( "move", X, Y )
                 event.handled = true

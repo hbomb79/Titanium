@@ -19,7 +19,6 @@ function OverlayContainer:__init__( ... )
     self:super()
 
     self.transparent = true
-    self.consumeAll = false
 
     self.canvas.onlyShadeBottom = true
 end
@@ -51,7 +50,7 @@ function OverlayContainer:handle( eventObj )
     end
 
     self:shipEvent( clone or eventObj )
-    if clone and clone.isWithin then
+    if clone and clone.isWithin and ( self.consumeAll or clone.handled ) then
         if not clone.handled then
             self:executeCallbacks "miss"
         end

@@ -5,7 +5,11 @@
 ]]
 
 abstract class MDialogManager {
-    dialogs = {};
+    static = {
+        templates = {}
+    };
+
+    -- dialogs = {};
     dialogContainer = false;
 }
 
@@ -14,15 +18,26 @@ abstract class MDialogManager {
     @desc Creates the dialogContainer (OverlayContainer) and sets important dynamic values on it
 ]]
 function MDialogManager:MDialogManager()
-    self.dialogContainer = self:addNode( OverlayContainer() ):set {
-        id = "application_dialog_overlay",
-        visible = "$parent.isDialogOpen",
-        enabled = "$self.visible",
+    -- Create a node that is *loosely* linked to the application (not inside app.nodes, or added via :addNode but does reference it via `cont.application`).
+    self.dialogContainer = OverlayContainer():set {
+        id = "application_dialog_container",
+        application = self,
+        parent = self,
+
         width = "$application.width",
         height = "$application.height",
-        consumeWhenDisabled = false,
-        Z = 10000
     }
+end
+
+--[[
+    @instance
+    @desc Draw the dialog window container to the application canvas, typically used after drawing nodes to the TermCanvas
+]]
+function MDialogManager:drawDialogs()
+    local container = self.dialogContainer
+
+    container:draw()
+    container.canvas:drawTo( self.canvas, 1, 1, container.shader, container.shadeText, container.shadeBackground )
 end
 
 --[[

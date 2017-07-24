@@ -14,7 +14,7 @@ local function resetNode( self, node )
     self:clearCollatedNodes()
 end
 
-abstract class MNodeContainer {
+abstract class MNodeContainer mixin MFluidLayout {
     nodes = {}
 }
 

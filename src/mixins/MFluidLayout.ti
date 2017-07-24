@@ -1,0 +1,86 @@
+local function max( a, b )
+    return a > b and a or b
+end
+
+--[[
+    @instance fluidPositioning - boolean (def. false) - When true this node will resolve fluid positioning (X/Y), using the child nodes position, margin, and alignment properties.
+    @instance fluidDimensions - boolean (def. false) - When true this node will change the width and height of the node based on the content inside. The dimensions are limited to (min/max)Width/Height *if* set (if false, the limit is not used).
+    @instance minWidth - number (def. 1) - Defines the minimum width that can be set when using fluidDimensions (see fluidDimensions property).
+    @instance maxWidth - number (def. false) - Defines the maximum width that can be set when using fluidDimensions (see fluidDimensions property).
+    @instance minHeight - number (def. 1) - Defines the minimum height that can be set when using fluidDimensions (see fluidDimensions property).
+    @instance maxHeight - number (def. false) - Defines the maximum height that can be set when using fluidDimensions (see fluidDimensions property).
+
+    ****************************************************************************
+    **                                                                        **
+    **    Features provided by this class should be considered unstable and   **
+    **   avoided to ensure reliable execution of Titanium based applications  **
+    **                                                                        **
+    ****************************************************************************
+    *                                                                          *
+    * Optimisation is lacking inside this class -- Performance may be impacted *
+]]
+
+abstract class MFluidLayout {
+    fluidPositioning = false;
+    fluidDimensions = false;
+
+    minWidth = 1;
+    maxWidth = 1;
+
+    minHeight = false;
+    maxHeight = false;
+}
+
+--[[
+    @instance
+    @desc TODO
+]]
+function MFluidLayout:resolveFluidDimensions()
+
+end
+
+--[[
+    @instance
+    @desc WIP
+]]
+function MFluidLayout:resolveFluidPositions()
+    local nodes = self.nodes
+    local X, Y, rowHeight = 1, 1, 0
+    local function consumeRow( currentNode )
+        X = 1
+        if currentNode then
+            rowHeight = max( rowHeight, currentNode.marginTop + currentNode.height + currentNode.marginBottom )
+            X = X + currentNode.marginLeft
+        end
+
+        Y = Y + rowHeight
+        rowHeight = 0
+    end
+
+    local function positionNode( node )
+        node.X, node.Y = X, Y + node.marginTop
+
+        X = X + node.width + node.marginRight
+    end
+
+    local maxWidth = not self.fluidDimensions and self.width or self.maxWidth
+    for i = 1, #nodes do
+        local currentNode = nodes[ i ]
+        if currentNode.positioning == "fluid" then
+            X = X + currentNode.marginLeft
+            local nXW = X + currentNode.width
+            if nXW > maxWidth then
+                if nXW - X < maxWidth then
+                    consumeRow( currentNode )
+                    positionNode( currentNode )
+                else
+                    positionNode( currentNode )
+                    consumeRow()
+                end
+            else
+                rowHeight = max( rowHeight, currentNode.marginTop + currentNode.height + currentNode.marginBottom )
+                positionNode( currentNode )
+            end
+        end
+    end
+end

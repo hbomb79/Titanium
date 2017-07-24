@@ -64,6 +64,23 @@ Manager = Application():set {
     terminatable = true
 }
 
+cont = Manager:addNode( Window():set { width = "15", height = "12", positioning = "fluid" } )
+
+cont:addNode( Label "Hello World":set { marginRight = 3, marginLeft = 2, marginBottom = 3, marginTop = 1 } )
+cont:addNode( Label "This is a fluid layout" )
+cont:addNode( Button( "Test"):set{ width = 6, marginLeft = 1 } )
+cont:addNode( Button( "Test 2"):set{ width = 8 } )
+cont:addNode( Label "Finished" )
+cont:addNode( Label "This label isn't fluid":set { X = 1, Y = 19, positioning = "normal" } )
+
+Manager:importTheme( "master", "example/ui/master.theme" )
+
+cont.content:resolveFluidPositions()
+
+Manager:start()
+
+do return end
+
 completeTask()
 
 --[[

@@ -16,19 +16,20 @@ end
     **   avoided to ensure reliable execution of Titanium based applications  **
     **                                                                        **
     ****************************************************************************
-    *                                                                          *
     * Optimisation is lacking inside this class -- Performance may be impacted *
+    ****************************************************************************
 ]]
 
 abstract class MFluidLayout {
-    fluidPositioning = false;
     fluidDimensions = false;
 
     minWidth = 1;
-    maxWidth = 1;
+    maxWidth = false;
 
-    minHeight = false;
+    minHeight = 1;
     maxHeight = false;
+
+    positionChanged = false;
 }
 
 --[[
@@ -66,7 +67,7 @@ function MFluidLayout:resolveFluidPositions()
     local maxWidth = not self.fluidDimensions and self.width or self.maxWidth
     for i = 1, #nodes do
         local currentNode = nodes[ i ]
-        if currentNode.positioning == "fluid" then
+        if ( not currentNode.positioning and self.positioning == "fluid" ) or currentNode.positioning == "fluid" then
             X = X + currentNode.marginLeft
             local nXW = X + currentNode.width
             if nXW > maxWidth then
@@ -84,3 +85,13 @@ function MFluidLayout:resolveFluidPositions()
         end
     end
 end
+
+configureConstructor {
+    argumentTypes = {
+        minWidth = "number",
+        minHeight = "number",
+        maxWidth = "number",
+        maxHeight = "number",
+        fluidDimensions = "boolean"
+    }
+}

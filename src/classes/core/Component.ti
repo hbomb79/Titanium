@@ -33,7 +33,7 @@ abstract class Component mixin MPropertyManager {
     marginRight = 0;
     marginTop = 0;
     marginBottom = 0;
-    positioning = "fluid";
+    positioning = false;
 }
 
 --[[
@@ -110,6 +110,7 @@ end
     @param <number - width>
 ]]
 function Component:setWidth( width )
+    if self.parent then self.parent.positionChanged = true end
     self:queueAreaReset()
 
     width = math.ceil( width )
@@ -123,6 +124,7 @@ end
     @param <number - height>
 ]]
 function Component:setHeight( height )
+    if self.parent then self.parent.positionChanged = true end
     self:queueAreaReset()
 
     height = math.ceil( height )
@@ -196,7 +198,7 @@ end
 
 configureConstructor {
     orderedArguments = { "X", "Y", "width", "height" },
-    argumentTypes = { X = "number", Y = "number", width = "number", height = "number", colour = "colour", backgroundColour = "colour", backgroundTextColour = "colour", transparent = "boolean", shader = "ANY", shadeText="ANY", shadeBackground="ANY" }
+    argumentTypes = { X = "number", Y = "number", width = "number", height = "number", colour = "colour", backgroundColour = "colour", backgroundTextColour = "colour", transparent = "boolean", shader = "ANY", shadeText="ANY", shadeBackground="ANY", marginLeft = "number", marginRight = "number", marginTop = "number", marginBottom = "number", positioning = "ANY" }
 } alias {
     color = "colour",
     backgroundColor = "backgroundColour"

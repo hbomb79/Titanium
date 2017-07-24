@@ -51,6 +51,10 @@ end
     @param [boolean - force], [number - offsetX], [number - offsetY]
 ]]
 function Container:draw( force, offsetX, offsetY )
+    if self.positionChanged or force then
+        self:resolveFluidPositions()
+    end
+
     if self.changed or force then
         local canvas = self.canvas
 

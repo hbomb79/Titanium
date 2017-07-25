@@ -75,8 +75,6 @@ cont:addNode( Label "This label isn't fluid":set { X = 1, Y = 19, positioning = 
 
 Manager:importTheme( "master", "example/ui/master.theme" )
 
-cont.content:resolveFluidPositions()
-
 Manager:start()
 
 do return end

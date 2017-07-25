@@ -47,36 +47,23 @@ end
 function MFluidLayout:resolveFluidPositions()
     local nodes = self.nodes
     local X, Y, rowHeight = 1, 1, 0
-    local function consumeRow( currentNode )
-        X = 1
-        if currentNode then
-            rowHeight = max( rowHeight, currentNode.marginTop + currentNode.height + currentNode.marginBottom )
-            X = X + currentNode.marginLeft
-        end
-
-        Y = Y + rowHeight
-        rowHeight = 0
-    end
-
-    local function positionNode( node )
-        node.X, node.Y = X, Y + node.marginTop
-
-        X = X + node.width + node.marginRight
-    end
-
     local maxWidth = not self.fluidDimensions and self.width or self.maxWidth
+
     for i = 1, #nodes do
         local currentNode = nodes[ i ]
+
         if ( not currentNode.positioning and self.positioning == "fluid" ) or currentNode.positioning == "fluid" then
-            X = X + currentNode.marginLeft
-            local nXW = X + currentNode.width
-            if nXW > maxWidth then
-                consumeRow( nXW - X < maxWidth and currentNode )
-                positionNode( currentNode )
-            else
-                rowHeight = max( rowHeight, currentNode.marginTop + currentNode.height + currentNode.marginBottom )
-                positionNode( currentNode )
+            if X + currentNode.marginLeft + currentNode.width > maxWidth then
+                X, Y = 1, Y + rowHeight
+                rowHeight = 0
             end
+
+            currentNode.X = X + currentNode.marginLeft
+            currentNode.Y = Y + currentNode.marginTop
+
+            X = currentNode.X + currentNode.width + currentNode.marginRight
+
+            rowHeight = max( rowHeight, currentNode.marginTop + currentNode.height + currentNode.marginBottom )
         end
     end
 end

@@ -66,10 +66,10 @@ Manager = Application():set {
 
 cont = Manager:addNode( Window():set { width = "15", height = "12", positioning = "fluid", backgroundColour = 1 } )
 
-cont:addNode( Label "Hello World":set { marginRight = 3, marginLeft = 2, marginBottom = 3, marginTop = 1 } )
-cont:addNode( Label "This is a fluid layout" )
-cont:addNode( Button( "Test"):set{ width = 6, marginLeft = 1 } )
-cont:addNode( Button( "Test 2"):set{ width = 8 } )
+cont:addNode( Button "Hello World":set { marginRight = 1, marginBottom = 1, width = 13, height = 3 } )
+cont:addNode( Label "This is a fluid layout":set( "marginRight", 1 ) )
+cont:addNode( Button( "Test" ):set{ width = 6, marginRight = 1 } )
+cont:addNode( Button( "Test 2" ):set{ width = 8, marginRight = 1 } )
 cont:addNode( Label "Finished" )
 cont:addNode( Label "This label isn't fluid":set { X = 1, Y = 19, positioning = "normal" } )
 

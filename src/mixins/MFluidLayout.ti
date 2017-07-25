@@ -71,13 +71,8 @@ function MFluidLayout:resolveFluidPositions()
             X = X + currentNode.marginLeft
             local nXW = X + currentNode.width
             if nXW > maxWidth then
-                if nXW - X < maxWidth then
-                    consumeRow( currentNode )
-                    positionNode( currentNode )
-                else
-                    positionNode( currentNode )
-                    consumeRow()
-                end
+                consumeRow( nXW - X < maxWidth and currentNode )
+                positionNode( currentNode )
             else
                 rowHeight = max( rowHeight, currentNode.marginTop + currentNode.height + currentNode.marginBottom )
                 positionNode( currentNode )

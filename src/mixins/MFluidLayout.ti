@@ -1,6 +1,5 @@
-local function max( a, b )
-    return a > b and a or b
-end
+local function max( a, b ) return a > b and a or b end
+local function min( a, b ) return a < b and a or b end
 
 --[[
     @instance fluidPositioning - boolean (def. false) - When true this node will resolve fluid positioning (X/Y), using the child nodes position, margin, and alignment properties.

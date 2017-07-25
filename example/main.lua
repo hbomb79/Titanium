@@ -60,11 +60,11 @@ completeTask()
 ]]
 Manager = Application():set {
     colour = 128,
-    backgroundColour = 1,
+    backgroundColour = 256,
     terminatable = true
 }
 
-cont = Manager:addNode( Window():set { width = "15", height = "12", positioning = "fluid" } )
+cont = Manager:addNode( Window():set { width = "15", height = "12", positioning = "fluid", backgroundColour = 1 } )
 
 cont:addNode( Label "Hello World":set { marginRight = 3, marginLeft = 2, marginBottom = 3, marginTop = 1 } )
 cont:addNode( Label "This is a fluid layout" )

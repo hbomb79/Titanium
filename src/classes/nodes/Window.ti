@@ -44,7 +44,7 @@
 class Window extends Container mixin MFocusable mixin MInteractable {
     static = {
         proxyMethods = { "addNode", "removeNode", "getNode", "query", "clearNodes" },
-        proxyProperties = { "marginLeft", "marginRight", "marginTop", "marginBottom", "fluidDimensions", "positioning", "minWidth", "minHeight", "maxWidth", "maxHeight" }
+        proxyProperties = { "marginLeft", "marginRight", "marginTop", "marginBottom", "fluidDimensions", "positioning", "minWidth", "minHeight", "maxWidth", "maxHeight", "positionChanged" }
     };
 
     titleBar = true;

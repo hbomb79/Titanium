@@ -66,6 +66,8 @@ function MFluidLayout:resolveFluidPositions()
             rowHeight = max( rowHeight, currentNode.marginTop + currentNode.height + currentNode.marginBottom )
         end
     end
+
+    self.positionChanged = false
 end
 
 configureConstructor {
@@ -74,6 +76,7 @@ configureConstructor {
         minHeight = "number",
         maxWidth = "number",
         maxHeight = "number",
-        fluidDimensions = "boolean"
+        fluidDimensions = "boolean",
+        positionChanged = "boolean"
     }
 }

@@ -33,37 +33,40 @@ abstract class MFluidLayout {
 
 --[[
     @instance
-    @desc TODO
-]]
-function MFluidLayout:resolveFluidDimensions()
-
-end
-
---[[
-    @instance
     @desc WIP
 ]]
 function MFluidLayout:resolveFluidPositions()
     local nodes = self.nodes
-    local X, Y, rowHeight = 1, 1, 0
+    local X, Y, rowHeight, prevNodeMarginRight, rowCount, maxRowWidth = 1, 1, 0, 0, 0, 0
     local maxWidth = not self.fluidDimensions and self.width or self.maxWidth
 
     for i = 1, #nodes do
         local currentNode = nodes[ i ]
 
         if ( not currentNode.positioning and self.positioning == "fluid" ) or currentNode.positioning == "fluid" then
-            if X + currentNode.marginLeft + currentNode.width > maxWidth then
+            if maxWidth and X + currentNode.marginLeft + currentNode.width > maxWidth then
+                maxRowWidth = max( maxRowWidth, X )
+
                 X, Y = 1, Y + rowHeight
-                rowHeight = 0
+                rowHeight, prevNodeMarginRight = 0, 0
+                rowCount = rowCount + 1
             end
 
-            currentNode.X = X + currentNode.marginLeft
+            currentNode.X = X + currentNode.marginLeft + prevNodeMarginRight
             currentNode.Y = Y + currentNode.marginTop
 
-            X = currentNode.X + currentNode.width + currentNode.marginRight
+            prevNodeMarginRight = currentNode.marginRight
+            X = currentNode.X + currentNode.width
 
             rowHeight = max( rowHeight, currentNode.marginTop + currentNode.height + currentNode.marginBottom )
         end
+    end
+
+    if self.fluidDimensions then
+        local row = Y + rowHeight - 1
+
+        self.width = max( self.minWidth, self.maxWidth and rowCount ~= 0 and min( self.maxWidth, maxRowWidth ) or X - 1 )
+        self.height = max( self.minHeight, self.maxHeight and min( self.maxHeight, row ) or row )
     end
 
     self.positionChanged = false

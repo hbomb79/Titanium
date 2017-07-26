@@ -58,6 +58,7 @@ function MDialogManager:addDialog( dialog )
     end)
 
     self.isDialogOpen = true
+    return dialog
 end
 
 --[[
@@ -81,6 +82,7 @@ function MDialogManager:removeDialog( dialog )
     self.dialogContainer:removeNode( dialog )
 
     self.isDialogOpen = #self.dialogContainer.nodes > 0
+    return dialog
 end
 
 configureConstructor {

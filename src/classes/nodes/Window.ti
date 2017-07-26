@@ -147,11 +147,14 @@ function Window:__postInit__()
     self.super:__postInit__()
 end
 
+--[[
+    @instance
+    @desc WIP
+]]
 function Window:createProxies( content )
     content = content or self.content
     for _, name in pairs( Window.static.proxyMethods ) do
         self[ name ] = function( self, ... )
-            printError("proxy method '"..tostring( name ).."' called")
             return content[ name ]( content, ... )
         end
 

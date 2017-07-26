@@ -110,7 +110,7 @@ function DynamicEqParser:resolveStacks( target, allowFailure )
         else self:throw("Invalid stack start '"..stackStart.."'. Only self, parent and application allowed") end
 
         for p = 2, #stack - 1 do
-            if not instancePoint then self:throw("Failed to resolve stacks. Index '"..stack[ p ].."' could not be accessed on '"..tostring( instancePoint ).."'") end
+            if not instancePoint then if allowFailure then return end self:throw("Failed to resolve stacks. Index '"..stack[ p ].."' could not be accessed on '"..tostring( instancePoint ).."'") end
             instancePoint = instancePoint[ stack[ p ] ]
         end
 

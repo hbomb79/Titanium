@@ -5,11 +5,6 @@
 ]]
 
 abstract class MDialogManager {
-    static = {
-        templates = {}
-    };
-
-    -- dialogs = {};
     dialogContainer = false;
 }
 
@@ -25,7 +20,7 @@ function MDialogManager:MDialogManager()
         parent = self,
 
         width = "$application.width",
-        height = "$application.height",
+        height = "$application.height"
     }
 end
 

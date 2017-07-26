@@ -1,14 +1,32 @@
+--[[
+    WIP
+]]
+
 class DialogWindow extends Window {
-    header = "Dialog",
     body = "This is a dialog window",
     resizable = false
 }
 
+--[[
+    @instance
+    @desc WIP
+]]
 function DialogWindow:__init__( ... )
+    self.bodyText = TextContainer( "" ):set( "id", "TEST" ):set { text = "$parent.parent.body", X = 1, Y = 1, width = "$parent.width", height = "$parent.height - 3 < 2 and 2 or parent.height - 3", colour = 256, horizontalAlign = "centre", Z = 1 }
+    self.actionContainer = ScrollContainer( 2 ):set{ id = "TESTING", Y = "$parent.height - 1", width = "$parent.width - 2", height = 2, fluidPositions = true, Z = 2, positioning = "fluid" }
+
     self:super( ... )
-    --self.headerLabel = self:addNode( Label( "" ) ):set { text = "$parent.parent.header", X = "$( parent.width / 2 ) - self.width / 2", Y = 2, colour = 512, Z = 3 }
-    self.bodyText = self:addNode( TextContainer( "" ):set( "id", "TEST" ) ):set { text = "$parent.parent.body", X = 1, Y = 1, width = "$parent.width", height = "$parent.height - 4 < 2 and 2 or parent.height - 4", colour = 256, horizontalAlign = "centre", Z = 2, backgroundColour = colours.blue }
-    self.actionContainer = self:addNode( Container( 2 ) ):set{ Y = "$parent.height - 2", width = "$parent.width - 2", height = 3, backgroundColour = colours.orange }
+
+    self.content:addNode( self.bodyText )
+    self.content:addNode( self.actionContainer )
+end
+
+--[[
+    @instance
+    @desc WIP
+]]
+function DialogWindow:createProxies()
+    self.super:createProxies( self.actionContainer )
 end
 
 configureConstructor( {

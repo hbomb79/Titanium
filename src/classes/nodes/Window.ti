@@ -121,15 +121,7 @@ function Window:__init__( ... )
         self.content[ name ] = ("$parent.%s"):format( name )
     end
 
-    for _, name in pairs( Window.static.proxyMethods ) do
-        self[ name ] = function( self, ... )
-            return self.content[ name ]( self.content, ... )
-        end
-
-        self[ name .. "Raw" ] = function( self, ... )
-            return self.super[ name ]( self, ... )
-        end
-    end
+    self:createProxies()
 
     self:on("remove", function() self:executeCallbacks "close" end)
     self:watchProperty( "width", function( _, __, value )
@@ -153,6 +145,20 @@ function Window:__postInit__()
 
     self.consumeAll = false
     self.super:__postInit__()
+end
+
+function Window:createProxies( content )
+    content = content or self.content
+    for _, name in pairs( Window.static.proxyMethods ) do
+        self[ name ] = function( self, ... )
+            printError("proxy method '"..tostring( name ).."' called")
+            return content[ name ]( content, ... )
+        end
+
+        self[ name .. "Raw" ] = function( self, ... )
+            return self.super[ name ]( self, ... )
+        end
+    end
 end
 
 --[[

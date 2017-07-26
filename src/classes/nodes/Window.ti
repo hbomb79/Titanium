@@ -43,7 +43,8 @@
 
 class Window extends Container mixin MFocusable mixin MInteractable {
     static = {
-        proxyMethods = { "addNode", "removeNode", "getNode", "query", "clearNodes" }
+        proxyMethods = { "addNode", "removeNode", "getNode", "query", "clearNodes" },
+        proxyProperties = { "marginLeft", "marginRight", "marginTop", "marginBottom", "fluidDimensions", "positioning", "minWidth", "minHeight", "maxWidth", "maxHeight", "positionChanged" }
     };
 
     titleBar = true;
@@ -85,10 +86,11 @@ function Window:__init__( ... )
         colour = "$not parent.enabled and parent.disabledColour or parent.titleBarColour",
 
         visible = "$parent.titleBar",
-        enabled = "$self.visible"
+        enabled = "$self.visible",
+        positioning = "normal"
     })
 
-    self.titleBarTitle = self.titleBarContent:addNode( Label( "" ) ):set( "id", "title" )
+    self.titleBarTitle = self.titleBarContent:addNode( Label( "" ) ):set { id = "title" }
 
     local b = self.titleBarContent:addNode( Button( "" ):set( "X", "$parent.width" ) )
     b:set {
@@ -114,6 +116,10 @@ function Window:__init__( ... )
 
         id = "content"
     } )
+
+    for _, name in pairs( Window.static.proxyProperties ) do
+        self.content[ name ] = ("$parent.%s"):format( name )
+    end
 
     for _, name in pairs( Window.static.proxyMethods ) do
         self[ name ] = function( self, ... )
@@ -191,6 +197,14 @@ end
 ]]
 function Window:onMouseDrag( event, handled, within )
     self:handleMouseDrag( event, handled, within )
+end
+
+--[[
+    @instance
+    @desc WIP
+]]
+function Window:resolveFluidPositions()
+    self.content:resolveFluidPositions()
 end
 
 --[[
@@ -356,12 +370,6 @@ configureConstructor {
         resizeButtonBackgroundColour = "colour",
 
         moveable = "boolean",
-
-        minWidth = "number",
-        minHeight = "number",
-
-        maxWidth = "number",
-        maxHeight = "number",
 
         shadow = "boolean",
         shadowColour = "colour"

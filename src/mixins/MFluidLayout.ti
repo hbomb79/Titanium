@@ -74,6 +74,20 @@ function MFluidLayout:resolveFluidPositions()
     self.positionChanged = false
 end
 
+--[[
+    @instance
+    @desc
+]]
+function MFluidLayout:setPositionChanged( changed )
+    -- self.changed = true
+    self.positionChanged = changed
+
+    local nodes = self.collatedNodes
+    for i = 1, #nodes do
+        nodes[ i ].positionChanged = changed
+    end
+end
+
 configureConstructor {
     argumentTypes = {
         minWidth = "number",

@@ -51,7 +51,7 @@ end
     @param [boolean - force], [number - offsetX], [number - offsetY]
 ]]
 function Container:draw( force, offsetX, offsetY )
-    if self.positionChanged then
+    if self.positionChanged and self.fluidPositions then
         self:resolveFluidPositions()
         self.positionChanged = false
     end

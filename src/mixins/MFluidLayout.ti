@@ -20,6 +20,7 @@ local function min( a, b ) return a < b and a or b end
 ]]
 
 abstract class MFluidLayout {
+    fluidPositions = false;
     fluidDimensions = false;
 
     minWidth = 1;
@@ -80,6 +81,7 @@ configureConstructor {
         maxWidth = "number",
         maxHeight = "number",
         fluidDimensions = "boolean",
+        fluidPositions = "boolean",
         positionChanged = "boolean"
     }
 }

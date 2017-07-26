@@ -298,7 +298,7 @@ end
 
 --[[ Caching Functions ]]--
 function ScrollContainer:cacheContent()
-    if self.positionChanged then self:resolveFluidPositions() end
+    if self.positionChanged and self.fluidPositions then self:resolveFluidPositions() end
 
     self:cacheContentSize()
     self:cacheActiveScrollbars()

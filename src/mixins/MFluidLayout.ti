@@ -42,9 +42,10 @@ function MFluidLayout:resolveFluidPositions()
 
     for i = 1, #nodes do
         local currentNode = nodes[ i ]
+        if currentNode.id == "TESTING" then error(tostring( self ) .. " (ID: "..tostring( self.id )..") is resolving", 3) end
 
         if ( not currentNode.positioning and self.positioning == "fluid" ) or currentNode.positioning == "fluid" then
-            if maxWidth and X + currentNode.marginLeft + currentNode.width > maxWidth then
+            if maxWidth and X + currentNode.marginLeft + currentNode.width + 1 > maxWidth then
                 maxRowWidth = max( maxRowWidth, X )
 
                 X, Y = 1, Y + rowHeight

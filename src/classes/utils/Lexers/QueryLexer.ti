@@ -31,9 +31,9 @@ function QueryLexer:tokenize()
     elseif stream:find "^>" then
         self:pushToken { type = "QUERY_DIRECT_PREFIX", value = self:consumePattern "^>" }
     elseif stream:find "^#[^%s%.#%[%,]*" then
-        self:pushToken { type = "QUERY_ID", value = self:consumePattern "^#([^%s%.#%[]*)" }
+        self:pushToken { type = "QUERY_ID", value = self:consumePattern "^#([^%s%.#%[%,]*)" }
     elseif stream:find "^%.[^%s#%[%,]*" then
-        self:pushToken { type = "QUERY_CLASS", value = self:consumePattern "^%.([^%s%.#%[]*)" }
+        self:pushToken { type = "QUERY_CLASS", value = self:consumePattern "^%.([^%s#%[%,]*)" }
     elseif stream:find "^[^,%s#%.%[]*" then
         self:pushToken { type = "QUERY_TYPE", value = self:consumePattern "^[^,%s#%.%[]*" }
     else

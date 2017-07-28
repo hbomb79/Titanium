@@ -1,4 +1,4 @@
-<PageContainer Z=1 X=1 Y=1 width="$application.width" height="$application.height">
+<TabbedPageContainer Z=1 X=1 Y=1 width="$application.width" height="$application.height" id="mainContainer">
     <Page id="main" xScrollAllowed="false">
         <Label X=2 Y=2 class="header">Titanium</Label>
         <Label X=2 Y=3 class="sub">Test Application</Label>
@@ -45,7 +45,7 @@
         <Slider X=23 width=15 Y=11 id="animationSlider" value=2/>
         <Label X="${#animationSlider}.X + ( {#animationSlider}.width / 2 ) - self.width / 2" Y=12 id="animationD" class="sub">${#animationSlider}.value * 0.15 .. 's'</Label>
 
-        <Container id="pane" width=21 height=19 X=52 backgroundColour="grey" Z=3>
+        <Container id="pane" width=21 height="$parent.height" X=52 backgroundColour="grey" Z=3>
             <Label colour=1 X=2 Y=2>Settings</Label>
 
             <ScrollContainer X=2 Y=4 width=20 height=10>
@@ -99,4 +99,4 @@
 
         <Button class="page_change" X=23 Y=18 width=6 targetPage="main">Home</Button>
     </Page>
-</PageContainer>
+</TabbedPageContainer>

@@ -86,7 +86,7 @@ local app = {
     masterTheme = Theme.fromFile( "masterTheme", "example/ui/master.theme" ),
 
     -- Grab our page container which was created in our TML file. This page container has two pages, which we will get into later
-    pages = Manager:query "PageContainer".result[1],
+    pages = Manager:query "#mainContainer".result[1],
 
     -- Store some commonly used assets for our animated sidebar
     sidePane = {

@@ -1,0 +1,33 @@
+class TabbedPageContainer extends PageContainer {
+    tabHeight = 1;
+    autoTabWidth = true;
+}
+
+function TabbedPageContainer:__init__( ... )
+    self:resolve( ... )
+    self:super()
+
+    self.tabContainer = self.super.super:addNode( Container() ):set {
+        X = "$parent.scroll + 1",
+        width = "$parent.width",
+        height = "$parent.tabHeight",
+        backgroundColour = colours.lightBlue
+    }
+end
+
+function TabbedPageContainer:linkPage( page )
+    page.height, page.Y = "$parent.height - parent.tabHeight", 2
+    page:linkProperties( self, "width" )
+end
+
+function TabbedPageContainer:unlinkPage( page )
+    page:removeDynamicValue "height"
+    page:unlinkProperties( self, "width" )
+end
+
+configureConstructor {
+    argumentTypes = {
+        tabHeight = "number",
+        autoTabWidth = "boolean"
+    }
+}

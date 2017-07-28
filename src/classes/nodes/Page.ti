@@ -15,9 +15,11 @@ class Page extends ScrollContainer
 ]]
 function Page:setParent( parent )
     if Titanium.typeOf( parent, "PageContainer", true ) then
-        self:linkProperties( parent, "width", "height" )
-    else
-        self:unlinkProperties( parent, "width", "height" )
+        parent:linkPage( self )
+    elseif parent then
+        return error("Page nodes can ONLY be children of PageContainers, or there subclasses.")
+    elseif self.parent then
+        self.parent:unlinkPage( self )
     end
 
     self.super:setParent( parent )

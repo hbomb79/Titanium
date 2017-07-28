@@ -50,6 +50,27 @@ end
 
 --[[
     @instance
+    @desc Links the target page to this page container (ties width/height of Page to parents)
+    @param <Page Instance - page>
+]]
+function PageContainer:linkPage( page )
+    if not Titanium.typeOf( page, "Page", true ) then return error("Failed to link page '"..tostring( page ).."'. Expected Page instance.") end
+    page:linkProperties( self, "width", "height" )
+    page.Y = 1
+end
+
+--[[
+    @instance
+    @desc Removes links to the target page
+    @param <Page Instance - page>
+]]
+function PageContainer:unlinkPage( page )
+    if not Titanium.typeOf( page, "Page", true ) then return error("Failed to unlink page '"..tostring( page ).."'. Expected Page instance.") end
+    page:unlinkProperties( self, "width", "height" )
+end
+
+--[[
+    @instance
     @desc Selects the new page using the 'pageID'. If a function is given as argument #2 'animationOverride', it will be called instead of the customAnimation
           set (or the default animation method used).
 

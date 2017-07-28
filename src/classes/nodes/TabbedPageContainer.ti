@@ -16,7 +16,7 @@ function TabbedPageContainer:__init__( ... )
 end
 
 function TabbedPageContainer:linkPage( page )
-    page.height, page.Y = "$parent.height - parent.tabHeight", 2
+    page.height, page.Y = "$parent.height - parent.tabHeight", "$parent.tabHeight + 1"
     page:linkProperties( self, "width" )
 end
 

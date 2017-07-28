@@ -1,8 +1,7 @@
 local function parseValue( val )
     if val == "true" then return true
-    elseif val == "false" then return false end
-
-    return tonumber( val ) or error("Invalid value passed for parsing '"..tostring( val ).."'")
+    elseif val == "false" then return false
+    else return tonumber( val ) or tostring( val ) end
 end
 
 --[[
@@ -112,7 +111,7 @@ function QueryParser:parseCondition()
         elseif token.type == "QUERY_COND_CLOSE" and ( not condition.property or ( condition.property and condition.value ) ) then
             break
         else
-            self:throw( "Unexpected '"..token.value.."' inside of condition block" )
+            self:throw( "Unexpected '"..tostring( token.value ).."' inside of condition block" )
         end
 
         token = self:stepForward()

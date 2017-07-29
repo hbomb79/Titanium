@@ -1,6 +1,13 @@
 class TabbedPageContainer extends PageContainer {
     tabHeight = 1;
-    autoTabWidth = true;
+    smartTabWidth = true;
+    tabPadding = 1;
+
+    tabColour = 1;
+    tabBackgroundColour = colours.green;
+
+    selectedTabColour = 1;
+    selectedTabBackgroundColour = colours.red;
 }
 
 function TabbedPageContainer:__init__( ... )
@@ -28,6 +35,10 @@ end
 configureConstructor {
     argumentTypes = {
         tabHeight = "number",
-        autoTabWidth = "boolean"
+        autoTabWidth = "boolean",
+        tabBackgroundColour = "colour",
+        tabColour = "colour",
+        selectedTabBackgroundColour = "colour",
+        selectedTabColour = "colour"
     }
 }

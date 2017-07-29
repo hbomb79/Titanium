@@ -30,6 +30,8 @@ function QueryLexer:tokenize()
         self:consume( 1 )
 
         self.inCondition = true
+    elseif stream:find "^[%[%]]" then
+        self:throw("Unmatched conditon opening/closing ([ or ])")
     elseif stream:find "^%," then
         self:pushToken { type = "QUERY_END", value = self:consumePattern "^%," }
     elseif stream:find "^>" then

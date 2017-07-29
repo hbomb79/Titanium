@@ -16,17 +16,17 @@
         <Label X=2 Y=10 id="selected_name_display" class="sub">No selected text</Label>
 
         <Button X=41 Y=18 width=10 id="exit_button" enabled="false">Exit</Button>
-        <Button X=2 Y=18 height=1 width=14 id="toggle">Toggle Theme</Button>
+        <Button X=2 Y=18 id="toggle">Toggle Theme</Button>
 
-        <Button X=2 Y=15 height=1 width=13 id="pane_toggle">Toggle Pane</Button>
+        <Button X=2 Y=15 id="pane_toggle">Toggle Pane</Button>
 
         <Label id="left" X=5 Y=16 class="sub hotkey_part">ctrl</Label>
         <Label X=9 Y=16 class="sub hotkey_part" id="hyphen_seperator">-</Label>
         <Label id="right" X=10 Y=16 class="sub hotkey_part">p</Label>
 
-        <Button width=7 height=1 X="${Container#pane}.X - 2 - self.width" Y=2 class="page_change" targetPage="console" id="shell_link">Shell</Button>
-        <Button width=6 height=1 X="${#shell_link}.X - 2 - self.width" Y=2 class="page_change" targetPage="text" id="button_link">Text</Button>
-        <Button width="$#self.text + 2" height=1 X="${#button_link}.X - 2 - self.width" Y=2 class="page_change" targetPage="windows">Windows</Button>
+        <Button X="${Container#pane}.X - 2 - self.width" Y=2 class="page_change" targetPage="console" id="shell_link">Shell</Button>
+        <Button X="${#shell_link}.X - 2 - self.width" Y=2 class="page_change" targetPage="text" id="button_link">Text</Button>
+        <Button X="${#button_link}.X - 2 - self.width" Y=2 class="page_change" targetPage="windows">Windows</Button>
 
         <Dropdown X=23 Y=6 width=25 maxHeight=7 Z=2>
             <Option value="1">Example Option 1</Option>
@@ -80,15 +80,15 @@
 
     <Page id="console" xScrollAllowed="false">
         <Terminal X=2 Y=2 width=49 height=15 id="shell"/>
-        <Button class="page_change" X=18 Y=18 width=6 targetPage="main">Back</Button>
-        <Button class="page_change" X=26 Y=18 width=6 targetPage="text">Next</Button>
+        <Button class="page_change" X=18 Y=18 targetPage="main">Back</Button>
+        <Button class="page_change" X=26 Y=18 targetPage="text">Next</Button>
     </Page>
 
     <Page id="text" xScrollAllowed="false">
         <EditableTextContainer X=2 Y=2 width="$parent.width - 2" height="$parent.height - 4" horizontalAlign="left" colour="256" focusedColour="white" backgroundColour="grey"/>
 
-        <Button class="page_change" X=18 Y=18 width=6 targetPage="console">Back</Button>
-        <Button class="page_change" X=26 Y=18 width=6 targetPage="main">Home</Button>
+        <Button class="page_change" X=18 Y=18 targetPage="console">Back</Button>
+        <Button class="page_change" X=26 Y=18 targetPage="main">Home</Button>
     </Page>
 
     <Page id="windows" xScrollAllowed="false" position=1>
@@ -97,6 +97,6 @@
             <Input width="$parent.width - 2" backgroundColour="red" X=2 Y=4/>
         </Window>
 
-        <Button class="page_change" X=23 Y=18 width=6 targetPage="main">Home</Button>
+        <Button class="page_change" X=23 Y=18 targetPage="main">Home</Button>
     </Page>
 </TabbedPageContainer>

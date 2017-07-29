@@ -22,6 +22,85 @@ function TabbedPageContainer:__init__( ... )
     }
 end
 
+function TabbedPageContainer:centreActivePageButton( noAnimation )
+
+end
+
+function TabbedPageContainer:updatePagePositions( ... )
+    self.super:updatePagePositions( ... )
+    self:formTabs()
+end
+
+function TabbedPageContainer:selectPage( ... )
+    self.super:selectPage( ... )
+    self:updateActiveTab()
+end
+
+function TabbedPageContainer:updateActiveTab()
+    self.tabContainer:query "Button.active":each( function( tab )
+        tab:set {
+            backgroundColour = "$parent.parent.parent.tabBackgroundColour",
+            colour = "$parent.parent.parent.tabColour"
+        }
+
+        tab:removeClass "active"
+    end )
+
+    if self.selectedPage then
+        local selectedTab = self.tabContainer:query( ("Button#%s"):format( self.selectedPage.id ) ).result[ 1 ]
+        selectedTab:addClass "active"
+        selectedTab.backgroundColour = "$parent.parent.parent.selectedTabBackgroundColour"
+        selectedTab.colour = "$parent.parent.parent.selectedTabColour"
+    end
+end
+
+function TabbedPageContainer:formTabs()
+    local tabs, width = {}, 1
+    local nodes = self.nodes
+    for i = 2, #nodes do
+        local page = nodes[ i ]
+        local content = page.name or page.id
+        local w = ( self.tabPadding * 2 ) + #content
+
+        tabs[ page.position ], width = { content, page.id, w, width }, width + w
+    end
+
+    self.tabContainer:removeNode "innerTabs"
+    local container = self.tabContainer:addNode( Container():set( "id", "innerTabs" ) )
+    local function spawnTab( text, width, X, page )
+        local tab = container:addNode( Button( text ) ):set {
+            width = width,
+            X = X,
+            height = self.tabHeight,
+            backgroundColour = "$parent.parent.parent.tabBackgroundColour",
+            colour = "$parent.parent.parent.tabColour",
+            id = page
+        }
+
+        tab:on( "trigger", function()
+            self:selectPage( page )
+        end )
+    end
+
+    if width < self.width and self.smartTabWidth then
+        local allocSpace = math.floor( self.width / #tabs )
+        container.width, container.X = allocSpace * #tabs, "$parent.width / 2 - ( self.width / 2 )"
+
+        for i = 1, #tabs do
+            local tab = tabs[ i ]
+            spawnTab( tab[ 1 ], allocSpace, 1 + allocSpace * ( i - 1 ), tab[ 2 ] )
+        end
+    else
+        container.width = width
+        for i = 1, #tabs do
+            local tab = tabs[ i ]
+            spawnTab( tab[ 1 ], tab[ 3 ], tab[ 4 ], tab[ 2 ] )
+        end
+    end
+
+    self:updateActiveTab()
+end
+
 function TabbedPageContainer:linkPage( page )
     page.height, page.Y = "$parent.height - parent.tabHeight", "$parent.tabHeight + 1"
     page:linkProperties( self, "width" )

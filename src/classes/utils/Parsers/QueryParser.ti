@@ -98,21 +98,41 @@ function QueryParser:parseCondition()
 
     local token = self:stepForward()
     while true do
-        if token.type == "QUERY_COND_ENTITY" and ( condition.symbol or not condition.property ) then
-            condition[ condition.symbol and "value" or "property" ] = condition.symbol and parseValue( token.value ) or token.value
+        if token.type == "QUERY_COND_ENTITY" then
+            if condition.symbol then
+                if condition.value then
+                    self:throw( "Unexpected entity '"..tostring( token.value ).."'. Expected end of condition block, or condition seperator preceding another condition" )
+                else
+                    condition.value = parseValue( token.value )
+                end
+            else
+                if condition.property then
+                    self:throw( "Unexpected entity '"..tostring( token.value ).."'. Expected operator symbol" )
+                else
+                    condition.property = token.value
+                end
+            end
         elseif token.type == "QUERY_COND_STRING_ENTITY" and condition.symbol then
             condition.value = token.value
-        elseif token.type == "QUERY_COND_SYMBOL" and not condition.property and token.value == "#" then
+        elseif token.type == "QUERY_COND_MODIFIER" and not condition.property then
             condition.modifier = token.value
         elseif token.type == "QUERY_COND_SYMBOL" and ( condition.property ) then
+            if condition.symbol then
+                self:throw( "Unexpected symbol '"..tostring( token.value ).."." )
+            end
+
             condition.symbol = token.value
         elseif token.type == "QUERY_COND_SEPERATOR" and next( condition ) then
+            if not ( condition.property and condition.value and condition.symbol ) then
+                self:throw "No valid condition was found before ',' (Unexpected query condition seperator)"
+            end
+
             conditions[ #conditions + 1 ] = condition
             condition = {}
-        elseif token.type == "QUERY_COND_CLOSE" and ( not condition.property or ( condition.property and condition.value ) ) then
+        elseif token.type == "QUERY_COND_CLOSE" and ( not condition.property or ( condition.property and condition.value and condition.symbol ) ) then
             break
         else
-            self:throw( "Unexpected '"..token.value.."' inside of condition block" )
+            self:throw( "Unexpected '" .. tostring( token.value ) .. "' (" .. token.type .. ") inside of condition block" )
         end
 
         token = self:stepForward()
@@ -120,6 +140,8 @@ function QueryParser:parseCondition()
 
     if next( condition ) then
         conditions[ #conditions + 1 ] = condition
+    elseif #conditions == 0 then
+        self:throw "Unexpected ']'. No conditions were defined (empty condition block)"
     end
 
     return #conditions > 0 and conditions or nil

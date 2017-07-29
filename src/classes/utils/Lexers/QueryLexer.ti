@@ -66,10 +66,13 @@ function QueryLexer:tokenizeCondition( stream )
     elseif stream:find "^%w+" then
         self:pushToken { type = "QUERY_COND_ENTITY", value = self:consumePattern "^%w+" }
     elseif stream:find "^%," then
-        self:pushToken { type = "QUERY_COND_SEPERATOR" }
+        self:pushToken { type = "QUERY_COND_SEPERATOR", value = "," }
+        self:consume( 1 )
+    elseif stream:find "^#" then
+        self:pushToken { type = "QUERY_COND_MODIFIER", value = "#" }
         self:consume( 1 )
     elseif stream:find "^%]" then
-        self:pushToken { type = "QUERY_COND_CLOSE" }
+        self:pushToken { type = "QUERY_COND_CLOSE", value = "]" }
         self:consume( 1 )
         self.inCondition = false
     else

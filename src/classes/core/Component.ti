@@ -1,10 +1,15 @@
 --[[
     @instance width - number (def. 1) - The objects width, defines the width of the canvas.
     @instance height - number (def. 1) - The objects width, defines the height of the canvas.
-    @instance X - number (def. 1) - The objects X position.
-    @instance Y - number (def. 1) - The objects Y position.
+    @instance X - number (def. 1) - The objects X position. Replaced when fluid positioning is used.
+    @instance Y - number (def. 1) - The objects Y position. Replaced when fluid positioning is used.
     @instance changed - boolean (def. true) - If true, the node will be redrawn by it's parent. This propagates up to the application, before being drawn to the CraftOS term object. Set to false after draw.
     @instance backgroundChar - string (def. " ") - Defines the character used when redrawing the canvas. Can be set to "nil" to use no character at all.
+    @instance positioning - string (def. "fluid") - The positioning type of the node -- used when the parent resolves fluid positions (when the parent has 'resolveFluid' set to true).
+    @instance marginLeft - number (def. 0) - When the parent is resolving fluid positions, this value is used to calculate the amount of space to the left of the node (from the edge, or an adjacent node). marginLeft takes priority over marginRight.
+    @instance marginRight - number (def. 0) - When the parent is resolving fluid positions, this value is used to calculate the amount of space to the right of node (from an adjacent node).
+    @instance marginTop - number (def. 0) - When the parent is resolving fluid positions, this value is used to calculate the amount of space above the node (from an adjacent node, or the edge of the parent). marginTop takes priority over marginBottom.
+    @instance marginBottom - number (def. 0) - When the parent is resolving fluid positions, this value is used to calculate the amount of space under the node (from an adjacent node).
 
     A Component is an object that can be represented visually.
 ]]
@@ -12,6 +17,7 @@
 abstract class Component mixin MPropertyManager {
     width = 1;
     height = 1;
+
     X = 1;
     Y = 1;
 
@@ -22,6 +28,12 @@ abstract class Component mixin MPropertyManager {
     shader = false;
     shadeText = true;
     shadeBackground = true;
+
+    marginLeft = 0;
+    marginRight = 0;
+    marginTop = 0;
+    marginBottom = 0;
+    positioning = false;
 }
 
 --[[
@@ -98,6 +110,7 @@ end
     @param <number - width>
 ]]
 function Component:setWidth( width )
+    if self.parent then self.parent.positionChanged = true end
     self:queueAreaReset()
 
     width = math.ceil( width )
@@ -111,6 +124,7 @@ end
     @param <number - height>
 ]]
 function Component:setHeight( height )
+    if self.parent then self.parent.positionChanged = true end
     self:queueAreaReset()
 
     height = math.ceil( height )
@@ -184,7 +198,7 @@ end
 
 configureConstructor {
     orderedArguments = { "X", "Y", "width", "height" },
-    argumentTypes = { X = "number", Y = "number", width = "number", height = "number", colour = "colour", backgroundColour = "colour", backgroundTextColour = "colour", transparent = "boolean", shader = "ANY", shadeText="ANY", shadeBackground="ANY" }
+    argumentTypes = { X = "number", Y = "number", width = "number", height = "number", colour = "colour", backgroundColour = "colour", backgroundTextColour = "colour", transparent = "boolean", shader = "ANY", shadeText="ANY", shadeBackground="ANY", marginLeft = "number", marginRight = "number", marginTop = "number", marginBottom = "number", positioning = "ANY" }
 } alias {
     color = "colour",
     backgroundColor = "backgroundColour"

@@ -88,12 +88,16 @@ end
     @desc Calls :retrieveThemes on the child nodes, meaning they will re-fetch their rules from the manager after clearing any current ones.
 ]]
 function MThemeManager:dispatchThemeRules()
-    local nodes = self.collatedNodes
+    local function dispatchAndYield( targets )
+        themeYield()
+        for i = 1, #targets do
+            if os.clock() - t > 8 then themeYield() end
 
-    themeYield()
-    for i = 1, #nodes do
-        if os.clock() - t > 8 then themeYield() end
-
-        nodes[ i ]:retrieveThemes()
+            targets[ i ]:retrieveThemes()
+        end
     end
+
+    dispatchAndYield( self.collatedNodes )
+    self.dialogContainer:retrieveThemes() -- Pretty sure I need this... Not certain, I'll leave it here for now.
+    dispatchAndYield( self.dialogContainer.collatedNodes )
 end

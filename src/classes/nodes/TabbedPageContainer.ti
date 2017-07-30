@@ -1,3 +1,9 @@
+--[[
+    @local
+    @desc Spawns a scroll button by adding the button to the parent (via super.super to avoid page verification)
+    @param <string - text>, <boolean - forward>, <TabbedPageContainer Instance - parent>
+    @return <Button Instance - b>
+]]
 local function spawnScrollButton( text, forward, parent )
     local b = Button( text ):set { width = 1, enabled = "$self.visible" }
 
@@ -7,6 +13,10 @@ local function spawnScrollButton( text, forward, parent )
 
     return parent.super.super:addNode( b )
 end
+
+--[[
+    WIP
+]]
 
 class TabbedPageContainer extends PageContainer {
     cache = {};
@@ -24,6 +34,10 @@ class TabbedPageContainer extends PageContainer {
     selectedTabBackgroundColour = colours.cyan;
 }
 
+--[[
+    @constructor
+    @desc WIP
+]]
 function TabbedPageContainer:__init__( ... )
     self:resolve( ... )
     self:super()
@@ -43,22 +57,38 @@ function TabbedPageContainer:__init__( ... )
     self.rightScrollButton = spawnScrollButton( ">", false, self ):set( "X", "$parent.scroll + parent.width" )
 end
 
+--[[
+    @instance
+    @desc WIP
+]]
 function TabbedPageContainer:centreActivePageButton( noAnimation )
     local button = self.tabContainer:query "Button.active".result[ 1 ]
 
     self:moveTabs( 0, false, button.X + ( button.width / 2 ) - ( self.width / 2 ) )
 end
 
+--[[
+    @instance
+    @desc WIP
+]]
 function TabbedPageContainer:updatePagePositions( ... )
     self.super:updatePagePositions( ... )
     self:formTabs()
 end
 
+--[[
+    @instance
+    @desc WIP
+]]
 function TabbedPageContainer:selectPage( ... )
     self.super:selectPage( ... )
     self:updateActiveTab()
 end
 
+--[[
+    @instance
+    @desc WIP
+]]
 function TabbedPageContainer:updateActiveTab()
     self.tabContainer:query "Button.active":each( function( tab )
         tab:set {
@@ -79,6 +109,10 @@ function TabbedPageContainer:updateActiveTab()
     end
 end
 
+--[[
+    @instance
+    @desc WIP
+]]
 function TabbedPageContainer:formTabs()
     local tabs, width = {}, 1
     local nodes = self.nodes
@@ -138,6 +172,10 @@ function TabbedPageContainer:formTabs()
     self:updateActiveTab()
 end
 
+--[[
+    @instance
+    @desc WIP
+]]
 function TabbedPageContainer:moveTabs( amount, noAnimation, absolute )
     local MAX = self:query "#innerTabs".result[ 1 ].width - self.width + 1
     local val = math.min( math.max( absolute or ( self.tabScroll + amount ), 0 ), MAX < 1 and 1 or MAX )
@@ -149,11 +187,19 @@ function TabbedPageContainer:moveTabs( amount, noAnimation, absolute )
     end
 end
 
+--[[
+    @instance
+    @desc WIP
+]]
 function TabbedPageContainer:linkPage( page )
     page.height, page.Y = "$parent.height - parent.tabHeight", "$parent.tabHeight + 1"
     page:linkProperties( self, "width" )
 end
 
+--[[
+    @instance
+    @desc WIP
+]]
 function TabbedPageContainer:unlinkPage( page )
     page:removeDynamicValue "height"
     page:unlinkProperties( self, "width" )

@@ -62,7 +62,7 @@ end
 function Lexer:pushToken( token )
     local tokens = self.tokens
 
-    token.char = self.char
+    token.char = self.char - ( token.value and #token.value or 1 )
     token.line = self.line
     tokens[ #tokens + 1 ] = token
 end

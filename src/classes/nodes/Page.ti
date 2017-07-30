@@ -59,7 +59,7 @@ function Page:getAbsolutePosition( limit )
         end
 
         local pX, pY = self.parent:getAbsolutePosition()
-        return -1 + pX + self.X - parent.scroll, -1 + pY + self.Y
+        return -1 + pX + self.X - parent.scroll - self.xScroll, -1 + pY + self.Y - self.yScroll
     else return self.X, self.Y end
 end
 

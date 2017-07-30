@@ -4,7 +4,11 @@
     A lexer that processes node queries into tokens used by QueryParser
 ]]
 
-class QueryLexer extends Lexer
+class QueryLexer extends Lexer {
+    static = {
+        validSymbols = { "==", "<", ">", ">=", "<=", "~=" }
+    }
+}
 
 --[[
     @instance
@@ -26,6 +30,8 @@ function QueryLexer:tokenize()
         self:consume( 1 )
 
         self.inCondition = true
+    elseif stream:find "^[%[%]]" then
+        self:throw("Unmatched conditon opening/closing ([ or ])")
     elseif stream:find "^%," then
         self:pushToken { type = "QUERY_END", value = self:consumePattern "^%," }
     elseif stream:find "^>" then
@@ -60,15 +66,23 @@ function QueryLexer:tokenizeCondition( stream )
     elseif stream:find "^%w+" then
         self:pushToken { type = "QUERY_COND_ENTITY", value = self:consumePattern "^%w+" }
     elseif stream:find "^%," then
-        self:pushToken { type = "QUERY_COND_SEPERATOR" }
+        self:pushToken { type = "QUERY_COND_SEPERATOR", value = "," }
         self:consume( 1 )
-    elseif stream:find "^[%p~]+" then
-        self:pushToken { type = "QUERY_COND_SYMBOL", value = self:consumePattern "^[%p~]+" }
+    elseif stream:find "^#" then
+        self:pushToken { type = "QUERY_COND_MODIFIER", value = "#" }
+        self:consume( 1 )
     elseif stream:find "^%]" then
-        self:pushToken { type = "QUERY_COND_CLOSE" }
+        self:pushToken { type = "QUERY_COND_CLOSE", value = "]" }
         self:consume( 1 )
         self.inCondition = false
     else
+        for _, val in pairs( QueryLexer.static.validSymbols ) do
+            if stream:find( ("^%s"):format( val ) ) then
+                self:pushToken { type = "QUERY_COND_SYMBOL", value = self:consumePattern( ( "^%s" ):format( val ) ) }
+                return
+            end
+        end
+
         self:throw("Invalid condition syntax. Expected property near '"..tostring( stream:match "%S*" ).."'")
     end
 end

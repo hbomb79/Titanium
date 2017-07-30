@@ -99,4 +99,11 @@
 
         <Button class="page_change" X=23 Y=18 targetPage="main">Home</Button>
     </Page>
+    <Page id="First"></Page>
+    <Page id="Second"></Page>
+    <Page id="Third"></Page>
+    <Page id="Fourth"></Page>
+    <Page id="Fifth"></Page>
+    <Page id="Sixth"></Page>
+    <Page id="Seventh"></Page>
 </TabbedPageContainer>

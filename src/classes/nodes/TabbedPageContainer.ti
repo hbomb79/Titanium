@@ -1,7 +1,21 @@
+local function spawnScrollButton( text, forward, parent )
+    local b = Button( text ):set { width = 1, enabled = "$self.visible" }
+
+    b:on("trigger", function( self )
+        parent:moveTabs( ( forward and -1 or 1 ) * ( parent.width / 2 ) )
+    end):addClass "scroller"
+
+    return parent.super.super:addNode( b )
+end
+
 class TabbedPageContainer extends PageContainer {
+    cache = {};
     tabHeight = 1;
     smartTabWidth = true;
+    scrollButtons = true;
+
     tabPadding = 1;
+    tabScroll = 0;
 
     tabColour = 1;
     tabBackgroundColour = colours.lightBlue;
@@ -15,11 +29,12 @@ function TabbedPageContainer:__init__( ... )
     self:super()
 
     self.tabContainer = self.super.super:addNode( Container() ):set {
-        X = "$parent.scroll + 1",
-        width = "$parent.width",
         height = "$parent.tabHeight",
         backgroundColour = "$parent.tabBackgroundColour"
     }
+
+    self.leftScrollButton = spawnScrollButton( "<", true, self ):set( "X", "$parent.scroll + 1" )
+    self.rightScrollButton = spawnScrollButton( ">", false, self ):set( "X", "$parent.scroll + parent.width" )
 end
 
 function TabbedPageContainer:centreActivePageButton( noAnimation )
@@ -57,7 +72,7 @@ end
 function TabbedPageContainer:formTabs()
     local tabs, width = {}, 1
     local nodes = self.nodes
-    for i = 2, #nodes do
+    for i = 4, #nodes do
         local page = nodes[ i ]
         local content = page.name or page.id
         local w = ( self.tabPadding * 2 ) + #content
@@ -80,9 +95,7 @@ function TabbedPageContainer:formTabs()
             id = page
         }
 
-        tab:on( "trigger", function()
-            self:selectPage( page )
-        end )
+        tab:on( "trigger", function() self:selectPage( page ) end )
     end
 
     local extraSpacePerNode = math.floor( ( self.width - width ) / #tabs )
@@ -94,11 +107,15 @@ function TabbedPageContainer:formTabs()
         extraSpacePerNode = 0
     end
 
-    if width > self.width then
-        container.X = 1
-    else
-        container.X = "$parent.width / 2 - ( self.width / 2 ) + .5"
-    end
+    local widthOverlap = width > self.width
+    local canScroll = widthOverlap and self.scrollButtons
+
+    container.X = widthOverlap and "$-parent.parent.tabScroll + 1" or "$parent.width / 2 - ( self.width / 2 ) + .5"
+    self:query "Button.scroller":set( "visible", canScroll )
+    self.tabContainer:set {
+        X = "$parent.scroll + " .. ( canScroll and "2" or "1" ),
+        width = "$parent.width - " .. ( canScroll and "2" or "0" )
+    }
 
     local w = 1
     for i = 1, #tabs do
@@ -109,6 +126,11 @@ function TabbedPageContainer:formTabs()
 
     container.width = width + ( extraSpacePerNode * #tabs )
     self:updateActiveTab()
+end
+
+function TabbedPageContainer:moveTabs( amount )
+    local MAX = self:query "#innerTabs".result[ 1 ].width - self.width + 1
+    self:animate( "TAB_SCROLL", "tabScroll", math.min( math.max( self.tabScroll + amount, 0 ), MAX < 1 and 1 or MAX ), 0.2, "inOutQuad")
 end
 
 function TabbedPageContainer:linkPage( page )
@@ -128,6 +150,7 @@ configureConstructor {
         tabBackgroundColour = "colour",
         tabColour = "colour",
         selectedTabBackgroundColour = "colour",
-        selectedTabColour = "colour"
+        selectedTabColour = "colour",
+        tabScroll = "number"
     }
 }

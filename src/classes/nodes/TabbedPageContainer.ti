@@ -67,8 +67,7 @@ function TabbedPageContainer:formTabs()
 
     self.tabContainer:removeNode "innerTabs"
     local container = self.tabContainer:addNode( Container() ):set {
-        id = "innerTabs",
-        X = "$parent.width / 2 - ( self.width / 2 ) + .5"
+        id = "innerTabs"
     }
 
     local function spawnTab( text, width, X, page )
@@ -93,6 +92,12 @@ function TabbedPageContainer:formTabs()
         end
     else
         extraSpacePerNode = 0
+    end
+
+    if width > self.width then
+        container.X = 1
+    else
+        container.X = "$parent.width / 2 - ( self.width / 2 ) + .5"
     end
 
     local w = 1

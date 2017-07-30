@@ -50,7 +50,7 @@ function TabbedPageContainer:__init__( ... )
     self.tabContainer.onMouseScroll = function( this, eventObj, handled, within )
         if handled or not within then return end
 
-        self:moveTabs( eventObj.button, true )
+        self:moveTabs( eventObj.button * 5, true )
     end
 
     self.leftScrollButton = spawnScrollButton( "<", true, self ):set( "X", "$parent.scroll + 1" )

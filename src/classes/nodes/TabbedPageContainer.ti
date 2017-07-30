@@ -44,7 +44,9 @@ function TabbedPageContainer:__init__( ... )
 end
 
 function TabbedPageContainer:centreActivePageButton( noAnimation )
+    local button = self.tabContainer:query "Button.active".result[ 1 ]
 
+    self:moveTabs( 0, false, button.X + ( button.width / 2 ) - ( self.width / 2 ) )
 end
 
 function TabbedPageContainer:updatePagePositions( ... )
@@ -72,6 +74,8 @@ function TabbedPageContainer:updateActiveTab()
         selectedTab:addClass "active"
         selectedTab.backgroundColour = "$parent.parent.parent.selectedTabBackgroundColour"
         selectedTab.colour = "$parent.parent.parent.selectedTabColour"
+
+        self:centreActivePageButton()
     end
 end
 
@@ -134,9 +138,9 @@ function TabbedPageContainer:formTabs()
     self:updateActiveTab()
 end
 
-function TabbedPageContainer:moveTabs( amount, noAnimation )
+function TabbedPageContainer:moveTabs( amount, noAnimation, absolute )
     local MAX = self:query "#innerTabs".result[ 1 ].width - self.width + 1
-    local val = math.min( math.max( self.tabScroll + amount, 0 ), MAX < 1 and 1 or MAX )
+    local val = math.min( math.max( absolute or ( self.tabScroll + amount ), 0 ), MAX < 1 and 1 or MAX )
 
     if noAnimation then
         self.tabScroll = val

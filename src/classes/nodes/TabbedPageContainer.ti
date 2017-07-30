@@ -4,10 +4,10 @@ class TabbedPageContainer extends PageContainer {
     tabPadding = 1;
 
     tabColour = 1;
-    tabBackgroundColour = colours.green;
+    tabBackgroundColour = colours.lightBlue;
 
     selectedTabColour = 1;
-    selectedTabBackgroundColour = colours.red;
+    selectedTabBackgroundColour = colours.cyan;
 }
 
 function TabbedPageContainer:__init__( ... )
@@ -18,7 +18,7 @@ function TabbedPageContainer:__init__( ... )
         X = "$parent.scroll + 1",
         width = "$parent.width",
         height = "$parent.tabHeight",
-        backgroundColour = colours.lightBlue
+        backgroundColour = "$parent.tabBackgroundColour"
     }
 end
 
@@ -62,11 +62,15 @@ function TabbedPageContainer:formTabs()
         local content = page.name or page.id
         local w = ( self.tabPadding * 2 ) + #content
 
-        tabs[ page.position ], width = { content, page.id, w, width }, width + w
+        tabs[ page.position ], width = { content, page.id, w }, width + w
     end
 
     self.tabContainer:removeNode "innerTabs"
-    local container = self.tabContainer:addNode( Container():set( "id", "innerTabs" ) )
+    local container = self.tabContainer:addNode( Container() ):set {
+        id = "innerTabs",
+        X = "$parent.width / 2 - ( self.width / 2 ) + .5"
+    }
+
     local function spawnTab( text, width, X, page )
         local tab = container:addNode( Button( text ) ):set {
             width = width,
@@ -82,22 +86,23 @@ function TabbedPageContainer:formTabs()
         end )
     end
 
-    if width < self.width and self.smartTabWidth then
-        local allocSpace = math.floor( self.width / #tabs )
-        container.width, container.X = allocSpace * #tabs, "$parent.width / 2 - ( self.width / 2 )"
-
-        for i = 1, #tabs do
-            local tab = tabs[ i ]
-            spawnTab( tab[ 1 ], allocSpace, 1 + allocSpace * ( i - 1 ), tab[ 2 ] )
+    local extraSpacePerNode = math.floor( ( self.width - width ) / #tabs )
+    if self.smartTabWidth and extraSpacePerNode >= 2 then
+        if extraSpacePerNode % 2 ~= 0 then
+            extraSpacePerNode = extraSpacePerNode - 1
         end
     else
-        container.width = width
-        for i = 1, #tabs do
-            local tab = tabs[ i ]
-            spawnTab( tab[ 1 ], tab[ 3 ], tab[ 4 ], tab[ 2 ] )
-        end
+        extraSpacePerNode = 0
     end
 
+    local w = 1
+    for i = 1, #tabs do
+        local tab = tabs[ i ]
+        spawnTab( tab[ 1 ], tab[ 3 ] + extraSpacePerNode, w, tab[ 2 ] )
+        w = w + extraSpacePerNode + tab[ 3 ]
+    end
+
+    container.width = width + ( extraSpacePerNode * #tabs )
     self:updateActiveTab()
 end
 

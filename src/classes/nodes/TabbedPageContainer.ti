@@ -33,6 +33,12 @@ function TabbedPageContainer:__init__( ... )
         backgroundColour = "$parent.tabBackgroundColour"
     }
 
+    self.tabContainer.onMouseScroll = function( this, eventObj, handled, within )
+        if handled or not within then return end
+
+        self:moveTabs( eventObj.button, true )
+    end
+
     self.leftScrollButton = spawnScrollButton( "<", true, self ):set( "X", "$parent.scroll + 1" )
     self.rightScrollButton = spawnScrollButton( ">", false, self ):set( "X", "$parent.scroll + parent.width" )
 end
@@ -128,9 +134,15 @@ function TabbedPageContainer:formTabs()
     self:updateActiveTab()
 end
 
-function TabbedPageContainer:moveTabs( amount )
+function TabbedPageContainer:moveTabs( amount, noAnimation )
     local MAX = self:query "#innerTabs".result[ 1 ].width - self.width + 1
-    self:animate( "TAB_SCROLL", "tabScroll", math.min( math.max( self.tabScroll + amount, 0 ), MAX < 1 and 1 or MAX ), 0.2, "inOutQuad")
+    local val = math.min( math.max( self.tabScroll + amount, 0 ), MAX < 1 and 1 or MAX )
+
+    if noAnimation then
+        self.tabScroll = val
+    else
+        self:animate( "TAB_SCROLL", "tabScroll", val, 0.2, "inOutQuad")
+    end
 end
 
 function TabbedPageContainer:linkPage( page )

@@ -5,7 +5,7 @@
     @return <Button Instance - b>
 ]]
 local function spawnScrollButton( text, forward, parent )
-    local b = Button( text ):set { width = 1, enabled = "$self.visible" }
+    local b = Button( text ):set { width = 1, enabled = "$self.visible", height = "$parent.tabHeight" }
 
     b:on("trigger", function( self )
         parent:moveTabs( ( forward and -1 or 1 ) * ( parent.width / 2 ) )
@@ -126,14 +126,15 @@ function TabbedPageContainer:formTabs()
 
     self.tabContainer:removeNode "innerTabs"
     local container = self.tabContainer:addNode( Container() ):set {
-        id = "innerTabs"
+        id = "innerTabs",
+        height = "$parent.height"
     }
 
     local function spawnTab( text, width, X, page )
         local tab = container:addNode( Button( text ) ):set {
             width = width,
             X = X,
-            height = self.tabHeight,
+            height = "$parent.parent.parent.tabHeight",
             backgroundColour = "$parent.parent.parent.tabBackgroundColour",
             colour = "$parent.parent.parent.tabColour",
             id = page

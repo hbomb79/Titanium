@@ -178,7 +178,7 @@ end
     @desc WIP
 ]]
 function TabbedPageContainer:moveTabs( amount, noAnimation, absolute )
-    local MAX = self:query "#innerTabs".result[ 1 ].width - self.width + 1
+    local MAX = self:query "#innerTabs".result[ 1 ].width - self.width + ( self.scrollButtons and 1 or -1 )
     local val = math.min( math.max( absolute or ( self.tabScroll + amount ), 0 ), MAX < 1 and 1 or MAX )
 
     if noAnimation then

@@ -99,11 +99,11 @@
 
         <Button class="page_change" X=23 Y=18 targetPage="main">Home</Button>
     </Page>
-    <Page id="First"></Page>
-    <Page id="Second"></Page>
-    <Page id="Third"></Page>
-    <Page id="Fourth"></Page>
-    <Page id="Fifth"></Page>
-    <Page id="Sixth"></Page>
-    <Page id="Seventh"></Page>
+    <Page id="First"><Label>$'This page is called ' .. '"' .. parent.id .. '"'</Label></Page>
+    <Page id="Second"><Label>$'This page is called ' .. '"' .. parent.id .. '"'</Label></Page>
+    <Page id="Third"><Label>$'This page is called ' .. '"' .. parent.id .. '"'</Label></Page>
+    <Page id="Fourth"><Label>$'This page is called ' .. '"' .. parent.id .. '"'</Label></Page>
+    <Page id="Fifth"><Label>$'This page is called ' .. '"' .. parent.id .. '"'</Label></Page>
+    <Page id="Sixth"><Label>$'This page is called ' .. '"' .. parent.id .. '"'</Label></Page>
+    <Page id="Seventh"><Label>$'This page is called ' .. '"' .. parent.id .. '"'</Label></Page>
 </TabbedPageContainer>

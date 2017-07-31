@@ -147,7 +147,7 @@ function TabbedPageContainer:formTabs()
     local widthOverlap = width > self.width
     local canScroll = widthOverlap and self.scrollButtons
 
-    container.X = widthOverlap and "$-parent.parent.tabScroll + 1" or "$parent.width / 2 - ( self.width / 2 ) + .5"
+    container.X = widthOverlap and "$-parent.parent.tabScroll + 1" or "$parent.width / 2 - ( self.width / 2 ) + 1"
     self:query "Button.scroller":set( "visible", canScroll )
     self.tabContainer:set {
         X = "$parent.scroll + " .. ( canScroll and "2" or "1" ),

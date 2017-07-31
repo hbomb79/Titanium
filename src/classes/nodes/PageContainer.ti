@@ -151,7 +151,12 @@ end
 
 --[[
     @instance
-    @desc WIP
+    @desc Overrides the super :removeNode so that page checking can be performed.
+          If removed page was the currently selected page, the page selection is reset
+
+          Tabs are reset after the node has been removed.
+    @param <Instance 'Node'/string name - target>
+    @return <boolean - success>, [node - removedNode]
 ]]
 function PageContainer:removeNode( ... )
     local rem, node = self.super:removeNode( ... )

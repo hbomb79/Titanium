@@ -149,7 +149,9 @@ end
 
 --[[
     @instance
-    @desc WIP
+    @desc For each method in Window.static.proxyMethods, a 'raw' method (ie: addNodeRaw) is created (which performs the action on the window), and a normal method (ie: addNode) is
+          created that performs the action on the 'content' provided (for example, the 'actionContainer' of a DialogWindow)
+    @param <Instance - content>
 ]]
 function Window:createProxies( content )
     content = content or self.content
@@ -210,7 +212,7 @@ end
 
 --[[
     @instance
-    @desc WIP
+    @desc Redirects attempts to resolve the fluid positions of this Window to the content instead
 ]]
 function Window:resolveFluidPositions()
     self.content:resolveFluidPositions()

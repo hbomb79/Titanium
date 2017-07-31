@@ -171,7 +171,7 @@ function Application:schedule( fn, time, repeating, name )
         self:unschedule( name )
     end
 
-    local ID = os.startTimer( time ) --TODO: Use timer util to re-use timer IDs
+    local ID = os.startTimer( time )
     self.timers[ ID ] = { fn, time, repeating, name }
 
     return ID

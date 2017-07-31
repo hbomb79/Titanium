@@ -1,0 +1,71 @@
+--[[
+    A class specifically designed for the TabbedPageContainer to contain the tabs (and facilitate mouse scrolling, dragging and tab selection)
+]]
+
+class TabContainer extends Container mixin MInteractable
+
+--[[
+    @instance
+    @desc WIP
+]]
+function TabContainer:__postInit__( ... )
+    self.super:__postInit__( ... )
+
+
+    self.height = "$parent.parent.tabHeight or 1"
+    self.backgroundColour = "$parent.parent.tabBackgroundColour"
+end
+
+--[[
+    @instance
+    @desc WIP
+]]
+function TabContainer:onMouseClick( event, handled, within )
+    if handled or not within then return end
+    self:updateMouse( "tabScroller", event.X + self.parent.tabScroll, event.Y )
+end
+
+--[[
+    @instance
+    @desc WIP
+]]
+function TabContainer:onMouseUp( event, handled, within )
+    self:updateMouse( false )
+    if self.dragged then
+        self.dragged = false
+
+        local nodes = self.nodes[ 1 ].nodes
+        for i = 1, #nodes do
+            if nodes[ i ].active then nodes[ i ].active = false; return end
+        end
+    end
+end
+
+--[[
+    @instance
+    @desc WIP
+]]
+function TabContainer:onMouseScroll( event, handled, within )
+    if handled or not within then return end
+    self.parent:moveTabs( event.button * 5, true )
+end
+
+--[[
+    @instance
+    @desc WIP
+]]
+function TabContainer:onMouseDrag( event, handled, within )
+    if handled or not within then return end
+
+    self:handleMouseDrag( event, handled, within )
+    self.dragged = true
+end
+
+--[[
+    @setter
+    @desc WIP
+]]
+function TabContainer:setTabScroll( tabScroll )
+    self.tabScroll = tabScroll
+    self.parent:moveTabs( false, true, -tabScroll )
+end

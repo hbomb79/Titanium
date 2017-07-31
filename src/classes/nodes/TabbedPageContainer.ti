@@ -41,16 +41,7 @@ function TabbedPageContainer:__init__( ... )
     self:resolve( ... )
     self:super()
 
-    self.tabContainer = self.super.super:addNode( Container() ):set {
-        height = "$parent.tabHeight",
-        backgroundColour = "$parent.tabBackgroundColour"
-    }
-
-    self.tabContainer.onMouseScroll = function( this, eventObj, handled, within )
-        if handled or not within then return end
-
-        self:moveTabs( eventObj.button * 5, true )
-    end
+    self.tabContainer = self.super.super:addNode( TabContainer() )
 
     self.leftScrollButton = spawnScrollButton( "<", true, self ):set( "X", "$parent.scroll + 1" )
     self.rightScrollButton = spawnScrollButton( ">", false, self ):set( "X", "$parent.scroll + parent.width" )

@@ -1,5 +1,5 @@
 <TabbedPageContainer Z=1 X=1 Y=1 width="$application.width" height="$application.height" id="mainContainer">
-    <Page id="main" xScrollAllowed="false">
+    <Page id="main" name="Landing" xScrollAllowed="false">
         <Label X=2 Y=2 class="header">Titanium</Label>
         <Label X=2 Y=3 class="sub">Test Application</Label>
 
@@ -78,20 +78,20 @@
         </Container>
     </Page>
 
-    <Page id="console" xScrollAllowed="false">
+    <Page id="console" name="Terminal" xScrollAllowed="false">
         <Terminal X=2 Y=2 width=49 height=15 id="shell"/>
         <Button class="page_change" X=18 Y=18 targetPage="main">Back</Button>
         <Button class="page_change" X=26 Y=18 targetPage="text">Next</Button>
     </Page>
 
-    <Page id="text" xScrollAllowed="false">
+    <Page id="text" xScrollAllowed="false" name="Editor">
         <EditableTextContainer X=2 Y=2 width="$parent.width - 2" height="$parent.height - 4" horizontalAlign="left" colour="256" focusedColour="white" backgroundColour="grey"/>
 
         <Button class="page_change" X=18 Y=18 targetPage="console">Back</Button>
         <Button class="page_change" X=26 Y=18 targetPage="main">Home</Button>
     </Page>
 
-    <Page id="windows" xScrollAllowed="false" position=1>
+    <Page id="windows" xScrollAllowed="false" position=1 name="Windows">
         <Window Z=5 X=6 Y=3 width=25 height=6 backgroundColour="256" title="Example Window" focusedBackgroundColour="lightBlue" minHeight="7">
             <Label class="centre" Y=2 colour=128>Drag me around!</Label>
             <Input width="$parent.width - 2" backgroundColour="red" X=2 Y=4/>
@@ -99,11 +99,4 @@
 
         <Button class="page_change" X=23 Y=18 targetPage="main">Home</Button>
     </Page>
-    <Page id="First"><Label>$'This page is called ' .. '"' .. parent.id .. '"'</Label></Page>
-    <Page id="Second"><Label>$'This page is called ' .. '"' .. parent.id .. '"'</Label></Page>
-    <Page id="Third"><Label>$'This page is called ' .. '"' .. parent.id .. '"'</Label></Page>
-    <Page id="Fourth"><Label>$'This page is called ' .. '"' .. parent.id .. '"'</Label></Page>
-    <Page id="Fifth"><Label>$'This page is called ' .. '"' .. parent.id .. '"'</Label></Page>
-    <Page id="Sixth"><Label>$'This page is called ' .. '"' .. parent.id .. '"'</Label></Page>
-    <Page id="Seventh"><Label>$'This page is called ' .. '"' .. parent.id .. '"'</Label></Page>
 </TabbedPageContainer>

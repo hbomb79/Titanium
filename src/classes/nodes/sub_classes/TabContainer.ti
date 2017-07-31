@@ -12,8 +12,8 @@ function TabContainer:__postInit__( ... )
     self.super:__postInit__( ... )
 
 
-    self.height = "$parent.parent.tabHeight or 1"
-    self.backgroundColour = "$parent.parent.tabBackgroundColour"
+    self.height = "$parent.tabHeight or 1"
+    self.backgroundColour = "$parent.tabBackgroundColour"
 end
 
 --[[
@@ -55,7 +55,7 @@ end
     @desc WIP
 ]]
 function TabContainer:onMouseDrag( event, handled, within )
-    if handled or not within then return end
+    if handled and self.mouse then return end
 
     self:handleMouseDrag( event, handled, within )
     self.dragged = true

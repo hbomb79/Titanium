@@ -163,8 +163,13 @@ function TabbedPageContainer:formTabs()
         width = "$parent.width - " .. ( canScroll and "2" or "0" )
     }
 
+    local keys = {}
+    for i in pairs( tabs ) do keys[ #keys + 1 ] = i end
+    table.sort( keys )
+
     local w = 1
-    for index, tab in pairs( tabs ) do
+    for i = 1, #keys do
+        local tab = tabs[ keys[ i ] ]
         spawnTab( tab[ 1 ], tab[ 3 ] + extraSpacePerNode, w, tab[ 2 ] )
         w = w + extraSpacePerNode + tab[ 3 ]
     end

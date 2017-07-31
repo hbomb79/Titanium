@@ -135,9 +135,11 @@ end
     @desc Provides the information required by the nodes application to draw the application caret.
     @return <boolean - caretEnabled>, <number - caretX>, <number - caretY>, <colour - caretColour>
 ]]
-function Terminal:getCaretInfo()
+function Terminal:getCaretInfo( parentLimit )
     local c = self.canvas
-    return isThreadRunning( self ) and c.tCursor, c.tX + self.X - 1, c.tY + self.Y - 1, c.tColour
+    local sX, sY = self:getAbsolutePosition( parentLimit )
+
+    return isThreadRunning( self ) and c.tCursor, sX + c.tX - 1, sY + c.tY - 1, c.tColour
 end
 
 --[[

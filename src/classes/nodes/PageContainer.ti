@@ -50,6 +50,27 @@ end
 
 --[[
     @instance
+    @desc Links the target page to this page container (ties width/height of Page to parents)
+    @param <Page Instance - page>
+]]
+function PageContainer:linkPage( page )
+    if not Titanium.typeOf( page, "Page", true ) then return error("Failed to link page '"..tostring( page ).."'. Expected Page instance.") end
+    page:linkProperties( self, "width", "height" )
+    page.Y = 1
+end
+
+--[[
+    @instance
+    @desc Removes links to the target page
+    @param <Page Instance - page>
+]]
+function PageContainer:unlinkPage( page )
+    if not Titanium.typeOf( page, "Page", true ) then return error("Failed to unlink page '"..tostring( page ).."'. Expected Page instance.") end
+    page:unlinkProperties( self, "width", "height" )
+end
+
+--[[
+    @instance
     @desc Selects the new page using the 'pageID'. If a function is given as argument #2 'animationOverride', it will be called instead of the customAnimation
           set (or the default animation method used).
 
@@ -81,26 +102,29 @@ function PageContainer:updatePagePositions()
     local pages, usedIndexes = self.nodes, {}
     for i = 1, #pages do
         local page = pages[ i ]
-
-        local pagePosition = page.position
-        if pagePosition and not page.isPositionTemporary then
-            usedIndexes[ pagePosition ] = true
+        if Titanium.typeOf( page, "Page", true ) then
+            local pagePosition = page.position
+            if pagePosition and not page.isPositionTemporary then
+                usedIndexes[ pagePosition ] = true
+            end
         end
     end
 
     local currentIndex = 0
     for i = 1, #pages do
         local page = pages[ i ]
-        if not page.position or page.isPositionTemporary then
-            repeat
-                currentIndex = currentIndex + 1
-            until not usedIndexes[ currentIndex ]
+        if Titanium.typeOf( page, "Page", true ) then
+            if not page.position or page.isPositionTemporary then
+                repeat
+                    currentIndex = currentIndex + 1
+                until not usedIndexes[ currentIndex ]
 
-            page.isPositionTemporary = true
-            page.raw.position = currentIndex
+                page.isPositionTemporary = true
+                page.raw.position = currentIndex
+            end
+
+            page:updatePosition()
         end
-
-        page:updatePosition()
     end
 end
 
@@ -123,6 +147,20 @@ function PageContainer:addNode( node )
     end
 
     return error("Only 'Page' nodes can be added as direct children of 'PageContainer' nodes, '"..tostring( node ).."' is invalid")
+end
+
+--[[
+    @instance
+    @desc WIP
+]]
+function PageContainer:removeNode( ... )
+    local rem, node = self.super:removeNode( ... )
+    if rem and node == self.selectedPage then
+        self.selectedPage = nil
+    end
+
+    self:formTabs()
+    return rem, node
 end
 
 --[[
@@ -204,6 +242,7 @@ configureConstructor {
         animationDuration = "number",
         animationEasing = "string",
         customAnimation = "function",
-        selectedPage = "string"
+        selectedPage = "string",
+        scroll = "number"
     }
 }

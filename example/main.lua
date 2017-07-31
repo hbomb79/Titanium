@@ -60,24 +60,9 @@ completeTask()
 ]]
 Manager = Application():set {
     colour = 128,
-    backgroundColour = 256,
+    backgroundColour = 1,
     terminatable = true
 }
-
-cont = Manager:addNode( Window():set { width = "15", height = "12", positioning = "fluid", backgroundColour = 1 } )
-
-cont:addNode( Button "Hello World":set { marginRight = 1, marginBottom = 1, width = 13, height = 3 } )
-cont:addNode( Label "This is a fluid layout":set( "marginRight", 1 ) )
-cont:addNode( Button( "Test" ):set{ width = 6, marginRight = 1 } )
-cont:addNode( Button( "Test 2" ):set{ width = 8, marginRight = 1 } )
-cont:addNode( Label "Finished" )
-cont:addNode( Label "This label isn't fluid":set { X = 1, Y = 19, positioning = "normal" } )
-
-Manager:importTheme( "master", "example/ui/master.theme" )
-
-Manager:start()
-
-do return end
 
 completeTask()
 

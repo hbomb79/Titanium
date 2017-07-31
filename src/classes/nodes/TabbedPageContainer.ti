@@ -19,7 +19,6 @@ end
 ]]
 
 class TabbedPageContainer extends PageContainer {
-    cache = {};
     tabHeight = 1;
     smartTabWidth = true;
     scrollButtons = true;
@@ -101,11 +100,13 @@ function TabbedPageContainer:updateActiveTab()
 
     if self.selectedPage then
         local selectedTab = self.tabContainer:query( ("Button#%s"):format( self.selectedPage.id ) ).result[ 1 ]
-        selectedTab:addClass "active"
-        selectedTab.backgroundColour = "$parent.parent.parent.selectedTabBackgroundColour"
-        selectedTab.colour = "$parent.parent.parent.selectedTabColour"
+        if selectedTab then
+            selectedTab:addClass "active"
+            selectedTab.backgroundColour = "$parent.parent.parent.selectedTabBackgroundColour"
+            selectedTab.colour = "$parent.parent.parent.selectedTabColour"
 
-        self:centreActivePageButton()
+            self:centreActivePageButton()
+        end
     end
 end
 

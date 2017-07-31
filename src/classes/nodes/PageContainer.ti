@@ -151,6 +151,20 @@ end
 
 --[[
     @instance
+    @desc WIP
+]]
+function PageContainer:removeNode( ... )
+    local rem, node = self.super:removeNode( ... )
+    if rem and node == self.selectedPage then
+        self.selectedPage = nil
+    end
+
+    self:formTabs()
+    return rem, node
+end
+
+--[[
+    @instance
     @desc An alias for 'addNode', contextualized for the PageContainer
     @param <Page Instance - page>
     @return 'param1 (page)'

@@ -8,7 +8,8 @@ abstract class MInteractable {
     static = {
         properties = {
             move = { "X", "Y" },
-            resize = { "width", "height" }
+            resize = { "width", "height" },
+            tabScroller = { "tabScroll" }
         },
 
         callbacks = {
@@ -57,7 +58,11 @@ function MInteractable:handleMouseDrag( eventObj, handled, within )
     local props = MInteractable.static.properties[ mouse[ 1 ] ]
     if not props then return end
 
-    self[ props[ 1 ] ], self[ props[ 2 ] ] = eventObj.X - mouse[ 2 ] + 1, eventObj.Y - mouse[ 3 ] + 1
+    self[ props[ 1 ] ] = eventObj.X - mouse[ 2 ] + 1
+    if props[ 2 ] then
+        self[ props[ 2 ] ] = eventObj.Y - mouse[ 3 ] + 1
+    end
+
 
     eventObj.handled = true
 end

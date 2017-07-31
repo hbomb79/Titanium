@@ -43,7 +43,8 @@
 
 class Window extends Container mixin MFocusable mixin MInteractable {
     static = {
-        proxyMethods = { "addNode", "removeNode", "getNode", "query", "clearNodes" }
+        proxyMethods = { "addNode", "removeNode", "getNode", "query", "clearNodes" },
+        proxyProperties = { "marginLeft", "marginRight", "marginTop", "marginBottom", "fluidDimensions", "positioning", "minWidth", "minHeight", "maxWidth", "maxHeight", "positionChanged" }
     };
 
     titleBar = true;
@@ -85,10 +86,11 @@ function Window:__init__( ... )
         colour = "$not parent.enabled and parent.disabledColour or parent.titleBarColour",
 
         visible = "$parent.titleBar",
-        enabled = "$self.visible"
+        enabled = "$self.visible",
+        positioning = "normal"
     })
 
-    self.titleBarTitle = self.titleBarContent:addNode( Label( "" ) ):set( "id", "title" )
+    self.titleBarTitle = self.titleBarContent:addNode( Label( "" ) ):set { id = "title" }
 
     local b = self.titleBarContent:addNode( Button( "" ):set( "X", "$parent.width" ) )
     b:set {
@@ -115,15 +117,11 @@ function Window:__init__( ... )
         id = "content"
     } )
 
-    for _, name in pairs( Window.static.proxyMethods ) do
-        self[ name ] = function( self, ... )
-            return self.content[ name ]( self.content, ... )
-        end
-
-        self[ name .. "Raw" ] = function( self, ... )
-            return self.super[ name ]( self, ... )
-        end
+    for _, name in pairs( Window.static.proxyProperties ) do
+        self.content[ name ] = ("$parent.%s"):format( name )
     end
+
+    self:createProxies()
 
     self:on("remove", function() self:executeCallbacks "close" end)
     self:watchProperty( "width", function( _, __, value )
@@ -151,16 +149,35 @@ end
 
 --[[
     @instance
+    @desc For each method in Window.static.proxyMethods, a 'raw' method (ie: addNodeRaw) is created (which performs the action on the window), and a normal method (ie: addNode) is
+          created that performs the action on the 'content' provided (for example, the 'actionContainer' of a DialogWindow)
+    @param <Instance - content>
+]]
+function Window:createProxies( content )
+    content = content or self.content
+    for _, name in pairs( Window.static.proxyMethods ) do
+        self[ name ] = function( self, ... )
+            return content[ name ]( content, ... )
+        end
+
+        self[ name .. "Raw" ] = function( self, ... )
+            return self.super[ name ]( self, ... )
+        end
+    end
+end
+
+--[[
+    @instance
     @desc Handles a mouse click by checking the location of the click. Depending on the location will either move, resize, focus or unfocus the window.
     @param <MouseEvent Instance - event>, <boolean - handled>, <boolean - within>
 ]]
 function Window:onMouseClick( event, handled, within )
-    if within then
-        if not handled and event.button == 1 then
+    local X, Y = event.X - self.X + 1, event.Y - self.Y + 1
+    if within and not ( self.shadow and ( X == self.width or Y == self.height ) ) and not handled then
+        if event.button == 1 then
             self:focus()
             self:executeCallbacks "windowFocus"
 
-            local X, Y = event.X - self.X + 1, event.Y - self.Y + 1
             if self.moveable and Y == 1 and ( X >= 1 and X <= self.titleBarContent.width - ( self.closeable and 1 or 0 ) ) then
                 self:updateMouse( "move", X, Y )
                 event.handled = true
@@ -191,6 +208,14 @@ end
 ]]
 function Window:onMouseDrag( event, handled, within )
     self:handleMouseDrag( event, handled, within )
+end
+
+--[[
+    @instance
+    @desc Redirects attempts to resolve the fluid positions of this Window to the content instead
+]]
+function Window:resolveFluidPositions()
+    self.content:resolveFluidPositions()
 end
 
 --[[
@@ -356,12 +381,6 @@ configureConstructor {
         resizeButtonBackgroundColour = "colour",
 
         moveable = "boolean",
-
-        minWidth = "number",
-        minHeight = "number",
-
-        maxWidth = "number",
-        maxHeight = "number",
 
         shadow = "boolean",
         shadowColour = "colour"

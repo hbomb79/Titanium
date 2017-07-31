@@ -1,0 +1,78 @@
+--[[
+    A class specifically designed for the TabbedPageContainer to contain the tabs (and facilitate mouse scrolling, dragging and tab selection)
+]]
+
+class TabContainer extends Container mixin MInteractable
+
+--[[
+    @instance
+    @desc Overrides the Node post constructor to insert height and background colour dynamic values (not possible in main constructor as the MThemeable mixin has not hooked into the instance yet)
+    @param <... - args> - Passed to super __postInit__
+]]
+function TabContainer:__postInit__( ... )
+    self.super:__postInit__( ... )
+
+
+    self.height = "$parent.tabHeight or 1"
+    self.backgroundColour = "$parent.tabBackgroundColour"
+end
+
+--[[
+    @instance
+    @desc If the mouse event has not been handled and is within this node, the TabContainers interactive mode is set to 'tabScroller'.
+    @param <MouseEvent Instance - event>, <boolean - handled>, <boolean - within>
+]]
+function TabContainer:onMouseClick( event, handled, within )
+    if handled or not within then return end
+    self:updateMouse( "tabScroller", event.X + self.parent.tabScroll, event.Y )
+end
+
+--[[
+    @instance
+    @desc If the mouse is released, the interactive mode of the node is reset. If the tab scroller was dragged before the release, the active node is deactivated to
+          prevent triggering after dragging tabs.
+    @param <MouseEvent Instance - event>, <boolean - handled>, <boolean - within>
+]]
+function TabContainer:onMouseUp( event, handled, within )
+    self:updateMouse( false )
+    if self.dragged then
+        self.dragged = false
+
+        local nodes = self.nodes[ 1 ].nodes
+        for i = 1, #nodes do
+            if nodes[ i ].active then nodes[ i ].active = false; return end
+        end
+    end
+end
+
+--[[
+    @instance
+    @desc If the event is not handled and is within this node, the tabs are moved by 5 places in the direction of the scroll.
+    @param <MouseEvent Instance - event>, <boolean - handled>, <boolean - within>
+]]
+function TabContainer:onMouseScroll( event, handled, within )
+    if handled or not within then return end
+    self.parent:moveTabs( event.button * 5, true )
+end
+
+--[[
+    @instance
+    @desc If the event has not been handled, and the tab containers interactive mode is set the event is passed to the interactive handler (MInteractable:handleMouseDrag)
+    @param <MouseEvent Instance - event>, <boolean - handled>, <boolean - within>
+]]
+function TabContainer:onMouseDrag( event, handled, within )
+    if handled and self.mouse then return end
+
+    self:handleMouseDrag( event, handled, within )
+    self.dragged = true
+end
+
+--[[
+    @setter
+    @desc When 'tabScroll' is changed, the tabs on the parent are shifted to that position (via absolute)
+    @param <number - tabScroll>
+]]
+function TabContainer:setTabScroll( tabScroll )
+    self.tabScroll = tabScroll
+    self.parent:moveTabs( false, true, -tabScroll )
+end

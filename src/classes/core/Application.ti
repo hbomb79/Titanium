@@ -171,7 +171,7 @@ function Application:schedule( fn, time, repeating, name )
         self:unschedule( name )
     end
 
-    local ID = os.startTimer( time ) --TODO: Use timer util to re-use timer IDs
+    local ID = os.startTimer( time )
     self.timers[ ID ] = { fn, time, repeating, name }
 
     return ID
@@ -270,8 +270,11 @@ function Application:draw( force )
             node.needsRedraw = false
         end
     end
-    self.changed = false
 
+    -- Shade the application content, and draw the dialog container over the top of all other nodes
+    if self.isDialogOpen then self:drawDialogs() end
+
+    self.changed = false
     local focusedNode, caretEnabled, caretX, caretY, caretColour = self.focusedNode
     if focusedNode then
         focusedNode:resolveProjectorFocus()
@@ -300,6 +303,8 @@ end
 function Application:handle( eName, ... )
     local eventObject = Event.spawn( eName, ... )
     if eventObject.main == "KEY" then self:handleKey( eventObject ) end
+
+    if self.isDialogOpen then self.dialogContainer:handle( eventObject ) end
 
     local nodes, node = self.nodes
     for i = #nodes, 1, -1 do

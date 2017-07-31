@@ -1,0 +1,45 @@
+--[[
+    @instance body - string (def. "This is a dialog window")
+
+    An enhanced version of the Window node that provides basic dialog prompt structure (title, body and action container).
+
+    Using :addNode will insert the given node as an action node into the action container. This, combined with fluid layouts makes creating
+    simple dialog prompts super easy and flexible.
+]]
+
+class DialogWindow extends Window {
+    body = "This is a dialog window"
+}
+
+--[[
+    @constructor
+    @desc Constructs the dialog by;
+          - Creating the body and action container
+          - Constructing the node via the super
+          - Inserting the body and action container
+    @param [number - X], [number - Y], [number - width], [number - height], [string - title], [string - body]
+]]
+function DialogWindow:__init__( ... )
+    self.bodyText = TextContainer( "" ):set( "id", "TEST" ):set { text = "$parent.parent.body", X = 1, Y = 1, width = "$parent.width", height = "$parent.height - 3 < 2 and 2 or parent.height - 3", colour = 256, horizontalAlign = "centre", Z = 1 }
+    self.actionContainer = ScrollContainer( 2 ):set{ id = "TESTING", Y = "$parent.height - 1", width = "$parent.width - 2", height = 2, fluidPositions = true, Z = 2, positioning = "fluid" }
+
+    self:super( ... )
+
+    self.content:addNode( self.bodyText )
+    self.content:addNode( self.actionContainer )
+end
+
+--[[
+    @instance
+    @desc Overrides Window:createProxies -- Redirects attempts to create proxy methods to the action container (methods in Window.static.proxyMethods act on the action container)
+]]
+function DialogWindow:createProxies()
+    self.super:createProxies( self.actionContainer )
+end
+
+configureConstructor( {
+    orderedArguments = { "X", "Y", "width", "height", "title", "body" },
+    argumentTypes = {
+        body = "string"
+    }
+}, true )

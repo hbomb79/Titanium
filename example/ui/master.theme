@@ -24,6 +24,7 @@
     <colour>white</colour>
     <verticalAlign>centre</verticalAlign>
     <horizontalAlign>centre</horizontalAlign>
+    <width dynamic>#self.text + 2</width>
 </Button>
 
 <RadioButton>

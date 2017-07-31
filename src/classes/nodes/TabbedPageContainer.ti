@@ -1,0 +1,247 @@
+--[[
+    @local
+    @desc Spawns a scroll button by adding the button to the parent (via super.super to avoid page verification)
+    @param <string - text>, <boolean - forward>, <TabbedPageContainer Instance - parent>
+    @return <Button Instance - b>
+]]
+local function spawnScrollButton( text, forward, parent )
+    local b = Button( text ):set { width = 1, enabled = "$self.visible", height = "$parent.tabHeight" }
+
+    b:on("trigger", function( self )
+        parent:moveTabs( ( forward and -1 or 1 ) * ( parent.width / 2 ) )
+    end):addClass "scroller"
+
+    return parent.super.super:addNode( b )
+end
+
+--[[
+    @instance tabHeight - number (def. 1) - The height of the tabs, and therefore the amount of space consumed at the top of the node. All pages are shifted DOWN by this amount to make space for tabs
+    @instance scrollButtons - boolean (def. true) - If the tabs overflow the container, two buttons (one for backward, one for forward) will appear to the left and right (respectively) of the tab container, allowing simple scrolling. Set to false to hide this buttons
+    @instance smartTabWidth - boolean(def. true) - When true, the tabs will try and consume as much of the total node width as possible -- This setting does not apply if the minimum width of the tabs (the text + the padding) exceeds the width of the node (ie: scrolling becomes possible)
+    @instance tabPadding - number (def. 1) - The space to the left AND the right of the text inside each tab
+    @instance tabScroll - number (def. 0) - The current scroll of the tabs. Changing this setting should be avoided -- Instead use :moveTabs
+    @instance tabAlignment - string (def. "centre") - The horizontal AND vertical alignment of the text inside each tab
+    @instance tabColour - colour (def. 1) - The text colour of unselected tabs
+    @instance tabBackgroundColour - colour (def. 1) - The background colour of unselected tabs
+    @instance selectedTabColour - colour (def. 1) - The text colour of selected tabs
+    @instance selectedTabBackgroundColour - colour (def. 1) - The background colour of selected tabs
+
+    A variant on the PageContainer which provides a bar at the top of the node containing draggable, scrollable tabs that represent all pages inside the container.
+]]
+
+class TabbedPageContainer extends PageContainer {
+    tabHeight = 1;
+    smartTabWidth = true;
+    scrollButtons = true;
+
+    tabPadding = 1;
+    tabScroll = 0;
+    tabAlignment = "centre";
+
+    tabColour = 1;
+    tabBackgroundColour = colours.lightBlue;
+
+    selectedTabColour = 1;
+    selectedTabBackgroundColour = colours.cyan;
+}
+
+--[[
+    @constructor
+    @desc Constructs the container by creating the tab container, and the left/right scroll buttons (only visible if scrollButtons is true and content exceeds width of container)
+    @param [number - X], [number - Y], [number - width], [number - height], [table - nodes]
+]]
+function TabbedPageContainer:__init__( ... )
+    self:resolve( ... )
+    self:super()
+
+    self.tabContainer = self.super.super:addNode( TabContainer() )
+
+    self.leftScrollButton = spawnScrollButton( "<", true, self ):set( "X", "$parent.scroll + 1" )
+    self.rightScrollButton = spawnScrollButton( ">", false, self ):set( "X", "$parent.scroll + parent.width" )
+end
+
+--[[
+    @instance
+    @desc Centres the tab representing the selected page inside the tab bar.
+    @param [boolean - noAnimation]
+]]
+function TabbedPageContainer:centreActivePageButton( noAnimation )
+    local button = self.tabContainer:query "Button.active".result[ 1 ]
+
+    self:moveTabs( 0, false, button.X + ( button.width / 2 ) - ( self.width / 2 ) )
+end
+
+--[[
+    @instance
+    @desc Calls PageContainer:updatePagePositions. Once pages are updated, the tabs are reformed to represent the new page(s)
+]]
+function TabbedPageContainer:updatePagePositions()
+    self.super:updatePagePositions()
+    self:formTabs()
+end
+
+--[[
+    @instance
+    @desc Selects the new page by calling PageContainer:selectPage and then updating the active tab (:updateActiveTab)
+    @param <string - pageID>, [function - animationOverride]
+]]
+function TabbedPageContainer:selectPage( ... )
+    self.super:selectPage( ... )
+    self:updateActiveTab()
+end
+
+--[[
+    @instance
+    @desc Updates the active tab by colouring the tab representing the selected page using the 'selected' variants of the tab colours and centering the tab
+]]
+function TabbedPageContainer:updateActiveTab()
+    self.tabContainer:query "Button.active":each( function( tab )
+        tab:set {
+            backgroundColour = "$parent.parent.parent.tabBackgroundColour",
+            colour = "$parent.parent.parent.tabColour"
+        }
+
+        tab:removeClass "active"
+    end )
+
+    if self.selectedPage then
+        local selectedTab = self.tabContainer:query( ("Button#%s"):format( self.selectedPage.id ) ).result[ 1 ]
+        if selectedTab then
+            selectedTab:addClass "active"
+            selectedTab.backgroundColour = "$parent.parent.parent.selectedTabBackgroundColour"
+            selectedTab.colour = "$parent.parent.parent.selectedTabColour"
+
+            self:centreActivePageButton()
+        end
+    end
+end
+
+--[[
+    @instance
+    @desc Forms the tabs for each page. The 'name' property of the page is used as the tab name (or, if no name is set, the 'id' is used instead)
+]]
+function TabbedPageContainer:formTabs()
+    local tabs, width = {}, 1
+    local nodes = self.nodes
+    for i = 4, #nodes do
+        local page = nodes[ i ]
+        local content = page.name or page.id
+        local w = ( self.tabPadding * 2 ) + #content
+
+        tabs[ page.position ], width = { content, page.id, w }, width + w
+    end
+
+    self.tabContainer:removeNode "innerTabs"
+    local container = self.tabContainer:addNode( Container() ):set {
+        id = "innerTabs",
+        height = "$parent.height"
+    }
+
+    local function spawnTab( text, width, X, page )
+        local tab = container:addNode( Button( text ) ):set {
+            width = width,
+            X = X,
+            height = "$parent.parent.parent.tabHeight",
+            backgroundColour = "$parent.parent.parent.tabBackgroundColour",
+            colour = "$parent.parent.parent.tabColour",
+            horizontalAlign = "$parent.parent.parent.tabAlignment",
+            verticalAlign = "$parent.parent.parent.tabAlignment",
+            id = page
+        }
+
+        tab:on( "trigger", function() self:selectPage( page ) end )
+    end
+
+    local extraSpacePerNode = math.floor( ( self.width - width ) / #tabs )
+    if self.smartTabWidth and extraSpacePerNode >= 2 then
+        if extraSpacePerNode % 2 ~= 0 then
+            extraSpacePerNode = extraSpacePerNode - 1
+        end
+    else
+        extraSpacePerNode = 0
+    end
+
+    local widthOverlap = width > self.width
+    local canScroll = widthOverlap and self.scrollButtons
+
+    container.X = widthOverlap and "$-parent.parent.tabScroll + 1" or "$parent.width / 2 - ( self.width / 2 ) + 1"
+    self:query "Button.scroller":set( "visible", canScroll )
+    self.tabContainer:set {
+        X = "$parent.scroll + " .. ( canScroll and "2" or "1" ),
+        width = "$parent.width - " .. ( canScroll and "2" or "0" )
+    }
+
+    local keys = {}
+    for i in pairs( tabs ) do keys[ #keys + 1 ] = i end
+    table.sort( keys )
+
+    local w = 1
+    for i = 1, #keys do
+        local tab = tabs[ keys[ i ] ]
+        spawnTab( tab[ 1 ], tab[ 3 ] + extraSpacePerNode, w, tab[ 2 ] )
+        w = w + extraSpacePerNode + tab[ 3 ]
+    end
+
+    container.width = width + ( extraSpacePerNode * #tabs )
+    self:updateActiveTab()
+end
+
+--[[
+    @instance
+    @desc Moves the tabs by 'amount' (OR, if 'absolute' is provided, the scroll offset is set directly to it). If 'noAnimation', the scrolling occurs instantly
+    @param <number - amount>, [boolean - noAnimation] - Scrolls tabs by this amount
+    @param [number - amount], [boolean - noAnimation], <number - absolute> - SETS the tab scroll to 'absolute'
+]]
+function TabbedPageContainer:moveTabs( amount, noAnimation, absolute )
+    local MAX = self:query "#innerTabs".result[ 1 ].width - self.width + ( self.scrollButtons and 1 or -1 )
+    local val = math.min( math.max( absolute or ( self.tabScroll + amount ), 0 ), MAX < 1 and 1 or MAX )
+
+    if noAnimation then
+        self.tabScroll = val
+    else
+        self:animate( "TAB_SCROLL", "tabScroll", val, 0.2, "inOutQuad")
+    end
+end
+
+--[[
+    @instance
+    @desc A modified version of PageContainer:linkPage that links the page provided to this container (sets the height and Y to dynamically adjust depending on 'tabHeight' and links the width)
+]]
+function TabbedPageContainer:linkPage( page )
+    page.height, page.Y = "$parent.height - parent.tabHeight", "$parent.tabHeight + 1"
+    page:linkProperties( self, "width" )
+end
+
+--[[
+    @instance
+    @desc A modified version of PageContainer:unlinkPage that unlinks the page provided from this container
+]]
+function TabbedPageContainer:unlinkPage( page )
+    page:removeDynamicValue "height"
+    page:removeDynamicValue "Y"
+    page:unlinkProperties( self, "width" )
+end
+
+--[[
+    @setter
+    @desc When 'scrollButtons' is updated, the tabs are reformed to reflect the new configuration
+    @param <boolean - scrollButtons>
+]]
+function TabbedPageContainer:setScrollButtons( scrollButtons )
+    self.scrollButtons = scrollButtons
+    self:formTabs()
+end
+
+configureConstructor {
+    argumentTypes = {
+        tabHeight = "number",
+        autoTabWidth = "boolean",
+        tabBackgroundColour = "colour",
+        tabColour = "colour",
+        selectedTabBackgroundColour = "colour",
+        selectedTabColour = "colour",
+        tabScroll = "number",
+        scrollButtons = "boolean",
+        tabAlignment = "string"
+    }
+}

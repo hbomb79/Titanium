@@ -92,7 +92,7 @@ function DynamicValue:attach()
         stack[ 2 ]:watchProperty( stack[ 1 ], function( _, __, value )
             self.cachedValues[ i ] = value
             self:solve()
-        end, "DYNAMIC_VALUE_" .. self.__ID )
+        end, "DYNAMIC_VALUE_" .. self.__ID .. "_" .. i )
     end
 
     self.attached = true
@@ -110,7 +110,7 @@ function DynamicValue:detach()
     for i = 1, #resolvedStacks do
         stack = resolvedStacks[ i ]
 
-        stack[ 2 ]:unwatchProperty( stack[ 1 ], "DYNAMIC_VALUE_" .. self.__ID )
+        stack[ 2 ]:unwatchProperty( stack[ 1 ], "DYNAMIC_VALUE_" .. self.__ID .. "_" .. i )
     end
 
     self.attached = false

@@ -211,6 +211,15 @@ function TabbedPageContainer:unlinkPage( page )
     page:unlinkProperties( self, "width" )
 end
 
+--[[
+    @setter
+    @desc WIP
+]]
+function TabbedPageContainer:setScrollButtons( scrollButtons )
+    self.scrollButtons = scrollButtons
+    self:formTabs()
+end
+
 configureConstructor {
     argumentTypes = {
         tabHeight = "number",

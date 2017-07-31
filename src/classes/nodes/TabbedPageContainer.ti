@@ -25,6 +25,7 @@ class TabbedPageContainer extends PageContainer {
 
     tabPadding = 1;
     tabScroll = 0;
+    tabAlignment = "centre";
 
     tabColour = 1;
     tabBackgroundColour = colours.lightBlue;
@@ -129,6 +130,8 @@ function TabbedPageContainer:formTabs()
             height = "$parent.parent.parent.tabHeight",
             backgroundColour = "$parent.parent.parent.tabBackgroundColour",
             colour = "$parent.parent.parent.tabColour",
+            horizontalAlign = "$parent.parent.parent.tabAlignment",
+            verticalAlign = "$parent.parent.parent.tabAlignment",
             id = page
         }
 
@@ -220,6 +223,7 @@ configureConstructor {
         selectedTabBackgroundColour = "colour",
         selectedTabColour = "colour",
         tabScroll = "number",
-        scrollButtons = "boolean"
+        scrollButtons = "boolean",
+        tabAlignment = "string"
     }
 }

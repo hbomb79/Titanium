@@ -163,8 +163,7 @@ function TabbedPageContainer:formTabs()
     }
 
     local w = 1
-    for i = 1, #tabs do
-        local tab = tabs[ i ]
+    for index, tab in pairs( tabs ) do
         spawnTab( tab[ 1 ], tab[ 3 ] + extraSpacePerNode, w, tab[ 2 ] )
         w = w + extraSpacePerNode + tab[ 3 ]
     end

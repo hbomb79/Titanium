@@ -329,9 +329,19 @@ end
 local output = [=[
 --[[
     Built using Titanium Packager (Harry Felton - hbomb79)
+
+    Install pakager, and other Titanium developer tools via 'pastebin run 5B9k1jZg'
+]]
+local args, exportDirectory = { ... }, ""
+]=] .. ( SETTINGS.EXTRACT.ALLOW_OVERRIDE and [=[
+if args[ 1 ] and args[ 1 ] ~= "--" then exportDirectory = args[ 1 ] or "" end
+]=] or "" )
+
+output = output .. [[
+table.remove( args, 1 )
+if args[ 1 ] == "--" then table.remove( args, 1 ) end
 ]]
 
-local exportDirectory = ]=] .. ( SETTINGS.EXTRACT.ALLOW_OVERRIDE and 'select( 1, ... ) or ""' or '""' ) .. "\n"
 
 if next( class_assets ) then
     if not SETTINGS.TITANIUM.DISABLE_CHECK and not SETTINGS.TITANIUM.INSTALL then
@@ -592,22 +602,12 @@ end
 end
 
 function runFile( path )
-    if useVFS and vfs_assets[ path ] then
-        output = output .. [[
-
-local fn, err = VFS_ENV.loadfile "]]..path..[["
-if fn then fn()
-else return error( "Failed to run file from bundle vfs: "..tostring( err ) ) end
-]]
-    elseif extract_assets[ path ] then
-        if useVFS then
-            output = output .. "VFS_ENV.dofile '"..path.."'\n"
-        else
-            output = output .. "dofile( fs.combine( exportDirectory, '"..path.."' ) )"
-        end
-    else
+    if not ( ( vfs_assets and vfs_assets[ path ] ) or ( extract_assets and extract_assets[ path ] ) ) then
         error("File '"..path.."' cannot be run. Not found inside application bundle. " .. ( not SETTINGS.VFS.ENABLE and not next( extract_assets ) and "This maybe caused by the VFS and extract being disabled. Re-enable the VFS or extract the files needed using --extract" or "" ))
     end
+
+    output = output .. "local fn, err = " .. ( useVFS and "VFS_ENV.loadfile '"..path.."'" or "loadfile( fs.combine( exportDirectory, '"..path.."') )" )
+    output = output .. "if fn then fn() else return error('Failed to run file from bundle: \"'..tostring( err )..'\"') end\n"
 end
 
 if SETTINGS.SOURCE.PRE then

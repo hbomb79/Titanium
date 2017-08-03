@@ -607,7 +607,7 @@ function runFile( path )
     end
 
     output = output .. "local fn, err = " .. ( useVFS and "VFS_ENV.loadfile '"..path.."'" or "loadfile( fs.combine( exportDirectory, '"..path.."') )" )
-    output = output .. "if fn then fn() else return error('Failed to run file from bundle: \"'..tostring( err )..'\"') end\n"
+    output = output .. "if fn then fn( unpack( args ) ) else return error('Failed to run file from bundle: \"'..tostring( err )..'\"') end\n"
 end
 
 if SETTINGS.SOURCE.PRE then

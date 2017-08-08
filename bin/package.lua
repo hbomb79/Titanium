@@ -631,8 +631,7 @@ end
 local ok, err = loadfile "/.tpm/bin/tpm"
 if not ok then return error("Failed to load TPM '"..tostring( err ).."'") end
 
-ok( "fetch"]] .. ( SETTINGS.TITANIUM.SILENT and ', "--silent"' or "" ) .. [[ )
-ok( "--disposable", "--depend", shell.getRunningProgram(), "install", "Titanium:]]..VERSION..[["]] .. ( SETTINGS.TITANIUM.SILENT and ', "--silent"' or "" ) .. [[ )
+ok( "--fetch", "--disposable", "--depend", shell.getRunningProgram(), "install", "Titanium:]]..VERSION..[["]] .. ( SETTINGS.TITANIUM.SILENT and ', "--silent"' or "" ) .. [[ )
 ]]
     if VERSION == "latest" then
         output = output .. [[local FAILURE = "Failed to execute Titanium package. Latest Titanium version cannot be found %s (/.tpm/cache)"

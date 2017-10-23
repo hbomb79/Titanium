@@ -36,9 +36,9 @@ local SETTINGS, FLAGS = {
         EXCLUDE = {}
     },
 
-    GLOBAL_EXCLUDE = {
-        [".DS_Store"] = true
-    },
+    PATTERN_EXCLUDE = { "%.sw[po]$", "%.DS_Store$" },
+
+    GLOBAL_EXCLUDE = {},
 
     PICKLE_LOCATION = "Pickle.lua",
 
@@ -66,6 +66,7 @@ FLAGS = {
     {"exclude-extract", false, function( path ) addFromExplore( path, SETTINGS.EXTRACT.EXCLUDE ) end, true, "Files inside this path will not be extracted"},
     {"exclude-vfs", false, function( path ) addFromExplore( path, SETTINGS.VFS.EXCLUDE ) end, true, "Files inside this path will not be available via the virtual file system"},
     {"exclude", false, function( path ) addFromExplore( path, SETTINGS.GLOBAL_EXCLUDE ) end, true, "Files inside this path will not be processed"},
+    {"pattern-exclude", false, function( pattern ) table.insert( SETTINGS.PATTERN_EXCLUDE, pattern ) end, true, "File paths that match the Lua pattern provided will not be processed"},
     {"block-extract-override", false, function() SETTINGS.EXTRACT.ALLOW_OVERRIDE = false end, false, "Disallows the package to be extracted to a certain path at execution time"},
 
     -- Titanium flags
@@ -234,6 +235,15 @@ local function getFileContents( path, allowMinify, allowPreprocess )
     end
 end
 
+local function isPathExcluded( path )
+    if SETTINGS.GLOBAL_EXCLUDE[ path ] then return true end
+
+    local patterns = SETTINGS.PATTERN_EXCLUDE
+    for i = 1, #patterns do
+        if path:match( patterns[ i ] ) then return true end
+    end
+end
+
 local function serialise( target )
     if type( textutils ) == "table" then
         return textutils.serialise( target )
@@ -291,13 +301,13 @@ end
 local GLOBAL_EXCLUDE, EXTRACT_EXCLUDE, CLASS_EXCLUDE, VFS_EXCLUDE = SETTINGS.GLOBAL_EXCLUDE, SETTINGS.EXTRACT.EXCLUDE, SETTINGS.SOURCE.EXCLUDE, SETTINGS.VFS.EXCLUDE
 local vfs_assets, vfs_dirs, extract_assets, class_assets = {}, {}, {}, {}
 for file in pairs( SETTINGS.EXTRACT.TARGETS ) do
-    if not ( GLOBAL_EXCLUDE[ file ] or EXTRACT_EXCLUDE[ file ] ) then
+    if not ( EXTRACT_EXCLUDE[ file ] or isPathExcluded( file ) ) then
         extract_assets[ file ] = getFileContents( file, file:find("%.lua$") or file:find("%.ti$") )
     end
 end
 
 for file in pairs( SETTINGS.SOURCE.CLASSES ) do
-    if not ( GLOBAL_EXCLUDE[ file ] or CLASS_EXCLUDE[ file ] ) then
+    if not ( CLASS_EXCLUDE[ file ] or isPathExcluded( file ) ) then
         class_assets[ getName( file ) ] = getFileContents( file, true, true )
     end
 end
@@ -306,7 +316,7 @@ do
     local r, rI = explore( SETTINGS.SOURCE.LOCATION )
     for i = 1, #r do
         rI = r[ i ]
-        if not ( class_assets[ getName( rI ) ] or extract_assets[ rI ] ) and not ( GLOBAL_EXCLUDE[ rI ] or VFS_EXCLUDE[ rI ] ) then
+        if not ( class_assets[ getName( rI ) ] or extract_assets[ rI ] ) and not ( VFS_EXCLUDE[ rI ] or isPathExcluded( rI ) ) then
             vfs_assets[ rI ] = getFileContents( rI, rI:find("%.lua$") or rI:find("%.ti$") )
         end
     end
